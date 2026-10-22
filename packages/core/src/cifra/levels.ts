@@ -12,8 +12,7 @@ export interface World extends CifraConfig {
 }
 
 export const WORLDS: World[] = [
-  { id: 1, name: "Calentando", description: "Tres cifras y pistas que se leen solas.", length: 3, minRows: 2, maxRows: 5, maxZeroRows: 1, maxDirectEliminations: 6, minTier: 1, maxTier: 1, levels: 30, unlockAfter: 0 },
-  { id: 2, name: "Cuatro cifras", description: "Cruzá filas: contá lo que ya sabés y cerrá lo que falta.", length: 4, minRows: 4, maxRows: 6, maxZeroRows: 1, maxDirectEliminations: 5, minTier: 2, maxTier: 2, levels: 30, unlockAfter: 10 },
+  { id: 2, name: "Cuatro cifras", description: "Cruzá filas: contá lo que ya sabés y cerrá lo que falta.", length: 4, minRows: 4, maxRows: 6, maxZeroRows: 1, maxDirectEliminations: 5, minTier: 2, maxTier: 2, levels: 30, unlockAfter: 0 },
   { id: 3, name: "Supuestos", description: "Probá una cifra en un lugar y mirá si todo se cae.", length: 4, minRows: 4, maxRows: 6, maxZeroRows: 1, maxDirectEliminations: 5, minTier: 3, maxTier: 3, levels: 30, unlockAfter: 10 },
   { id: 4, name: "Cinco cifras", description: "Códigos largos, todavía sin suposiciones.", length: 5, minRows: 5, maxRows: 7, maxZeroRows: 1, maxDirectEliminations: 4, minTier: 2, maxTier: 2, levels: 30, unlockAfter: 10 },
   { id: 5, name: "Maestría", description: "Cinco cifras y todas las técnicas juntas.", length: 5, minRows: 5, maxRows: 7, maxZeroRows: 1, maxDirectEliminations: 4, minTier: 3, maxTier: 3, levels: 30, unlockAfter: 10 },

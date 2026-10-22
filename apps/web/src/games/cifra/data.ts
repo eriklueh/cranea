@@ -22,9 +22,11 @@ export function dailyNumber(dateKey: string) {
 }
 
 export function isWorldUnlocked(worldId: number, done: (w: number, l: number) => boolean) {
-  const world = getWorld(worldId);
-  if (!world || worldId === 1) return true;
-  const prev = getWorld(worldId - 1)!;
+  const index = WORLDS.findIndex((world) => world.id === worldId);
+  if (index < 0) return false;
+  const world = WORLDS[index];
+  if (index === 0 || world.unlockAfter === 0) return true;
+  const prev = WORLDS[index - 1];
   let count = 0;
   for (let n = 1; n <= prev.levels; n++) if (done(prev.id, n)) count++;
   return count >= world.unlockAfter;

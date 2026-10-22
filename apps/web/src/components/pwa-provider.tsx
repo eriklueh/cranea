@@ -2,12 +2,14 @@
 
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { DownloadIcon } from "lucide-react";
+import { WORLDS } from "@cranea/core/cifra";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface InstallPrompt extends Event {
   prompt(): Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
+const LEVEL_COUNT = WORLDS.reduce((total, world) => total + world.levels, 0);
 const PwaContext = createContext<{
   installed: boolean; ready: boolean; failed: boolean; ios: boolean;
   prompt: InstallPrompt | null; install: () => Promise<void>;
@@ -105,7 +107,7 @@ export function InstallApp() {
       </DialogHeader>
       {prompt ? <button type="button" onClick={() => void install()} className="min-h-12 rounded-lg bg-ink px-5 py-3 font-bold text-paper focus-visible:outline-2 focus-visible:outline-offset-2">Instalar Craneá</button>
         : <p className="text-sm leading-relaxed">{ios ? "En Safari, tocá Compartir y elegí Agregar a pantalla de inicio." : "Abrí el menú de tu navegador y elegí Instalar app o Agregar a pantalla de inicio, si está disponible."}</p>}
-      <p role="status" className="text-sm text-muted-foreground">{ready ? "Los 150 niveles y el desafío diario ya están listos para jugar sin conexión." : failed ? "No se completó la descarga. Volvé a abrir la app con conexión para reintentar." : process.env.NODE_ENV === "production" ? "Preparando los niveles para jugar sin conexión…" : "La descarga sin conexión se activa en la versión publicada."}</p>
+      <p role="status" className="text-sm text-muted-foreground">{ready ? `Los ${LEVEL_COUNT} niveles y el desafío diario ya están listos para jugar sin conexión.` : failed ? "No se completó la descarga. Volvé a abrir la app con conexión para reintentar." : process.env.NODE_ENV === "production" ? "Preparando los niveles para jugar sin conexión…" : "La descarga sin conexión se activa en la versión publicada."}</p>
     </DialogContent>
   </Dialog>;
 }

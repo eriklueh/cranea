@@ -55,6 +55,13 @@ describe("generador", () => {
 });
 
 describe("niveles publicados", () => {
+  it("empieza en cuatro cifras y solo publica mundos activos", () => {
+    expect(WORLDS[0].length).toBe(4);
+    expect(WORLDS[0].unlockAfter).toBe(0);
+    expect(WORLDS.map((world) => world.id)).toEqual([2, 3, 4, 5]);
+    expect(packed).toHaveLength(WORLDS.reduce((total, world) => total + world.levels, 0));
+    expect(packed.every((level) => WORLDS.some((world) => world.id === level.w))).toBe(true);
+  });
   for (const world of WORLDS) {
     it(`mundo ${world.id}: balance, unicidad, técnica y curva`, () => {
       const levels = (packed as PackedLevel[]).filter((l) => l.w === world.id);
