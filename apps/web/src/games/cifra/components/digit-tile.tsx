@@ -44,7 +44,7 @@ export function DigitTile({ digit, mark = "none", position = 0, interactive = fa
       {mark === "out" && (
         <span aria-hidden className="absolute inset-x-2 top-1/2 h-0.5 -rotate-12 rounded bg-margin" />
       )}
-      {mark === "in" && <span aria-hidden className="absolute inset-1.5 rounded-full border-2 border-ok" />}
+      {mark === "in" && <span aria-hidden className="absolute inset-1.5 rounded-full border-2 border-clue-present" />}
     </Tile>
   );
 }
