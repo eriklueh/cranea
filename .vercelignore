@@ -1,5 +1,14 @@
 artifacts
 assets/brand
 .git
+node_modules
+**/node_modules
+**/.next
+**/.turbo
+**/*.tsbuildinfo
+.env*
+**/.env*
+.vercel
+apps/web/public/sw.js
 **/*.test.ts
 **/*.test.mjs
