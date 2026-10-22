@@ -13,7 +13,8 @@
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "levels": "tsx scripts/build-levels.ts"
+    "levels": "tsx scripts/build-levels.ts",
+    "audit:levels": "tsx scripts/audit-levels.ts"
   },
   "devDependencies": {
     "tsx": "4.23.15",

@@ -1,0 +1,33 @@
+{
+  "levelsAudited": 120,
+  "levelsWithIssues": [],
+  "worlds": [
+    {
+      "world": 2,
+      "levels": 30,
+      "missingDigitLevels": [],
+      "difficultySorted": true
+    },
+    {
+      "world": 3,
+      "levels": 30,
+      "missingDigitLevels": [],
+      "difficultySorted": true
+    },
+    {
+      "world": 4,
+      "levels": 30,
+      "missingDigitLevels": [],
+      "difficultySorted": true
+    },
+    {
+      "world": 5,
+      "levels": 30,
+      "missingDigitLevels": [],
+      "difficultySorted": true
+    }
+  ],
+  "dailyAudited": 366,
+  "dailyWithIssues": [],
+  "independentEnumeration": true
+}

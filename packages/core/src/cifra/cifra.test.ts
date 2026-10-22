@@ -3,6 +3,8 @@ import { candidates, DAILY_CONFIG, generate, generateDaily, pack, score, selectD
 import packed from "../../levels/cifra.json";
 
 function expectBalanced(p: CifraPuzzle, cfg: CifraConfig) {
+  const visibleDigits = new Set(p.clues.flatMap((clue) => [...clue.guess]));
+  expect(p.solution.filter((digit) => !visibleDigits.has(digit)), "Todas las cifras de la solución deben aparecer en las pistas finales").toEqual([]);
   expect(p.clues.length).toBeGreaterThanOrEqual(cfg.minRows);
   expect(p.clues.length).toBeLessThanOrEqual(cfg.maxRows);
   const zeros = p.clues.filter((c) => c.feedback.exact + c.feedback.present === 0);
@@ -46,7 +48,7 @@ describe("generador", () => {
   }
 
   it("diario", () => {
-    for (const date of ["2026-10-22", "2026-10-23", "2026-12-31", "2027-01-01", "2028-02-29"]) {
+    for (const date of ["2026-10-22", "2026-10-23", "2026-10-24", "2026-12-31", "2027-01-01", "2028-02-29"]) {
       const p = generateDaily(date);
       expectBalanced(p, DAILY_CONFIG);
       expect(generateDaily(date)).toEqual(p);

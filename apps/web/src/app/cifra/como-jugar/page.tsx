@@ -22,7 +22,7 @@ export default function HowTo() {
         <p className="max-w-prose">
           Hay un código secreto de cifras distintas. El tablero ya trae varios intentos puntuados. Cada fila te dice cuántas de sus
           cifras están en el código y cuántas están en su lugar, pero nunca cuáles. Cruzando las filas, solo un código encaja con
-          todas. Tenés tres intentos para escribirlo.
+          todas. Todas las cifras del código aparecen entre las pistas. Tenés tres intentos para escribirlo.
         </p>
 
         <div className="space-y-3">

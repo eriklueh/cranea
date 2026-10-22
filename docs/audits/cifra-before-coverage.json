@@ -1,0 +1,1249 @@
+{
+  "levelsAudited": 120,
+  "levelsWithIssues": [
+    {
+      "id": "2-1",
+      "solution": "4278",
+      "missingDigits": [
+        7
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2-2",
+      "solution": "3245",
+      "missingDigits": [
+        3
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2-3",
+      "solution": "6507",
+      "missingDigits": [
+        0
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2-4",
+      "solution": "9426",
+      "missingDigits": [
+        2
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2-12",
+      "solution": "3607",
+      "missingDigits": [
+        0
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2-14",
+      "solution": "9418",
+      "missingDigits": [
+        4
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2-17",
+      "solution": "3527",
+      "missingDigits": [
+        7
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2-18",
+      "solution": "2631",
+      "missingDigits": [
+        6
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2-19",
+      "solution": "2415",
+      "missingDigits": [
+        1
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2-20",
+      "solution": "5387",
+      "missingDigits": [
+        7
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2-26",
+      "solution": "7239",
+      "missingDigits": [
+        7
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2-29",
+      "solution": "7160",
+      "missingDigits": [
+        0
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "3-2",
+      "solution": "0856",
+      "missingDigits": [
+        0
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "3-4",
+      "solution": "1870",
+      "missingDigits": [
+        0
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "3-6",
+      "solution": "4918",
+      "missingDigits": [
+        1
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "3-10",
+      "solution": "4236",
+      "missingDigits": [
+        3
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "3-22",
+      "solution": "8971",
+      "missingDigits": [
+        1
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "3-26",
+      "solution": "8179",
+      "missingDigits": [
+        9
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "4-20",
+      "solution": "52360",
+      "missingDigits": [
+        0
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "4-24",
+      "solution": "15647",
+      "missingDigits": [
+        6
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "4-27",
+      "solution": "08725",
+      "missingDigits": [
+        5
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "5-12",
+      "solution": "89534",
+      "missingDigits": [
+        9
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    }
+  ],
+  "worlds": [
+    {
+      "world": 2,
+      "levels": 30,
+      "missingDigitLevels": [
+        {
+          "id": "2-1",
+          "missingDigits": [
+            7
+          ]
+        },
+        {
+          "id": "2-2",
+          "missingDigits": [
+            3
+          ]
+        },
+        {
+          "id": "2-3",
+          "missingDigits": [
+            0
+          ]
+        },
+        {
+          "id": "2-4",
+          "missingDigits": [
+            2
+          ]
+        },
+        {
+          "id": "2-12",
+          "missingDigits": [
+            0
+          ]
+        },
+        {
+          "id": "2-14",
+          "missingDigits": [
+            4
+          ]
+        },
+        {
+          "id": "2-17",
+          "missingDigits": [
+            7
+          ]
+        },
+        {
+          "id": "2-18",
+          "missingDigits": [
+            6
+          ]
+        },
+        {
+          "id": "2-19",
+          "missingDigits": [
+            1
+          ]
+        },
+        {
+          "id": "2-20",
+          "missingDigits": [
+            7
+          ]
+        },
+        {
+          "id": "2-26",
+          "missingDigits": [
+            7
+          ]
+        },
+        {
+          "id": "2-29",
+          "missingDigits": [
+            0
+          ]
+        }
+      ],
+      "difficultySorted": true
+    },
+    {
+      "world": 3,
+      "levels": 30,
+      "missingDigitLevels": [
+        {
+          "id": "3-2",
+          "missingDigits": [
+            0
+          ]
+        },
+        {
+          "id": "3-4",
+          "missingDigits": [
+            0
+          ]
+        },
+        {
+          "id": "3-6",
+          "missingDigits": [
+            1
+          ]
+        },
+        {
+          "id": "3-10",
+          "missingDigits": [
+            3
+          ]
+        },
+        {
+          "id": "3-22",
+          "missingDigits": [
+            1
+          ]
+        },
+        {
+          "id": "3-26",
+          "missingDigits": [
+            9
+          ]
+        }
+      ],
+      "difficultySorted": true
+    },
+    {
+      "world": 4,
+      "levels": 30,
+      "missingDigitLevels": [
+        {
+          "id": "4-20",
+          "missingDigits": [
+            0
+          ]
+        },
+        {
+          "id": "4-24",
+          "missingDigits": [
+            6
+          ]
+        },
+        {
+          "id": "4-27",
+          "missingDigits": [
+            5
+          ]
+        }
+      ],
+      "difficultySorted": true
+    },
+    {
+      "world": 5,
+      "levels": 30,
+      "missingDigitLevels": [
+        {
+          "id": "5-12",
+          "missingDigits": [
+            9
+          ]
+        }
+      ],
+      "difficultySorted": true
+    }
+  ],
+  "dailyAudited": 366,
+  "dailyWithIssues": [
+    {
+      "id": "2026-10-24",
+      "solution": "9602",
+      "missingDigits": [
+        0
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2026-11-03",
+      "solution": "4679",
+      "missingDigits": [
+        4
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2026-11-06",
+      "solution": "5013",
+      "missingDigits": [
+        5
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2026-11-21",
+      "solution": "7251",
+      "missingDigits": [
+        7
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2026-11-22",
+      "solution": "7618",
+      "missingDigits": [
+        1
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2026-11-23",
+      "solution": "0867",
+      "missingDigits": [
+        8
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2026-11-25",
+      "solution": "5081",
+      "missingDigits": [
+        0
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2026-11-27",
+      "solution": "3647",
+      "missingDigits": [
+        4
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2026-12-24",
+      "solution": "4601",
+      "missingDigits": [
+        4
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2026-12-27",
+      "solution": "5302",
+      "missingDigits": [
+        5
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2026-12-28",
+      "solution": "7564",
+      "missingDigits": [
+        7
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2026-12-31",
+      "solution": "7180",
+      "missingDigits": [
+        1
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-01-06",
+      "solution": "2165",
+      "missingDigits": [
+        5
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-01-13",
+      "solution": "2109",
+      "missingDigits": [
+        9
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-01-17",
+      "solution": "7590",
+      "missingDigits": [
+        0
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-01-19",
+      "solution": "9073",
+      "missingDigits": [
+        0
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-01-22",
+      "solution": "0132",
+      "missingDigits": [
+        3
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-01-23",
+      "solution": "3916",
+      "missingDigits": [
+        9
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-01-24",
+      "solution": "3829",
+      "missingDigits": [
+        9
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-01-25",
+      "solution": "4097",
+      "missingDigits": [
+        7
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-01-27",
+      "solution": "2305",
+      "missingDigits": [
+        2
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-01-28",
+      "solution": "2041",
+      "missingDigits": [
+        2
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-02-01",
+      "solution": "2089",
+      "missingDigits": [
+        0
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-02-03",
+      "solution": "9830",
+      "missingDigits": [
+        3
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-02-05",
+      "solution": "8492",
+      "missingDigits": [
+        4
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-02-12",
+      "solution": "8675",
+      "missingDigits": [
+        5
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-02-14",
+      "solution": "9410",
+      "missingDigits": [
+        4
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-02-20",
+      "solution": "1083",
+      "missingDigits": [
+        3
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-03-03",
+      "solution": "8517",
+      "missingDigits": [
+        8
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-03-18",
+      "solution": "8712",
+      "missingDigits": [
+        1
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-03-19",
+      "solution": "8042",
+      "missingDigits": [
+        0
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-03-24",
+      "solution": "2143",
+      "missingDigits": [
+        1
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-03-25",
+      "solution": "1286",
+      "missingDigits": [
+        2
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-03-26",
+      "solution": "8579",
+      "missingDigits": [
+        8
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-03-30",
+      "solution": "1432",
+      "missingDigits": [
+        3
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-04-03",
+      "solution": "4892",
+      "missingDigits": [
+        9
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-04-12",
+      "solution": "2675",
+      "missingDigits": [
+        2
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-04-21",
+      "solution": "6831",
+      "missingDigits": [
+        8
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-04-30",
+      "solution": "0426",
+      "missingDigits": [
+        4
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-05-02",
+      "solution": "3029",
+      "missingDigits": [
+        2
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-05-03",
+      "solution": "7452",
+      "missingDigits": [
+        4
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-05-04",
+      "solution": "1693",
+      "missingDigits": [
+        9
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-05-16",
+      "solution": "3971",
+      "missingDigits": [
+        7
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-05-17",
+      "solution": "0236",
+      "missingDigits": [
+        3
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-05-21",
+      "solution": "3260",
+      "missingDigits": [
+        3
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-05-30",
+      "solution": "4560",
+      "missingDigits": [
+        0
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-06-01",
+      "solution": "8179",
+      "missingDigits": [
+        9
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-06-02",
+      "solution": "8469",
+      "missingDigits": [
+        8
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-06-08",
+      "solution": "3862",
+      "missingDigits": [
+        3
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-06-11",
+      "solution": "5736",
+      "missingDigits": [
+        5
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-06-14",
+      "solution": "0328",
+      "missingDigits": [
+        2
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-06-17",
+      "solution": "9803",
+      "missingDigits": [
+        9
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-06-19",
+      "solution": "0153",
+      "missingDigits": [
+        5
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-06-20",
+      "solution": "1573",
+      "missingDigits": [
+        7
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-06-23",
+      "solution": "5264",
+      "missingDigits": [
+        5
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-06-24",
+      "solution": "1364",
+      "missingDigits": [
+        6
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-06-25",
+      "solution": "7025",
+      "missingDigits": [
+        2
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-06-27",
+      "solution": "6854",
+      "missingDigits": [
+        6
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-06-29",
+      "solution": "3197",
+      "missingDigits": [
+        7
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-07-16",
+      "solution": "3409",
+      "missingDigits": [
+        4
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-07-19",
+      "solution": "9174",
+      "missingDigits": [
+        1
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-08-05",
+      "solution": "1938",
+      "missingDigits": [
+        9
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-08-10",
+      "solution": "1459",
+      "missingDigits": [
+        5
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-08-12",
+      "solution": "2836",
+      "missingDigits": [
+        6
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-08-21",
+      "solution": "4028",
+      "missingDigits": [
+        2
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-08-22",
+      "solution": "6859",
+      "missingDigits": [
+        6
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-08-27",
+      "solution": "1687",
+      "missingDigits": [
+        8
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-09-03",
+      "solution": "3062",
+      "missingDigits": [
+        0
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-09-06",
+      "solution": "4251",
+      "missingDigits": [
+        4
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-09-15",
+      "solution": "3976",
+      "missingDigits": [
+        3
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-09-21",
+      "solution": "8495",
+      "missingDigits": [
+        4
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-09-27",
+      "solution": "0481",
+      "missingDigits": [
+        8
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-10-01",
+      "solution": "3512",
+      "missingDigits": [
+        1
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-10-04",
+      "solution": "3814",
+      "missingDigits": [
+        3
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-10-15",
+      "solution": "4291",
+      "missingDigits": [
+        1
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    },
+    {
+      "id": "2027-10-17",
+      "solution": "3074",
+      "missingDigits": [
+        4
+      ],
+      "candidateCount": 1,
+      "issues": [
+        "solution-digits-absent-from-clues"
+      ]
+    }
+  ],
+  "independentEnumeration": true
+}

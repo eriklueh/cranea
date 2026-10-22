@@ -46,6 +46,10 @@ function tryBuild(rng: Rng, cfg: CifraConfig): Omit<CifraPuzzle, "id"> | null {
   if (pool.length !== 1) return null;
 
   const board = minimize(clues, cfg.length);
+  // Una solución única por descarte no basta: todas sus cifras deben verse
+  // en las pistas finales. Minimize puede haber quitado su única aparición.
+  const visibleDigits = new Set(board.flatMap((clue) => [...clue.guess]));
+  if (secret.some((digit) => !visibleDigits.has(digit))) return null;
   if (board.length < cfg.minRows || board.length > cfg.maxRows) return null;
 
   const zeroRows = board.filter(({ feedback: f }) => f.exact + f.present === 0);
