@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     id: "/", name: "Craneá", short_name: "Craneá", lang: "es-AR",
     description: "Juegos de lógica cortos. Pensá, probá y descubrí el código.",
     start_url: "/", scope: "/", display: "standalone",
-    background_color: "#1d3a31", theme_color: "#1d3a31",
+    background_color: "#202124", theme_color: "#202124",
     categories: ["games", "education"],
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
