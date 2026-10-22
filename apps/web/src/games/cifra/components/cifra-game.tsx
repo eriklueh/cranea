@@ -11,6 +11,7 @@ import { InputSlots, Keypad } from "./keypad";
 import { Lives } from "./lives";
 import { ResultDialog, type GameMode } from "./result-dialog";
 import { Timer } from "./timer";
+import { DrawingBoard } from "./drawing-board";
 
 export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMode }) {
   const start = useCifra((s) => s.start);
@@ -20,18 +21,25 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
   const marks = useCifra((s) => s.marks);
   const cycleMark = useCifra((s) => s.cycleMark);
   const [resultOpen, setResultOpen] = useState(false);
+  const [drawing, setDrawing] = useState(false);
+  const [drawingSession, setDrawingSession] = useState(0);
   const recorded = useRef(false);
 
   useEffect(() => {
     start(puzzle);
+    setDrawing(false);
     recorded.current = false;
   }, [puzzle, start]);
 
   // Teclado físico.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (drawing) {
+        if (e.key === "Escape") { e.preventDefault(); setDrawing(false); }
+        return;
+      }
       if (e.metaKey || e.ctrlKey || e.altKey) return;
-      if (e.target instanceof Element && e.target.closest('[role="dialog"], input, textarea, select, [contenteditable="true"]')) return;
+      if (e.target instanceof Element && e.target.closest('[role="dialog"], [data-drawing-controls], input, textarea, select, [contenteditable="true"]')) return;
       const s = useCifra.getState();
       if (/^[0-9]$/.test(e.key)) s.press(Number(e.key));
       else if (e.key === "Backspace") s.backspace();
@@ -44,7 +52,7 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [drawing]);
 
   // Guardar el resultado una sola vez.
   useEffect(() => {
@@ -82,6 +90,7 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
         </div>
       </div>
 
+      <DrawingBoard key={`${puzzle.id}:${drawingSession}`} active={drawing} onActiveChange={setDrawing}>
       <section aria-label="Pistas" className="mb-4">
         <ol className="space-y-2.5">
           {puzzle.clues.map((c, i) => (
@@ -104,9 +113,12 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
         </div>
         <Keypad />
       </section>
+      </DrawingBoard>
 
       <ResultDialog open={resultOpen} onOpenChange={setResultOpen} mode={mode} onRetry={() => {
         setResultOpen(false);
+        setDrawing(false);
+        setDrawingSession((session) => session + 1);
         recorded.current = false;
         start(puzzle);
       }} />
