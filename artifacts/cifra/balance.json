@@ -1,0 +1,116 @@
+{
+  "before": [
+    {
+      "world": 1,
+      "name": "Calentando",
+      "averageRows": 4.733333333333333,
+      "minRows": 3,
+      "maxRows": 5,
+      "averageZeroRows": 2.566666666666667,
+      "minDifficulty": 6,
+      "maxDifficulty": 8,
+      "maxJump": 2
+    },
+    {
+      "world": 2,
+      "name": "Cuatro cifras",
+      "averageRows": 4.533333333333333,
+      "minRows": 4,
+      "maxRows": 6,
+      "averageZeroRows": 0.8666666666666667,
+      "minDifficulty": 11,
+      "maxDifficulty": 27,
+      "maxJump": 16
+    },
+    {
+      "world": 3,
+      "name": "Supuestos",
+      "averageRows": 4.533333333333333,
+      "minRows": 4,
+      "maxRows": 6,
+      "averageZeroRows": 0.06666666666666667,
+      "minDifficulty": 38,
+      "maxDifficulty": 213,
+      "maxJump": 134
+    },
+    {
+      "world": 4,
+      "name": "Cinco cifras",
+      "averageRows": 5.4,
+      "minRows": 5,
+      "maxRows": 7,
+      "averageZeroRows": 0.43333333333333335,
+      "minDifficulty": 12,
+      "maxDifficulty": 26,
+      "maxJump": 12
+    },
+    {
+      "world": 5,
+      "name": "Maestría",
+      "averageRows": 5.5,
+      "minRows": 5,
+      "maxRows": 7,
+      "averageZeroRows": 0,
+      "minDifficulty": 63,
+      "maxDifficulty": 257,
+      "maxJump": 147
+    }
+  ],
+  "after": [
+    {
+      "world": 1,
+      "name": "Calentando",
+      "averageRows": 2.033333333333333,
+      "minRows": 2,
+      "maxRows": 3,
+      "averageZeroRows": 0,
+      "minDifficulty": 4,
+      "maxDifficulty": 6,
+      "maxJump": 1
+    },
+    {
+      "world": 2,
+      "name": "Cuatro cifras",
+      "averageRows": 4.4,
+      "minRows": 4,
+      "maxRows": 6,
+      "averageZeroRows": 0.8333333333333334,
+      "minDifficulty": 11,
+      "maxDifficulty": 31,
+      "maxJump": 3
+    },
+    {
+      "world": 3,
+      "name": "Supuestos",
+      "averageRows": 4.5,
+      "minRows": 4,
+      "maxRows": 6,
+      "averageZeroRows": 0.23333333333333334,
+      "minDifficulty": 26,
+      "maxDifficulty": 259,
+      "maxJump": 14
+    },
+    {
+      "world": 4,
+      "name": "Cinco cifras",
+      "averageRows": 5.366666666666666,
+      "minRows": 5,
+      "maxRows": 7,
+      "averageZeroRows": 0,
+      "minDifficulty": 13,
+      "maxDifficulty": 32,
+      "maxJump": 3
+    },
+    {
+      "world": 5,
+      "name": "Maestría",
+      "averageRows": 5.533333333333333,
+      "minRows": 5,
+      "maxRows": 7,
+      "averageZeroRows": 0,
+      "minDifficulty": 46,
+      "maxDifficulty": 273,
+      "maxJump": 15
+    }
+  ]
+}

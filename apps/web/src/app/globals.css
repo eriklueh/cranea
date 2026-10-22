@@ -1,0 +1,174 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Concepto: claro = hoja de cuaderno cuadriculado; oscuro = pizarrón.
+ * Las fichas miden 2 cuadritos de la cuadrícula (48px).
+ */
+:root {
+  --radius: 0.5rem;
+  --cell: 24px;
+
+  --paper: #f6f8fb;
+  --grid-line: #dbe5f1;
+  --ink: #1c2b4b;
+  --pencil: #6f7a8f;
+  --margin: #d2453d;
+  --ok: #23774f;
+  --tile: #ffffff;
+  --shadow-ink: #1c2b4b;
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: #ffffff;
+  --card-foreground: var(--ink);
+  --popover: #ffffff;
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: #ffffff;
+  --secondary: #e6edf6;
+  --secondary-foreground: var(--ink);
+  --muted: #eaf0f7;
+  --muted-foreground: var(--pencil);
+  --accent: #e6edf6;
+  --accent-foreground: var(--ink);
+  --destructive: var(--margin);
+  --border: #c5d2e3;
+  --input: #c5d2e3;
+  --ring: #3a63b8;
+}
+
+.dark {
+  --paper: #1d3a31;
+  --grid-line: rgb(255 255 255 / 0.055);
+  --ink: #eef1ea;
+  --pencil: #a9b8ae;
+  --margin: #f28b7d;
+  --ok: #f2d36b;
+  --tile: #244539;
+  --shadow-ink: #0f241d;
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: #21423a;
+  --card-foreground: var(--ink);
+  --popover: #21423a;
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: #1d3a31;
+  --secondary: #2a5045;
+  --secondary-foreground: var(--ink);
+  --muted: #27493f;
+  --muted-foreground: var(--pencil);
+  --accent: #2a5045;
+  --accent-foreground: var(--ink);
+  --destructive: var(--margin);
+  --border: #3d6457;
+  --input: #3d6457;
+  --ring: #f2d36b;
+}
+
+@theme inline {
+  --font-sans: var(--font-atkinson), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-pencil: var(--pencil);
+  --color-margin: var(--margin);
+  --color-ok: var(--ok);
+  --color-tile: var(--tile);
+  --color-grid-line: var(--grid-line);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --animate-shake: shake 0.38s ease-in-out;
+  --animate-pop: pop 0.18s ease-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+@keyframes pop {
+  0% { transform: scale(0.85); }
+  100% { transform: scale(1); }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    @apply text-foreground antialiased;
+    background-color: var(--paper);
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: var(--cell) var(--cell);
+    min-height: 100dvh;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  button, a { touch-action: manipulation; }
+  /* El renglón rojo del margen del cuaderno. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0 auto 0 calc(var(--cell) * 2);
+    width: 2px;
+    background: var(--margin);
+    opacity: 0.55;
+    pointer-events: none;
+  }
+  @media (max-width: 640px) {
+    body::before {
+      inset-inline-start: 10px;
+      opacity: 0.4;
+    }
+  }
+  .dark body::before {
+    opacity: 0.3;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

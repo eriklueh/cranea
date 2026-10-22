@@ -1,0 +1,16 @@
+node_modules
+.next
+.turbo
+out
+*.tsbuildinfo
+.env*.local
+.vercel
+artifacts/*
+!artifacts/cifra/
+artifacts/cifra/*
+!artifacts/cifra/before.json
+!artifacts/cifra/balance.json
+apps/web/public/sw.js
+.env
+.env.*
+!.env.example
