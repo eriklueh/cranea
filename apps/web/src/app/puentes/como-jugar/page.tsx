@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Cómo se juega Puentes" };
 export default function HowTo() {
   return (
     <>
-      <SiteHeader />
+      <SiteHeader game={{ name: "Puentes", href: "/puentes" }} />
       <main className="mx-auto w-full max-w-2xl space-y-8 px-6 pt-4 pb-16 leading-relaxed sm:pl-16">
         <h1 className="font-display text-4xl font-extrabold tracking-tight">Cómo se juega Puentes</h1>
         <p className="max-w-prose">

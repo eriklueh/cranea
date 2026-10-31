@@ -36,17 +36,8 @@ export default function Home() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto w-full max-w-3xl px-5 pb-16 sm:pr-6 sm:pl-16">
-        <section className="pt-4 pb-8 sm:pt-10 sm:pb-12">
-          <h1 className="font-display text-5xl leading-[0.95] font-extrabold tracking-tight sm:text-7xl">
-            Craneá
-          </h1>
-          <p className="mt-3 max-w-md text-muted-foreground sm:mt-4 sm:text-lg">
-            Juegos de lógica cortos para pensar un rato. Uno por día, o todos los que quieras.
-          </p>
-        </section>
-
-        <h2 className="sr-only">Juegos</h2>
+      <main className="mx-auto w-full max-w-3xl px-5 pt-2 pb-16 sm:pr-6 sm:pl-16 sm:pt-6">
+        <h1 className="sr-only">Craneá: juegos de lógica</h1>
         <ul className="grid gap-3 sm:gap-4">
           {GAMES.map((g) => {
             const Preview = PREVIEWS[g.id];
@@ -59,7 +50,7 @@ export default function Home() {
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-5">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 sm:justify-start">
-                      <h3 className="font-display text-3xl font-extrabold">{g.name}</h3>
+                      <h2 className="font-display text-3xl font-extrabold">{g.name}</h2>
                       <DailyBadge gameId={g.id} />
                     </div>
                     <p className="mt-1 max-w-sm text-muted-foreground">{g.tagline}</p>

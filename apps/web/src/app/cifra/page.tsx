@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Cifra" };
 export default function CifraPage() {
   return (
     <>
-      <SiteHeader />
+      <SiteHeader game={{ name: "Cifra", href: "/cifra", current: true }} />
       <CifraHome />
     </>
   );

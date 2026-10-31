@@ -27,7 +27,7 @@ export default async function LevelPage({ params }: { params: Params }) {
 
   return (
     <>
-      <SiteHeader />
+      <SiteHeader game={{ name: "Palabra", href: "/palabra" }} />
       <PalabraGame puzzle={puzzle} mode={{ kind: "level", world: w, level: n, nextHref }} />
     </>
   );

@@ -15,7 +15,7 @@ const EMPTY = new Array<number>(16).fill(0);
 export default function HowTo() {
   return (
     <>
-      <SiteHeader />
+      <SiteHeader game={{ name: "Torres", href: "/torres" }} />
       <main className="mx-auto w-full max-w-2xl space-y-8 px-6 pt-4 pb-16 leading-relaxed sm:pl-16">
         <h1 className="font-display text-4xl font-extrabold tracking-tight">Cómo se juega Torres</h1>
         <p className="max-w-prose">

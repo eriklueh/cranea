@@ -20,7 +20,7 @@ const repeated: Clue[] = [{ word: "error", scores: [1, 1, 2, 1, 0] }];
 export default function HowTo() {
   return (
     <>
-      <SiteHeader />
+      <SiteHeader game={{ name: "Palabra", href: "/palabra" }} />
       <main className="mx-auto w-full max-w-2xl space-y-8 px-5 pt-4 pb-16 leading-relaxed sm:pl-16">
         <h1 className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">Cómo se juega Palabra</h1>
         <p className="max-w-prose">

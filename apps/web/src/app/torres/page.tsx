@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Torres" };
 export default function TorresPage() {
   return (
     <>
-      <SiteHeader />
+      <SiteHeader game={{ name: "Torres", href: "/torres", current: true }} />
       <TorresHome />
     </>
   );

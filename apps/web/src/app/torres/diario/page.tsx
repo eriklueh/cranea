@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Torres del día" };
 export default function DailyPage() {
   return (
     <>
-      <SiteHeader />
+      <SiteHeader game={{ name: "Torres", href: "/torres" }} />
       <DailyGame />
     </>
   );
