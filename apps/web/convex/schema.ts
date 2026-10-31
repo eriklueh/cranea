@@ -52,6 +52,34 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_entry", ["userId", "gameId", "date"])
     .index("by_day", ["gameId", "date", "won", "attempts", "timeMs"]),
+  /**
+   * Totales de cada jugador por tablero y período, recalculados desde `dailyResults` cada vez que
+   * se publica un diario. `gameId` es un juego o "all" (General); `period` es "2026-10-31" (solo
+   * General), "2026-W44" o "2026-10". Puntos en `convex/scoring.ts`.
+   */
+  periodScores: defineTable({
+    userId: v.string(),
+    gameId: v.string(),
+    period: v.string(),
+    points: v.number(),
+    wins: v.number(),
+    played: v.number(),
+    timeMs: v.number(),
+    /** Puntos, resueltos y menos tiempo en un solo número, para ordenar con el índice. */
+    order: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_entry", ["userId", "gameId", "period"])
+    .index("by_board", ["gameId", "period", "order"]),
+  /** Logros desbloqueados (se evalúan en el dispositivo; acá viajan entre dispositivos). */
+  achievements: defineTable({
+    userId: v.string(),
+    achievementId: v.string(),
+    /** Cuándo se desbloqueó (ms). Entre dispositivos vale el más antiguo. */
+    at: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_entry", ["userId", "achievementId"]),
   /** Suscripciones Web Push al recordatorio del diario. Sin sesión, se identifican solo por el endpoint. */
   reminders: defineTable({
     endpoint: v.string(),

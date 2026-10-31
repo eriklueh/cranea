@@ -8,13 +8,16 @@
  * @module
  */
 
+import type * as achievements from "../achievements.js";
 import type * as crons from "../crons.js";
+import type * as leaderboards from "../leaderboards.js";
 import type * as progress from "../progress.js";
 import type * as push from "../push.js";
 import type * as ranking from "../ranking.js";
 import type * as reminders from "../reminders.js";
 import type * as results from "../results.js";
 import type * as schedule from "../schedule.js";
+import type * as scoring from "../scoring.js";
 
 import type {
   ApiFromModules,
@@ -23,13 +26,16 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  achievements: typeof achievements;
   crons: typeof crons;
+  leaderboards: typeof leaderboards;
   progress: typeof progress;
   push: typeof push;
   ranking: typeof ranking;
   reminders: typeof reminders;
   results: typeof results;
   schedule: typeof schedule;
+  scoring: typeof scoring;
 }>;
 
 /**

@@ -17,7 +17,8 @@
     "./palabra/words": "./src/palabra/words.ts",
     "./levels/palabra.json": "./levels/palabra.json",
     "./torres": "./src/torres/index.ts",
-    "./levels/torres.json": "./levels/torres.json"
+    "./levels/torres.json": "./levels/torres.json",
+    "./achievements": "./src/achievements/index.ts"
   },
   "scripts": {
     "test": "vitest run",

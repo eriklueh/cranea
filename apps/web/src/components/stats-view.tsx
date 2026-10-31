@@ -1,6 +1,9 @@
 "use client";
 import Link from "next/link";
+import { ChevronRightIcon } from "lucide-react";
 import { todayKey, type GameMeta } from "@cranea/core";
+import { AchievementIcon } from "@/components/achievement-icon";
+import { useAchievementList } from "@/components/achievements-view";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { formatTime } from "@/lib/utils";
 import { gameStats, useGameProgress } from "@/stores/progress";
@@ -10,8 +13,36 @@ export function StatsView({ games }: { games: GameMeta[] }) {
   const hydrated = useHydrated();
   return (
     <div className="space-y-10">
+      {hydrated ? <AchievementsLink /> : <div className="h-[4.75rem]" />}
       {games.map((g) => (hydrated ? <GameStatsCard key={g.id} game={g} /> : <section key={g.id} className="h-64" />))}
     </div>
+  );
+}
+
+/** Cuántos logros llevás, con los últimos conseguidos. */
+function AchievementsLink() {
+  const list = useAchievementList();
+  const done = list.filter((a) => a.unlocked).sort((a, b) => (b.at ?? 0) - (a.at ?? 0));
+  return (
+    <Link
+      href="/logros"
+      className="flex min-h-11 items-center gap-3 rounded-xl border-2 border-ink bg-card p-4 shadow-[0_4px_0_0_var(--shadow-ink)] outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+    >
+      <span className="min-w-0 flex-1">
+        <span className="block font-display text-xl font-extrabold">Logros</span>
+        <span className="block text-sm text-muted-foreground tabular-nums">
+          {done.length} de {list.length} conseguidos
+        </span>
+      </span>
+      <span aria-hidden className="flex -space-x-2">
+        {done.slice(0, 3).map((a) => (
+          <span key={a.id} className="grid size-9 place-items-center rounded-full border-2 border-card bg-clue-present-bg text-clue-present">
+            <AchievementIcon icon={a.icon} className="size-4" />
+          </span>
+        ))}
+      </span>
+      <ChevronRightIcon aria-hidden className="size-5 shrink-0 text-muted-foreground" />
+    </Link>
   );
 }
 
@@ -31,7 +62,7 @@ function GameStatsCard({ game }: { game: GameMeta }) {
           {game.name}
         </h2>
         <Link href={`/ranking?juego=${game.id}`} className="font-semibold underline decoration-margin decoration-2 underline-offset-4">
-          Ranking del día
+          Ranking
         </Link>
       </div>
 
