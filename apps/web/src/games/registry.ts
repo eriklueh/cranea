@@ -9,4 +9,11 @@ export const GAMES: GameMeta[] = [
     path: "/cifra",
     status: "live",
   },
+  {
+    id: "puentes",
+    name: "Puentes",
+    tagline: "Uní todas las islas con puentes, sin cruzarlos.",
+    path: "/puentes",
+    status: "live",
+  },
 ];
