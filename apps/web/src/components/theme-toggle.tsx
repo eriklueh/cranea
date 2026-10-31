@@ -1,23 +1,19 @@
 "use client";
-import { MoonIcon, SunIcon } from "lucide-react";
+import { MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Choice } from "@/components/settings/controls";
 
-export function ThemeToggle() {
-  const { resolvedTheme, setTheme } = useTheme();
+const OPTIONS = [
+  { value: "light", label: "Cuaderno", icon: SunIcon },
+  { value: "dark", label: "Pizarrón", icon: MoonIcon },
+  { value: "system", label: "Sistema", icon: MonitorIcon },
+];
+
+/** Tema: cuaderno (claro), pizarrón (oscuro) o el del sistema. */
+export function ThemeChoice() {
+  const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  const dark = resolvedTheme === "dark";
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={() => setTheme(dark ? "light" : "dark")}
-      aria-label={!mounted ? "Cambiar tema" : dark ? "Pasar a modo cuaderno" : "Pasar a modo pizarrón"}
-    >
-      <SunIcon className="hidden dark:block" />
-      <MoonIcon className="dark:hidden" />
-    </Button>
-  );
+  return <Choice name="theme" legend="Tema" value={mounted ? theme ?? "system" : ""} options={OPTIONS} onChange={setTheme} />;
 }

@@ -4,6 +4,7 @@ import { DeleteIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { haptic, useOnChange } from "@/lib/motion";
+import { sound } from "@/lib/sound";
 import { useCifra } from "../store";
 import { DigitTile } from "./digit-tile";
 
@@ -14,6 +15,7 @@ export function InputSlots() {
   const won = useCifra((s) => s.status === "won");
   useOnChange(shakeKey, (key) => key > 0 && haptic("invalid"));
   useOnChange(won, (w) => w && haptic("win"));
+  useOnChange(input.length, (n, before) => n > before && sound("tap"));
   if (!puzzle) return null;
   return (
     <div key={shakeKey} className={cn("flex gap-1.5", shakeKey > 0 && "animate-shake")} aria-live="polite">

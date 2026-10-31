@@ -3,6 +3,7 @@ import { useMemo, useRef, type CSSProperties, type KeyboardEvent, type PointerEv
 import { colCells, emptyBoard, lineDone, rowCells, EMPTY, FILLED, type Cell, type NonogramaPuzzle } from "@cranea/core/nonograma";
 import { cn } from "@/lib/utils";
 import { haptic, play, useOnChange } from "@/lib/motion";
+import { sound } from "@/lib/sound";
 import { WinBurst } from "@/components/win-burst";
 import { useNonograma } from "../store";
 
@@ -40,6 +41,8 @@ export function Board({ puzzle }: { puzzle: NonogramaPuzzle }) {
     }),
     [board, puzzle],
   );
+  useOnChange(board, () => live && sound("tap"));
+  useOnChange(done.rows.filter(Boolean).length + done.cols.filter(Boolean).length, (n, before) => live && n > before && sound("line"));
   const flaggedSet = useMemo(() => new Set(flagged), [flagged]);
 
   const { width: W, height: H } = puzzle;

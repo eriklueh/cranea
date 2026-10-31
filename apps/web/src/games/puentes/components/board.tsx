@@ -3,6 +3,7 @@ import { useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type
 import { bridgeCounts, type PuentesPuzzle } from "@cranea/core/puentes";
 import { cn } from "@/lib/utils";
 import { haptic, play, SHAKE, useOnChange } from "@/lib/motion";
+import { sound } from "@/lib/sound";
 import { WinBurst } from "@/components/win-burst";
 import { usePuentes } from "../store";
 import { BridgeLines, edgeEnds } from "./geometry";
@@ -77,6 +78,7 @@ export function PuentesBoard({ puzzle }: { puzzle: PuentesPuzzle }) {
     play(boardRef, NUDGE, { duration: 220, easing: "ease-in-out" });
   });
   useOnChange(won, (w) => w && haptic("win"));
+  useOnChange(bridges, () => live && sound("tap"));
 
   // Marca que sigue al dedo mientras se arrastra, sin volver a renderizar.
   const moveGhost = (x: number, y: number) => {

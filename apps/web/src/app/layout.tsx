@@ -3,6 +3,8 @@ import { Atkinson_Hyperlegible, Bricolage_Grotesque } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { PwaProvider } from "@/components/pwa-provider";
 import { AccountProvider } from "@/components/account-provider";
+import { PrefsSync } from "@/components/settings/prefs-sync";
+import { PREFS_SCRIPT } from "@/lib/prefs-script";
 import "./globals.css";
 
 const display = Bricolage_Grotesque({ subsets: ["latin"], variable: "--font-bricolage", display: "swap" });
@@ -29,7 +31,12 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es" suppressHydrationWarning className={`${display.variable} ${body.variable}`}>
+      <head>
+        {/* Ajustes visuales (paleta, letra, movimiento) antes de pintar, para no destellar. */}
+        <script dangerouslySetInnerHTML={{ __html: PREFS_SCRIPT }} />
+      </head>
       <body className="font-sans">
+        <PrefsSync />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <AccountProvider><PwaProvider>{children}</PwaProvider></AccountProvider>
         </ThemeProvider>

@@ -1,10 +1,6 @@
 import Link from "next/link";
-import { ChartColumnIcon } from "lucide-react";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { InstallApp } from "@/components/pwa-provider";
 import { AccountButton } from "@/components/account-button";
-import { Button } from "@/components/ui/button";
-import { DailyReminder } from "@/components/daily-reminder";
+import { SettingsSheet } from "@/components/settings/settings-sheet";
 import { cn } from "@/lib/utils";
 
 /** El juego de la ruta, para la miga "Craneá / Cifra". `current` en su pantalla de inicio. */
@@ -48,14 +44,10 @@ export function SiteHeader({ game, children }: { game?: HeaderGame; children?: R
         )}
         {children}
       </div>
-      <div className="flex shrink-0 items-center sm:gap-1">
-        <InstallApp />
-        <Button asChild variant="ghost" size="icon">
-          <Link href="/estadisticas" aria-label="Estadísticas" title="Estadísticas"><ChartColumnIcon /></Link>
-        </Button>
-        <DailyReminder />
-        <ThemeToggle />
+      {/* Cuenta y Ajustes; tema, instalar, aviso y estadísticas viven en la hoja de Ajustes. */}
+      <div className="flex shrink-0 items-center gap-1">
         <AccountButton />
+        <SettingsSheet />
       </div>
     </header>
   );

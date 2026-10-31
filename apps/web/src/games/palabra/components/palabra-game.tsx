@@ -16,6 +16,7 @@ import { Timer } from "./timer";
 import { describeRow } from "./word-row";
 import { cn } from "@/lib/utils";
 import { haptic, useOnChange, useSettled } from "@/lib/motion";
+import { sound } from "@/lib/sound";
 import { WinBurst } from "@/components/win-burst";
 import { WORD_LENGTH } from "@cranea/core/palabra";
 
@@ -147,6 +148,8 @@ function Board() {
   const message = usePalabra((s) => s.message);
   useOnChange(shakeKey, (key) => key > 0 && haptic("invalid"));
   useOnChange(status, (s) => s === "won" && haptic("win"));
+  useOnChange(input.length, (n, before) => n > before && sound("tap"));
+  useOnChange(misses.length, (n, before) => n > before && sound("line"));
   if (!puzzle) return null;
   const won = status === "won";
   // Al ganar, la palabra correcta se ve como una fila toda verde.

@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import type { TorresPuzzle } from "@cranea/core/torres";
 import { useProgress } from "@/stores/progress";
 import { haptic, play, useOnChange } from "@/lib/motion";
+import { sound } from "@/lib/sound";
 import { WinBurst } from "@/components/win-burst";
 import { GAME_ID, levelKey } from "../data";
 import { attemptsOf, useTorres } from "../store";
@@ -33,6 +34,8 @@ export function TorresGame({ puzzle, mode }: { puzzle: TorresPuzzle; mode: GameM
     play(gridRef);
   });
   useOnChange(status, (s) => s === "won" && haptic("win"));
+  useOnChange(values, () => sound("tap"));
+  useOnChange(check, (c) => c?.kind === "ok" && sound("line"));
 
   useEffect(() => {
     start(puzzle);

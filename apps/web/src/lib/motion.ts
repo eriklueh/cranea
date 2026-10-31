@@ -1,14 +1,25 @@
 "use client";
 import { useEffect, useRef, useState, type RefObject } from "react";
+import { getPrefs } from "@/lib/prefs";
+import { sound, type SoundEvent } from "@/lib/sound";
 
+/** Movimiento reducido del sistema o elegido en Ajustes (atributo `data-motion` en <html>). */
 export const prefersReducedMotion = () =>
-  typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
+  typeof window !== "undefined" &&
+  (document.documentElement.dataset.motion === "reduced" || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true);
 
 const PATTERNS = { tap: 8, invalid: 22, win: [14, 60, 22] } satisfies Record<string, VibratePattern>;
+const SOUND_FOR: Record<keyof typeof PATTERNS, SoundEvent> = { tap: "tap", invalid: "error", win: "win" };
 
-/** Vibración corta para momentos que importan (ganar, jugada inválida). Solo donde el dispositivo la soporta. */
+export const canVibrate = () => typeof navigator !== "undefined" && typeof navigator.vibrate === "function";
+
+/**
+ * Respuesta para momentos que importan (ganar, jugada inválida): vibración corta y su sonido,
+ * cada uno según Ajustes. La vibración, solo donde el dispositivo la soporta.
+ */
 export function haptic(kind: keyof typeof PATTERNS) {
-  if (typeof navigator === "undefined" || typeof navigator.vibrate !== "function") return;
+  sound(SOUND_FOR[kind]);
+  if (!canVibrate() || !getPrefs().vibration) return;
   try {
     navigator.vibrate(PATTERNS[kind]);
   } catch {

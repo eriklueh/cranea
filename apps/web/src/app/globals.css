@@ -2,6 +2,16 @@
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
+/* Movimiento reducido del sistema o elegido en Ajustes (data-motion en <html>). */
+@custom-variant motion-reduce {
+  @media (prefers-reduced-motion: reduce) { @slot; }
+  &:where([data-motion="reduced"] *) { @slot; }
+}
+@custom-variant motion-safe {
+  @media (prefers-reduced-motion: no-preference) {
+    &:where(:not([data-motion="reduced"] *)) { @slot; }
+  }
+}
 
 /*
  * Concepto: claro = hoja de cuaderno cuadriculado; oscuro = pizarrón.
@@ -76,6 +86,40 @@
   --border: #4a4d55;
   --input: #4a4d55;
   --ring: #92b4e7;
+}
+
+/*
+ * Ajustes > Colores para daltonismo: azul (en su lugar) y naranja (en otro lugar) en vez de verde y amarillo.
+ * "Bien" (--ok) pasa a azul para no depender de verde contra rojo. Contraste del texto sobre las fichas ≥ 5.8:1.
+ */
+html[data-palette="colorblind"] {
+  --ok: #174f96;
+  --clue-exact: #174f96;
+  --clue-exact-bg: #dde9f9;
+  --clue-present: #943d00;
+  --clue-present-bg: #ffe2c8;
+}
+html.dark[data-palette="colorblind"] {
+  --ok: #9ccdff;
+  --clue-exact: #9ccdff;
+  --clue-exact-bg: #1c3049;
+  --clue-present: #ffb877;
+  --clue-present-bg: #4a2f19;
+}
+
+/*
+ * Ajustes > Letra grande: agranda el texto sin tocar los espaciados, así los tableros
+ * conservan su tamaño y siguen entrando en 360px. Las fichas ya usan tamaños propios.
+ */
+html[data-text="large"] {
+  --text-xs: 0.875rem;
+  --text-sm: 1rem;
+  --text-base: 1.125rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.375rem;
+}
+html[data-text="large"] body {
+  font-size: 1.125rem;
 }
 
 @theme inline {
@@ -362,5 +406,13 @@
       transition-duration: 0.01ms !important;
       transition-delay: 0ms !important;
     }
+  }
+  /* Lo mismo cuando se elige "Reducidas" en Ajustes. */
+  html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-motion="reduced"] *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
   }
 }
