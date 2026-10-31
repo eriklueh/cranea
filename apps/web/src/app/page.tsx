@@ -3,6 +3,7 @@ import { SiteHeader } from "@/components/site-header";
 import { GAMES } from "@/games/registry";
 import { DigitTile } from "@/games/cifra/components/digit-tile";
 import { Indicator } from "@/games/cifra/components/pegs";
+import { NonogramaPreview } from "@/games/nonograma/components/preview";
 
 export default function Home() {
   return (
@@ -31,7 +32,8 @@ export default function Home() {
                     <h3 className="font-display text-3xl font-extrabold">{g.name}</h3>
                     <p className="mt-1 max-w-sm text-muted-foreground">{g.tagline}</p>
                   </div>
-                  <div className="flex items-center justify-center gap-2" aria-hidden>
+                  {g.id === "nonograma" && <NonogramaPreview />}
+                  {g.id === "cifra" && <div className="flex items-center justify-center gap-2" aria-hidden>
                     <Indicator kind="exact" value={1} />
                     <span className="flex gap-1.5">
                       {[4, 0, 7, 2].map((d, i) => (
@@ -39,7 +41,7 @@ export default function Home() {
                       ))}
                     </span>
                     <Indicator kind="present" value={2} />
-                  </div>
+                  </div>}
                 </div>
               </Link>
             </li>

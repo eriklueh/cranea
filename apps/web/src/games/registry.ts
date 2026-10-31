@@ -9,4 +9,11 @@ export const GAMES: GameMeta[] = [
     path: "/cifra",
     status: "live",
   },
+  {
+    id: "nonograma",
+    name: "Nonograma",
+    tagline: "Pintá casillas siguiendo los números hasta que aparezca el dibujo.",
+    path: "/nonograma",
+    status: "live",
+  },
 ];

@@ -8,13 +8,16 @@
   "exports": {
     ".": "./src/index.ts",
     "./cifra": "./src/cifra/index.ts",
-    "./levels/cifra.json": "./levels/cifra.json"
+    "./levels/cifra.json": "./levels/cifra.json",
+    "./nonograma": "./src/nonograma/index.ts",
+    "./levels/nonograma.json": "./levels/nonograma.json"
   },
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "levels": "tsx scripts/build-levels.ts",
-    "audit:levels": "tsx scripts/audit-levels.ts"
+    "audit:levels": "tsx scripts/audit-levels.ts",
+    "levels:nonograma": "tsx scripts/build-nonograma.ts"
   },
   "devDependencies": {
     "tsx": "4.23.15",
