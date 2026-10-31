@@ -8,8 +8,12 @@
  * @module
  */
 
+import type * as crons from "../crons.js";
 import type * as progress from "../progress.js";
+import type * as push from "../push.js";
+import type * as reminders from "../reminders.js";
 import type * as results from "../results.js";
+import type * as schedule from "../schedule.js";
 
 import type {
   ApiFromModules,
@@ -18,8 +22,12 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  crons: typeof crons;
   progress: typeof progress;
+  push: typeof push;
+  reminders: typeof reminders;
   results: typeof results;
+  schedule: typeof schedule;
 }>;
 
 /**

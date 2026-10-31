@@ -62,6 +62,14 @@ La versión de producción incluye manifest, íconos normales y maskable, ícono
 
 `pnpm test` incluye tests del motor y del service worker (navegación sin red, actualización, fallos de descarga y aislamiento de caché). Completá la validación con `pnpm -r typecheck` y `pnpm build`.
 
+### Recordatorio diario
+
+La campana del encabezado activa un aviso Web Push a la hora local elegida (10:00 por defecto). Funciona con o sin sesión; con sesión, no avisa si ya jugaste el diario de ese día UTC. En iPhone y iPad requiere la app instalada. Sin `NEXT_PUBLIC_CONVEX_URL` o sin `NEXT_PUBLIC_VAPID_PUBLIC_KEY` la campana no aparece.
+
+- `convex/reminders.ts`: suscripciones (tabla `reminders`, una por endpoint) y la selección de vencidos; `convex/schedule.ts` calcula el próximo envío con la zona horaria del dispositivo.
+- `convex/push.ts` + `convex/crons.ts`: cada 15 minutos envía los vencidos con `web-push` y borra las suscripciones que responden 404/410.
+- Variables: `NEXT_PUBLIC_VAPID_PUBLIC_KEY` en Vercel; `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` y `VAPID_SUBJECT` (`mailto:` o URL) en Convex. Para generar un par: `npx web-push generate-vapid-keys`.
+
 El original del ícono y su prompt están en `assets/brand`. Para regenerar sus tamaños: `node assets/brand/build-icons.cjs` después de instalar dependencias.
 
 ## Próximo: Expo

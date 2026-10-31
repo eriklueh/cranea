@@ -90,8 +90,10 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
   </PwaContext.Provider>;
 }
 
+export const usePwa = () => useContext(PwaContext);
+
 export function InstallApp() {
-  const { installed, ready, failed, ios, prompt, install } = useContext(PwaContext);
+  const { installed, ready, failed, ios, prompt, install } = usePwa();
   if (installed) return null;
   return <Dialog>
     <DialogTrigger asChild>

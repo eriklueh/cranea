@@ -14,4 +14,20 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_entry", ["userId", "gameId", "kind", "key"]),
+  /** Suscripciones Web Push al recordatorio del diario. Sin sesión, se identifican solo por el endpoint. */
+  reminders: defineTable({
+    endpoint: v.string(),
+    p256dh: v.string(),
+    auth: v.string(),
+    userId: v.optional(v.string()),
+    /** Minutos desde la medianoche local. */
+    minutes: v.number(),
+    timeZone: v.string(),
+    /** Desfase local respecto de UTC en minutos, por si la zona no se reconoce. */
+    offset: v.number(),
+    /** Próximo envío (ms UTC). */
+    nextAt: v.number(),
+  })
+    .index("by_endpoint", ["endpoint"])
+    .index("by_next", ["nextAt"]),
 });
