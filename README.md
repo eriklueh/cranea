@@ -4,14 +4,15 @@ Plataforma de juegos de lógica. Primer juego: **Cifra**, descubrir un código s
 
 ```
 cranea/
-├─ packages/core      Lógica pura en TypeScript (sin React). La comparten web y la futura app Expo.
+├─ packages/core      Lógica pura en TypeScript (sin React). La comparten la web y la app Expo.
 │  ├─ src/cifra       Puntaje, solver "humano", generador con semilla, mundos
 │  ├─ scripts/        build-levels.ts → pregenera los niveles
 │  └─ levels/         cifra.json (120 niveles fijos)
-└─ apps/web           Next.js 16 + Tailwind 4 + shadcn/ui + Zustand
-   ├─ src/app         Rutas: /, /cifra, /cifra/nivel/[mundo]/[nivel], /cifra/diario, /cifra/como-jugar
-   ├─ src/games       Un directorio por juego + registry.ts
-   └─ src/stores      progress.ts: progreso de todos los juegos (localStorage)
+├─ apps/web           Next.js 16 + Tailwind 4 + shadcn/ui + Zustand
+│  ├─ src/app         Rutas: /, /cifra, /cifra/nivel/[mundo]/[nivel], /cifra/diario, /cifra/como-jugar
+│  ├─ src/games       Un directorio por juego + registry.ts
+│  └─ src/stores      progress.ts: progreso de todos los juegos (localStorage)
+└─ apps/mobile        Expo + expo-router: app nativa (ver docs/mobile.md)
 ```
 
 ## Empezar
@@ -123,6 +124,6 @@ La campana del encabezado activa un aviso Web Push a la hora local elegida (10:0
 
 El original del ícono y su prompt están en `assets/brand`. Para regenerar sus tamaños: `node assets/brand/build-icons.cjs` después de instalar dependencias.
 
-## Próximo: Expo
+## App nativa (Expo)
 
-Crear `apps/mobile` con Expo y depender de `@cranea/core`. El motor, los niveles y la lógica de progreso se reutilizan; solo se reescribe la UI con componentes nativos.
+`apps/mobile`: Expo SDK 58 + expo-router para Google Play y App Store. Usa `@cranea/core`, el mismo Convex y la misma cuenta de Clerk; el progreso tiene el mismo formato que la web y se sincroniza igual. Cifra y Palabra ya se juegan; los otros tres muestran «Muy pronto». `pnpm mobile` la arranca. Pasos para publicar, variables y monetización en [docs/mobile.md](docs/mobile.md).
