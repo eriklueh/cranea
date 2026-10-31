@@ -41,6 +41,11 @@ pnpm levels              # regenera packages/core/levels/cifra.json (~1 min)
 - **Marcas manuales** (`marks.ts`): `emptyMarks()`, `nextMark(marks, row, position)` y `tileMarkState(marks, row, position)` son funciones puras compartidas con Expo. Filas y columnas empiezan en cero; los intentos fallidos se agregan después de las pistas. Cada casilla cicla descartada → va → va ahí → sin marcar de forma independiente, sin cambiar otras apariciones de la misma cifra ni el teclado. Estas notas no deducen ni completan nada automáticamente. En web se reinician con cada partida y no forman parte de `cranea-progress`.
 - **Lápiz**: permite dibujar sobre el juego con mouse, dedo o stylus, con espacio libre arriba y abajo y márgenes amplios en escritorio. Mientras está activo, el tablero no recibe toques ni entradas de código. La mano permite desplazar la página sin dibujar; las herramientas permanecen visibles. **Listo** o Escape vuelve al juego conservando el dibujo; también se puede deshacer el último trazo o borrar todo. Los trazos se adaptan al tema, permanecen al agregar intentos y se limpian al reiniciar o cambiar de nivel. Son notas locales de la partida y no se guardan en `cranea-progress`.
 
+## Estadísticas y ranking
+
+- **/estadisticas** calcula todo con el progreso del dispositivo (`gameStats` en `stores/progress.ts`), así que funciona sin sesión y sin red. Recorre los juegos `live` del registro.
+- **/ranking?juego=<id>&fecha=YYYY-MM-DD** muestra el diario de cada juego en vivo (`convex/ranking.ts`): primero quienes ganaron, después menos intentos y menos tiempo. Para aparecer hay que iniciar sesión y elegir un apodo (tabla `profiles`). Al sumarse se copian a `dailyResults` los diarios ya guardados; después, `progress.save` copia cada diario nuevo. Solo entran partidas del jugador autenticado, válidas y terminadas durante ese día UTC (`rankable` en `convex/results.ts`). Al dejar de aparecer se borran sus filas.
+
 ## Sumar un juego nuevo
 
 1. Lógica en `packages/core/src/<juego>/` (pura, testeable, reutilizable en Expo).

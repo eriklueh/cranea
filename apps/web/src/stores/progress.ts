@@ -71,3 +71,47 @@ export function dailyStreak(daily: Record<string, Result>, today: string): numbe
   }
   return n;
 }
+
+/** La racha más larga de diarios ganados en días seguidos. */
+export function bestStreak(daily: Record<string, Result>): number {
+  const days = Object.keys(daily).filter((d) => daily[d].won).map((d) => Date.parse(`${d}T00:00:00Z`)).sort((a, b) => a - b);
+  let best = 0;
+  let run = 0;
+  for (let i = 0; i < days.length; i++) {
+    run = i > 0 && days[i] - days[i - 1] === 86_400_000 ? run + 1 : 1;
+    best = Math.max(best, run);
+  }
+  return best;
+}
+
+export interface GameStats {
+  played: number;
+  won: number;
+  streak: number;
+  bestStreak: number;
+  /** Diarios ganados según los intentos que llevaron; `lost` cuenta los que no salieron. */
+  attempts: { counts: Record<number, number>; lost: number };
+  avgTimeMs: number | null;
+  bestTimeMs: number | null;
+  levelsCompleted: number;
+}
+
+/** Estadísticas de un juego a partir del progreso del dispositivo. */
+export function gameStats(g: GameProgress, today: string): GameStats {
+  const levels = Object.values(g.levels);
+  const daily = Object.values(g.daily);
+  const all = [...levels, ...daily];
+  const times = all.filter((r) => r.won).map((r) => r.timeMs);
+  const counts: Record<number, number> = {};
+  for (const r of daily) if (r.won) counts[r.attempts] = (counts[r.attempts] ?? 0) + 1;
+  return {
+    played: all.length,
+    won: all.filter((r) => r.won).length,
+    streak: dailyStreak(g.daily, today),
+    bestStreak: bestStreak(g.daily),
+    attempts: { counts, lost: daily.filter((r) => !r.won).length },
+    avgTimeMs: times.length ? times.reduce((a, b) => a + b, 0) / times.length : null,
+    bestTimeMs: times.length ? Math.min(...times) : null,
+    levelsCompleted: levels.filter((r) => r.won).length,
+  };
+}

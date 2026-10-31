@@ -17,9 +17,14 @@ export default function CifraHome() {
           <p className="max-w-md text-muted-foreground">
             Cada tablero trae intentos ya puntuados. Cruzalos hasta que solo un código encaje.
           </p>
-          <Link href="/cifra/como-jugar" className="font-semibold underline decoration-margin decoration-2 underline-offset-4">
-            Cómo se juega
-          </Link>
+          <div className="flex gap-4">
+            <Link href="/cifra/como-jugar" className="font-semibold underline decoration-margin decoration-2 underline-offset-4">
+              Cómo se juega
+            </Link>
+            <Link href="/estadisticas#cifra" className="font-semibold underline decoration-margin decoration-2 underline-offset-4">
+              Estadísticas
+            </Link>
+          </div>
         </div>
         <DailyCard />
         <WorldMap />

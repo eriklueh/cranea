@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { ChartColumnIcon } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { InstallApp } from "@/components/pwa-provider";
 import { AccountButton } from "@/components/account-button";
+import { Button } from "@/components/ui/button";
 
 export function SiteHeader({ children }: { children?: React.ReactNode }) {
   return (
@@ -12,7 +14,14 @@ export function SiteHeader({ children }: { children?: React.ReactNode }) {
         </Link>
         {children}
       </div>
-      <div className="flex shrink-0 items-center gap-1"><InstallApp /><ThemeToggle /><AccountButton /></div>
+      <div className="flex shrink-0 items-center gap-1">
+        <InstallApp />
+        <Button asChild variant="ghost" size="icon">
+          <Link href="/estadisticas" aria-label="Estadísticas" title="Estadísticas"><ChartColumnIcon /></Link>
+        </Button>
+        <ThemeToggle />
+        <AccountButton />
+      </div>
     </header>
   );
 }
