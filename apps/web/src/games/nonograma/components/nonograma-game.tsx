@@ -178,7 +178,7 @@ function ChecksLeft() {
   return (
     <span className="inline-flex items-center gap-1" role="img" aria-label={`Intento ${attempts} de ${MAX_ATTEMPTS}`}>
       {Array.from({ length: MAX_ATTEMPTS }, (_, i) => (
-        <span key={i} className={cn("h-4 w-1.5 rounded-full", i < left ? "bg-ink" : "bg-margin/40")} />
+        <span key={i} className={cn("h-4 w-1.5 rounded-full transition-[background-color,scale] duration-300 ease-out", i < left ? "bg-ink" : "scale-y-60 bg-margin/40")} />
       ))}
     </span>
   );

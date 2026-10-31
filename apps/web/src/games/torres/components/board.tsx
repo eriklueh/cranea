@@ -19,6 +19,8 @@ interface Props {
   readOnly?: boolean;
   /** Muestra si cada pista se cumple. */
   feedback?: boolean;
+  /** Las torres se levantan en una ola en diagonal (al ganar y en la solución). */
+  wave?: boolean;
   gridRef?: Ref<HTMLDivElement>;
   className?: string;
 }
@@ -40,9 +42,10 @@ function Clue({ value, state, side, index, size }: { value: number; state: ClueS
         role="img"
         aria-label={`Desde ${SIDE_LABEL[side]}, ${line}: se ven ${value}${STATE_LABEL[state]}`}
         className={cn(
-          "grid size-[min(1.9rem,92%)] place-items-center rounded-full font-display text-[clamp(0.95rem,3.8vw,1.2rem)] font-bold tabular-nums transition-colors",
-          state === "ok" && "bg-clue-exact-bg text-clue-exact",
-          state === "conflict" && "bg-margin text-paper",
+          "grid size-[min(1.9rem,92%)] place-items-center rounded-full font-display text-[clamp(0.95rem,3.8vw,1.2rem)] font-bold tabular-nums transition-colors duration-300",
+          // Cada cambio de estado tiene su propio gesto: un salto al cumplirse, un temblor al no cumplirse.
+          state === "ok" && "anim-bump bg-clue-exact-bg text-clue-exact",
+          state === "conflict" && "anim-nudge bg-margin text-paper",
         )}
       >
         {value}
@@ -66,7 +69,7 @@ function Notes({ mask, size }: { mask: number; size: number }) {
 }
 
 /** Tablero de Torres: casillas en el centro y pistas de borde alrededor. */
-export function Board({ size, clues, givens, values, notes, selected = null, wrong = [], onSelect, readOnly = false, feedback = true, gridRef, className }: Props) {
+export function Board({ size, clues, givens, values, notes, selected = null, wrong = [], onSelect, readOnly = false, feedback = true, wave = false, gridRef, className }: Props) {
   const dupes = useMemo(() => duplicateCells(values, size), [values, size]);
   const wrongSet = useMemo(() => new Set(wrong), [wrong]);
   const range = Array.from({ length: size }, (_, i) => i);
@@ -95,7 +98,7 @@ export function Board({ size, clues, givens, values, notes, selected = null, wro
     const noteList = range.filter((k) => noteMask & (1 << k)).map((k) => k + 1);
     const label = `Fila ${r + 1}, columna ${c + 1}: ${v ? `altura ${v}` : "vacía"}${given ? ", dada" : ""}${conflict ? ", repetida" : ""}${isWrong ? ", incorrecta" : ""}${noteList.length ? `, notas ${noteList.join(" ")}` : ""}`;
     const cls = cn(
-      "relative grid aspect-square place-items-center font-display text-[clamp(1.15rem,6vw,1.9rem)] font-bold tabular-nums select-none outline-none transition-colors",
+      "relative grid aspect-square place-items-center font-display text-[clamp(1.15rem,6vw,1.9rem)] font-bold tabular-nums select-none outline-none transition-[color,background-color,box-shadow] duration-200 ease-out",
       "border-ink/20",
       c < size - 1 && "border-r",
       r < size - 1 && "border-b",
@@ -108,9 +111,15 @@ export function Board({ size, clues, givens, values, notes, selected = null, wro
     );
     const content = (
       <>
-        {v ? <span key={v} className={cn(!given && "animate-pop")}>{v}</span> : noteMask ? <Notes mask={noteMask} size={size} /> : null}
+        {v ? (
+          <span key={v} className={cn("inline-block origin-bottom", (wave || (!given && !readOnly)) && "anim-rise")} style={wave ? ({ "--i": r + c } as CSSProperties) : undefined}>
+            {v}
+          </span>
+        ) : noteMask ? (
+          <Notes mask={noteMask} size={size} />
+        ) : null}
         {given && <span aria-hidden className="absolute inset-x-[32%] bottom-[13%] h-0.5 rounded bg-ink/35" />}
-        {isWrong && <span aria-hidden className="absolute inset-x-[22%] top-1/2 h-0.5 -rotate-12 rounded bg-margin" />}
+        {isWrong && <span aria-hidden className="anim-grow-x absolute inset-x-[22%] top-1/2 h-0.5 origin-left -rotate-12 rounded bg-margin" />}
       </>
     );
     const pos: CSSProperties = { gridRow: r + 2, gridColumn: c + 2 };

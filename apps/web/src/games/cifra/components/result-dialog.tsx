@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatTime } from "@/lib/utils";
@@ -62,7 +62,7 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry, celebration }:
         </DialogHeader>
         <div className="flex gap-1.5" aria-label="Solución">
           {puzzle.solution.map((d, i) => (
-            <DigitTile key={i} digit={d} tone="solution" />
+            <DigitTile key={i} digit={d} tone="solution" className="anim-pop-in [--base:140ms]" style={{ "--i": i } as CSSProperties} />
           ))}
         </div>
         <div className="flex flex-wrap items-center justify-between gap-2 text-sm">

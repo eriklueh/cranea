@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { LetterScore } from "@cranea/core/palabra";
 import { cn } from "@/lib/utils";
 
@@ -18,12 +19,14 @@ interface Props {
   tone?: Tone;
   size?: "sm" | "md";
   className?: string;
+  style?: CSSProperties;
 }
 
-export function LetterTile({ letter, tone = "absent", size = "md", className }: Props) {
+export function LetterTile({ letter, tone = "absent", size = "md", className, style }: Props) {
   const score: LetterScore | null = tone === "exact" ? 2 : tone === "present" ? 1 : null;
   return (
     <span
+      style={style}
       className={cn(
         "relative inline-flex shrink-0 items-center justify-center rounded-md border-2 font-display font-bold uppercase select-none",
         size === "md" ? "size-12 text-[1.6rem]" : "size-9 text-lg",
