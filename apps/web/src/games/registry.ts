@@ -9,4 +9,11 @@ export const GAMES: GameMeta[] = [
     path: "/cifra",
     status: "live",
   },
+  {
+    id: "palabra",
+    name: "Palabra",
+    tagline: "Encontrá la palabra oculta cruzando palabras ya puntuadas.",
+    path: "/palabra",
+    status: "live",
+  },
 ];

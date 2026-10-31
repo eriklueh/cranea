@@ -8,13 +8,17 @@
   "exports": {
     ".": "./src/index.ts",
     "./cifra": "./src/cifra/index.ts",
-    "./levels/cifra.json": "./levels/cifra.json"
+    "./levels/cifra.json": "./levels/cifra.json",
+    "./palabra": "./src/palabra/index.ts",
+    "./palabra/words": "./src/palabra/words.ts",
+    "./levels/palabra.json": "./levels/palabra.json"
   },
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "levels": "tsx scripts/build-levels.ts",
-    "audit:levels": "tsx scripts/audit-levels.ts"
+    "audit:levels": "tsx scripts/audit-levels.ts",
+    "levels:palabra": "tsx scripts/build-palabra-levels.ts"
   },
   "devDependencies": {
     "tsx": "4.23.15",
