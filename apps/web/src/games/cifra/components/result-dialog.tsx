@@ -77,6 +77,11 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry, celebration }:
           <Button variant="outline" onClick={share}>
             {copied ? "Copiado" : "Compartir resultado"}
           </Button>
+          {mode.kind === "daily" && (
+            <Button variant="outline" asChild>
+              <Link href={`/ranking?juego=cifra&fecha=${mode.date}`}>Ver ranking</Link>
+            </Button>
+          )}
           {mode.kind === "level" && !won && (
             <Button variant="outline" onClick={onRetry}>
               Reintentar

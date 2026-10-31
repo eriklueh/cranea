@@ -45,6 +45,11 @@ pnpm levels              # regenera packages/core/levels/cifra.json (~1 min)
 - **Pistas**: el botón **Pista** usa la traza. El primer toque resalta las filas a cruzar; el segundo explica la deducción. Saltea los pasos que tus marcas ya muestran y nunca completa ni marca fichas. Al terminar, **¿Cómo se resolvía?** recorre la traza paso a paso.
 - **Festejos**: al ganar todos los niveles de un mundo se muestra un resumen (niveles, tiempo total, intentos promedio); también al llegar a 7 y 30 diarios seguidos. Con movimiento reducido no hay animación.
 
+## Estadísticas y ranking
+
+- **/estadisticas** calcula todo con el progreso del dispositivo (`gameStats` en `stores/progress.ts`), así que funciona sin sesión y sin red. Recorre los juegos `live` del registro.
+- **/ranking?juego=<id>&fecha=YYYY-MM-DD** muestra el diario de cada juego en vivo (`convex/ranking.ts`): primero quienes ganaron, después menos intentos y menos tiempo. Para aparecer hay que iniciar sesión y elegir un apodo (tabla `profiles`). Al sumarse se copian a `dailyResults` los diarios ya guardados; después, `progress.save` copia cada diario nuevo. Solo entran partidas del jugador autenticado, válidas y terminadas durante ese día UTC (`rankable` en `convex/results.ts`). Al dejar de aparecer se borran sus filas.
+
 ## Sumar un juego nuevo
 
 1. Lógica en `packages/core/src/<juego>/` (pura, testeable, reutilizable en Expo).
