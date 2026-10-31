@@ -41,6 +41,21 @@ pnpm levels              # regenera packages/core/levels/cifra.json (~1 min)
 - **Marcas manuales** (`marks.ts`): `emptyMarks()`, `nextMark(marks, row, position)` y `tileMarkState(marks, row, position)` son funciones puras compartidas con Expo. Filas y columnas empiezan en cero; los intentos fallidos se agregan después de las pistas. Cada casilla cicla descartada → va → va ahí → sin marcar de forma independiente, sin cambiar otras apariciones de la misma cifra ni el teclado. Estas notas no deducen ni completan nada automáticamente. En web se reinician con cada partida y no forman parte de `cranea-progress`.
 - **Lápiz**: permite dibujar sobre el juego con mouse, dedo o stylus, con espacio libre arriba y abajo y márgenes amplios en escritorio. Mientras está activo, el tablero no recibe toques ni entradas de código. La mano permite desplazar la página sin dibujar; las herramientas permanecen visibles. **Listo** o Escape vuelve al juego conservando el dibujo; también se puede deshacer el último trazo o borrar todo. Los trazos se adaptan al tema, permanecen al agregar intentos y se limpian al reiniciar o cambiar de nivel. Son notas locales de la partida y no se guardan en `cranea-progress`.
 
+## Cómo funciona Torres
+
+Cuadrado latino de N×N con alturas 1..N; los números del borde dicen cuántas torres se ven desde ese lado. Rutas: `/torres`, `/torres/nivel/[mundo]/[nivel]`, `/torres/diario`, `/torres/como-jugar`.
+
+- **Motor** (`packages/core/src/torres`): `board.ts` tiene las reglas puras (torres visibles, pistas de un tablero, estado de cada pista y repetidos para la UI). `solver.ts` trabaja con candidatos por casilla y resuelve en tres niveles; si no llega sin adivinar, el tablero se descarta:
+  1. Lectura directa: límites por pista (a distancia i del borde, con pista c, nada mayor que N − c + 1 + i; un 1 pone la más alta pegada al borde), únicos desnudos y ocultos.
+  2. Cruce de una línea: combinaciones posibles de una fila o columna con sus candidatos y sus dos pistas.
+  3. Suposición: probar una altura y descartarla si las técnicas 1 y 2 llegan a una contradicción.
+- **Generador** (`generator.ts`): cuadrado latino al azar con semilla, todas las pistas, casillas dadas solo donde el solver se traba, y después quita dadas y pistas mientras siga siendo deducible con el techo de técnica. Como cada paso es deducción válida, deducible implica solución única. Máximo ⌊N²/8⌋ dadas y al menos N pistas.
+- **Niveles** (`levels.ts`): 4 mundos de 24 niveles (4×4, 5×5, 6×6, 7×7). `pnpm --filter @cranea/core levels:torres` genera 72 candidatos por mundo alternando el techo de técnica del mundo, elige 24 con la misma curva que Cifra y escribe `levels/torres.json` (determinístico, ~1 min). `d = pasos + 3 × usos de técnica 2 + 8 × usos de técnica 3`.
+- **Tests** (`torres.test.ts`): cada nivel publicado y una muestra de diarios se verifican con un conteo de soluciones independiente del solver (búsqueda solo con las reglas), además de resolución humana, técnica, dificultad y curva.
+- **Diario**: 5×5 con técnicas 2–3, generado en el cliente con la fecha UTC (`torres:daily:YYYY-MM-DD`). Se juega una vez: si ya hay resultado de hoy, se muestra en lugar del tablero.
+- **Intentos**: `1 + comprobaciones fallidas`, con 3 como máximo. **Comprobar** revisa lo escrito contra la solución: si está todo bien no cuesta nada; si hay errores los marca y gasta un intento. A la tercera fallida la partida se pierde (`attempts = 3`, `won = false`). Llenar el tablero sin repetidos y con todas las pistas cumplidas es ganar (con solución única no hay otra forma). Las ayudas visuales (pistas en verde o rojo, repetidos en rojo) no cuestan intentos.
+- **Juego** (`apps/web/src/games/torres`): tocá una casilla y elegí la altura; **Notas** anota candidatos chiquitos; **Deshacer**, **Reiniciar** (también se puede deshacer). Teclado: flechas, números, Shift + número o N para notas, Borrar, Ctrl + Z. Notas e historial son de la partida y no se guardan.
+
 ## Sumar un juego nuevo
 
 1. Lógica en `packages/core/src/<juego>/` (pura, testeable, reutilizable en Expo).

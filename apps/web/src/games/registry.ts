@@ -9,4 +9,11 @@ export const GAMES: GameMeta[] = [
     path: "/cifra",
     status: "live",
   },
+  {
+    id: "torres",
+    name: "Torres",
+    tagline: "Levantá la ciudad: cada borde dice cuántas torres se ven.",
+    path: "/torres",
+    status: "live",
+  },
 ];
