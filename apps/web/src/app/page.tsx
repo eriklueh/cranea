@@ -2,6 +2,7 @@ import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { GAMES } from "@/games/registry";
 import { DailyBadge } from "@/components/game-home/daily-badge";
+import { TodayHub } from "@/components/daily-hub/today-hub";
 import { DigitTile } from "@/games/cifra/components/digit-tile";
 import { Indicator } from "@/games/cifra/components/pegs";
 import { PuentesPreview } from "@/games/puentes/components/preview";
@@ -38,6 +39,8 @@ export default function Home() {
       <SiteHeader />
       <main className="mx-auto w-full max-w-3xl px-5 pt-2 pb-16 sm:pr-6 sm:pl-16 sm:pt-6">
         <h1 className="sr-only">Craneá: juegos de lógica</h1>
+        <TodayHub />
+        <h2 className="mt-6 mb-2 text-xs font-bold tracking-wider text-muted-foreground uppercase">Los juegos</h2>
         <ul className="grid gap-3 sm:gap-4">
           {GAMES.map((g) => {
             const Preview = PREVIEWS[g.id];
@@ -50,7 +53,7 @@ export default function Home() {
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-5">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 sm:justify-start">
-                      <h2 className="font-display text-3xl font-extrabold">{g.name}</h2>
+                      <h3 className="font-display text-3xl font-extrabold">{g.name}</h3>
                       <DailyBadge gameId={g.id} />
                     </div>
                     <p className="mt-1 max-w-sm text-muted-foreground">{g.tagline}</p>

@@ -3,13 +3,13 @@ import { useMemo } from "react";
 import { generateDaily } from "@cranea/core/torres";
 import { DailyGate } from "@/components/daily-gate";
 import { TorresGame } from "@/games/torres/components/torres-game";
-import { dailyNumber, GAME_ID } from "@/games/torres/data";
+import { dailyNumber, GAME_ID, LAUNCH_DATE } from "@/games/torres/data";
 
 /** El diario se genera en el cliente con la fecha UTC como semilla: todos ven el mismo tablero. Cuenta la primera partida. */
 export function DailyGame() {
   return (
-    <DailyGate gameId={GAME_ID} game="Torres" home="/torres" title={(date) => `Torres del día #${dailyNumber(date)}`}>
-      {(date, practice) => <Play key={String(practice)} date={date} practice={practice} />}
+    <DailyGate gameId={GAME_ID} game="Torres" home="/torres" launch={LAUNCH_DATE} title={(date) => `Torres del día #${dailyNumber(date)}`}>
+      {(date, practice) => <Play key={`${date}-${practice}`} date={date} practice={practice} />}
     </DailyGate>
   );
 }

@@ -5,7 +5,7 @@ import { DailyGate } from "@/components/daily-gate";
 import { Button } from "@/components/ui/button";
 import { PalabraGame } from "@/games/palabra/components/palabra-game";
 import { LetterTile } from "@/games/palabra/components/letter-tile";
-import { dailyNumber, GAME_ID } from "@/games/palabra/data";
+import { dailyNumber, GAME_ID, LAUNCH_DATE } from "@/games/palabra/data";
 import { useDictionary } from "@/games/palabra/dictionary";
 
 /** El diario se genera en el cliente con la fecha UTC como semilla: todos ven el mismo tablero. Cuenta la primera partida. */
@@ -15,10 +15,11 @@ export function DailyGame() {
       gameId={GAME_ID}
       game="Palabra"
       home="/palabra"
+      launch={LAUNCH_DATE}
       title={(date) => `Palabra del día #${dailyNumber(date)}`}
       reveal={(date) => <Answer date={date} />}
     >
-      {(date, practice) => <Play key={String(practice)} date={date} practice={practice} />}
+      {(date, practice) => <Play key={`${date}-${practice}`} date={date} practice={practice} />}
     </DailyGate>
   );
 }
