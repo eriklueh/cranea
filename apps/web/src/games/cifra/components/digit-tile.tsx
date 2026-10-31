@@ -15,10 +15,12 @@ interface Props {
   tone?: "clue" | "input" | "empty" | "solution";
   className?: string;
   style?: CSSProperties;
+  /** Nombre para que el tutorial la señale (data-tutorial). */
+  tutorial?: string;
 }
 
 /** Ficha de 2×2 cuadritos. En el tablero permite anotar la deducción del jugador. */
-export function DigitTile({ digit, mark = "none", position = 0, interactive = false, disabled = false, onClick, size = "md", tone = "clue", className, style }: Props) {
+export function DigitTile({ digit, mark = "none", position = 0, interactive = false, disabled = false, onClick, size = "md", tone = "clue", className, style, tutorial }: Props) {
   const Tile = interactive ? "button" : "span";
   return (
     <Tile
@@ -26,6 +28,7 @@ export function DigitTile({ digit, mark = "none", position = 0, interactive = fa
       disabled={interactive ? disabled : undefined}
       onClick={interactive ? onClick : undefined}
       data-clue-tile={interactive ? "" : undefined}
+      data-tutorial={tutorial}
       style={style}
       aria-label={interactive ? `Cifra ${digit}, posición ${position + 1}: ${MARK_LABEL[mark]}.${disabled ? "" : " Tocá para cambiar."}` : undefined}
       className={cn(

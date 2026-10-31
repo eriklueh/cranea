@@ -40,6 +40,7 @@ function Clue({ value, state, side, index, size }: { value: number; state: ClueS
     <span className="grid place-items-center" style={place(side, index, size)}>
       <span
         role="img"
+        data-tutorial={`clue-${side}-${index}`}
         aria-label={`Desde ${SIDE_LABEL[side]}, ${line}: se ven ${value}${STATE_LABEL[state]}`}
         className={cn(
           "grid size-[min(1.9rem,92%)] place-items-center rounded-full font-display text-[clamp(0.95rem,3.8vw,1.2rem)] font-bold tabular-nums transition-colors duration-300",
@@ -135,6 +136,7 @@ export function Board({ size, clues, givens, values, notes, selected = null, wro
         key={i}
         type="button"
         data-cell={i}
+        data-tutorial={`cell-${i}`}
         tabIndex={isSel || (selected === null && i === 0) ? 0 : -1}
         aria-label={label}
         aria-pressed={isSel}
@@ -148,7 +150,7 @@ export function Board({ size, clues, givens, values, notes, selected = null, wro
   };
 
   return (
-    <div ref={gridRef} role="group" aria-label={`Tablero de ${size} por ${size}`} className={cn("mx-auto grid w-full", className)} style={style}>
+    <div ref={gridRef} data-tutorial={readOnly ? undefined : "board"} role="group" aria-label={`Tablero de ${size} por ${size}`} className={cn("mx-auto grid w-full", className)} style={style}>
       {/* Marco del tablero, detrás de las casillas. */}
       <span
         aria-hidden

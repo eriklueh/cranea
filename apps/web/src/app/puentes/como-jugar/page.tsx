@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
+import { TryTutorial } from "@/components/tutorial/try-tutorial";
 import { EXAMPLE_ROWS, EXAMPLE_SOLUTION, StaticBoard } from "@/games/puentes/components/preview";
 
 export const metadata: Metadata = { title: "Cómo se juega Puentes" };
@@ -12,6 +13,7 @@ export default function HowTo() {
       <SiteHeader game={{ name: "Puentes", href: "/puentes" }} />
       <main className="mx-auto w-full max-w-2xl space-y-8 px-6 pt-4 pb-16 leading-relaxed sm:pl-16">
         <h1 className="font-display text-4xl font-extrabold tracking-tight">Cómo se juega Puentes</h1>
+        <TryTutorial href="/puentes/tutorial" />
         <p className="max-w-prose">
           Cada círculo es una isla y su número dice cuántos puentes salen de ella. Uní las islas con puentes rectos, en horizontal o
           en vertical, hasta que todas queden conectadas en un solo grupo.

@@ -16,7 +16,7 @@ export function InputSlots() {
   useOnChange(won, (w) => w && haptic("win"));
   if (!puzzle) return null;
   return (
-    <div key={shakeKey} className={cn("flex gap-1.5", shakeKey > 0 && "animate-shake")} aria-live="polite">
+    <div key={shakeKey} data-tutorial="code" className={cn("flex gap-1.5", shakeKey > 0 && "animate-shake")} aria-live="polite">
       {Array.from({ length: puzzle.length }, (_, i) =>
         input[i] === undefined ? (
           <DigitTile key={i} tone="empty" />
@@ -34,7 +34,7 @@ export function Keypad() {
   const playing = status === "playing";
   const full = puzzle ? input.length === puzzle.length : false;
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" data-tutorial="keypad">
       <div className="grid grid-cols-5 gap-1.5">
         {Array.from({ length: 10 }, (_, d) => (
           <button

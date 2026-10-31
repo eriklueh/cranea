@@ -6,3 +6,4 @@ export * from "./generator";
 export * from "./pictures";
 export * from "./levels";
 export * from "./board";
+export * from "./tutorial";

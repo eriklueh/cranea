@@ -92,6 +92,15 @@ Cuadrado latino de N×N con alturas 1..N; los números del borde dicen cuántas 
 - **Intentos**: `1 + comprobaciones fallidas`, con 3 como máximo. **Comprobar** revisa lo escrito contra la solución: si está todo bien no cuesta nada; si hay errores los marca y gasta un intento. A la tercera fallida la partida se pierde (`attempts = 3`, `won = false`). Llenar el tablero sin repetidos y con todas las pistas cumplidas es ganar (con solución única no hay otra forma). Las ayudas visuales (pistas en verde o rojo, repetidos en rojo) no cuestan intentos.
 - **Juego** (`apps/web/src/games/torres`): tocá una casilla y elegí la altura; **Notas** anota candidatos chiquitos; **Deshacer**, **Reiniciar** (también se puede deshacer). Teclado: flechas, números, Shift + número o N para notas, Borrar, Ctrl + Z. Notas e historial son de la partida y no se guardan.
 
+## Tutoriales
+
+Cada juego tiene un primer nivel guiado en `/<juego>/tutorial` (se llega desde "Cómo se juega"). También aparece solo la primera vez que se abre el primer nivel del primer mundo, si ese nivel no tiene partidas y el tutorial nunca se terminó ni se salteó.
+
+- **Tableros** (`packages/core/src/<juego>/tutorial.ts`): hechos a mano, más chicos que el nivel 1 (Cifra de 3 cifras, Puentes 5×5 con 6 islas, Nonograma 4×4, Torres 3×3, Palabra PALTA → PLATO). `tutorials.test.ts` verifica con los solvers que tengan una sola solución y salgan sin adivinar.
+- **Motor** (`apps/web/src/components/tutorial`): se juega con los componentes reales en modo `{ kind: "tutorial" }`, que no llama a `recordLevel` ni `recordDaily` y no guarda la partida en curso. Cada guion (`apps/web/src/games/<juego>/tutorial.tsx`) es una lista de pasos: texto, lo que se resalta (`data-tutorial="..."` en los componentes) y un `check` sobre el estado del store. El overlay escucha el store: si la jugada es la esperada avanza, si va bien la acepta y si no la deshace y avisa. Los pasos sin `check` se leen y avanzan con **Siguiente**. `machine.ts` es la lógica pura de pasos (tests en `apps/web/scripts/tutorial-machine.test.mjs`).
+- **Overlay**: oscurece la pantalla con un SVG par-impar; los huecos dejan pasar los toques y el resto los bloquea (tocar afuera avisa). Se posiciona con `getBoundingClientRect` y se actualiza con `ResizeObserver`, scroll y cambios del DOM. El globo va arriba o abajo de lo resaltado sin taparlo; cada paso se anuncia con `aria-live`. **Saltar** está siempre visible.
+- **Guardado**: `cranea-tutorials` en localStorage (`{ <juego>: { state: "done" | "skipped", at } }`), aparte de `cranea-progress`.
+
 ## Sumar un juego nuevo
 
 1. Lógica en `packages/core/src/<juego>/` (pura, testeable, reutilizable en Expo).

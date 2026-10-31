@@ -29,7 +29,7 @@ export function Keyboard({ ready, onSubmit }: { ready: boolean; onSubmit: () => 
     "inline-flex h-12 min-w-0 flex-1 items-center justify-center rounded-md border-2 font-display text-lg font-bold uppercase shadow-[0_2px_0_0_var(--shadow-ink)] [transition:translate_90ms,scale_90ms,background-color_260ms_ease_var(--key-delay,0ms),border-color_260ms_ease_var(--key-delay,0ms),color_260ms_ease_var(--key-delay,0ms)] outline-none active:translate-y-px active:scale-95 focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-40";
 
   return (
-    <div className="space-y-1.5" role="group" aria-label="Teclado">
+    <div className="space-y-1.5" role="group" aria-label="Teclado" data-tutorial="keyboard">
       {ROWS.map((row, r) => (
         <div key={row} className="flex gap-1">
           {r === 2 && (

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
+import { TryTutorial } from "@/components/tutorial/try-tutorial";
 import { ExampleLine } from "@/games/nonograma/components/example-line";
 import { NonogramaPreview } from "@/games/nonograma/components/preview";
 
@@ -13,6 +14,7 @@ export default function HowTo() {
       <SiteHeader game={{ name: "Nonograma", href: "/nonograma" }} />
       <main className="mx-auto w-full max-w-2xl space-y-8 px-6 pt-4 pb-16 leading-relaxed sm:pl-16">
         <h1 className="font-display text-4xl font-extrabold tracking-tight">Cómo se juega Nonograma</h1>
+        <TryTutorial href="/nonograma/tutorial" />
         <p className="max-w-prose">
           Cada fila y cada columna tiene números. Te dicen cuántas casillas seguidas van pintadas, en orden, y que entre un tramo y
           otro hay al menos una vacía. Un <strong>3 1</strong> es un tramo de tres, uno o más espacios, y uno suelto. Un 0 es una

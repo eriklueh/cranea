@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
+import { TryTutorial } from "@/components/tutorial/try-tutorial";
 import { Board } from "@/games/torres/components/board";
 import { TorresPreview } from "@/games/torres/components/preview";
 
@@ -18,6 +19,7 @@ export default function HowTo() {
       <SiteHeader game={{ name: "Torres", href: "/torres" }} />
       <main className="mx-auto w-full max-w-2xl space-y-8 px-6 pt-4 pb-16 leading-relaxed sm:pl-16">
         <h1 className="font-display text-4xl font-extrabold tracking-tight">Cómo se juega Torres</h1>
+        <TryTutorial href="/torres/tutorial" />
         <p className="max-w-prose">
           Cada casilla es una torre. En un tablero de cuatro por cuatro las alturas van del 1 al 4, y cada fila y cada columna
           tiene todas las alturas una sola vez. Los números del borde dicen cuántas torres se ven mirando desde ese lado: una torre

@@ -364,3 +364,18 @@
     }
   }
 }
+
+/* Tutorial: lo que no hay que tocar queda en penumbra; lo resaltado late apenas. */
+:root {
+  --tutorial-dim: rgb(28 43 75 / 0.55);
+}
+.dark {
+  --tutorial-dim: rgb(0 0 0 / 0.72);
+}
+@keyframes tutorial-pulse {
+  0%, 100% { stroke-opacity: 1; }
+  50% { stroke-opacity: 0.35; }
+}
+.tutorial-ring {
+  animation: tutorial-pulse 1.6s ease-in-out infinite;
+}

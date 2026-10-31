@@ -8,3 +8,4 @@ export * from "./score";
 export * from "./levels";
 export * from "./generator";
 export * from "./keyboard";
+export * from "./tutorial";

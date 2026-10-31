@@ -11,10 +11,11 @@ import { attemptsOf, useTorres } from "../store";
 import { Board } from "./board";
 import { CheckMessage, Lives, NumberPad, Timer, Toolbar } from "./controls";
 import { ResultDialog, type GameMode } from "./result-dialog";
+import type { TutorialMode } from "@/components/tutorial/mode";
 
 const ARROWS: Record<string, [number, number]> = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] };
 
-export function TorresGame({ puzzle, mode }: { puzzle: TorresPuzzle; mode: GameMode }) {
+export function TorresGame({ puzzle, mode }: { puzzle: TorresPuzzle; mode: GameMode | TutorialMode }) {
   const start = useTorres((s) => s.start);
   const current = useTorres((s) => s.puzzle);
   const status = useTorres((s) => s.status);
@@ -76,7 +77,7 @@ export function TorresGame({ puzzle, mode }: { puzzle: TorresPuzzle; mode: GameM
 
   // Guardar el resultado una sola vez.
   useEffect(() => {
-    if (status === "playing" || recorded.current || current !== puzzle) return;
+    if (status === "playing" || recorded.current || current !== puzzle || mode.kind === "tutorial") return;
     recorded.current = true;
     const s = useTorres.getState();
     const result = {
@@ -92,8 +93,8 @@ export function TorresGame({ puzzle, mode }: { puzzle: TorresPuzzle; mode: GameM
     return () => clearTimeout(t);
   }, [status, current, puzzle, mode]);
 
-  const title = mode.kind === "daily" ? `Torres del día #${mode.number}` : `Nivel ${mode.level}`;
-  const subtitle = mode.kind === "daily" ? "Mismo tablero para todos" : `Mundo ${mode.world}`;
+  const title = mode.kind === "tutorial" ? "Tutorial" : mode.kind === "daily" ? `Torres del día #${mode.number}` : `Nivel ${mode.level}`;
+  const subtitle = mode.kind === "tutorial" ? "Torres" : mode.kind === "daily" ? "Mismo tablero para todos" : `Mundo ${mode.world}`;
   const ready = current === puzzle && values.length === puzzle.size * puzzle.size;
 
   return (
@@ -145,7 +146,7 @@ export function TorresGame({ puzzle, mode }: { puzzle: TorresPuzzle; mode: GameM
         )}
       </section>
 
-      <ResultDialog
+      {mode.kind !== "tutorial" && <ResultDialog
         open={resultOpen}
         onOpenChange={setResultOpen}
         mode={mode}
@@ -154,7 +155,7 @@ export function TorresGame({ puzzle, mode }: { puzzle: TorresPuzzle; mode: GameM
           recorded.current = false;
           start(puzzle);
         }}
-      />
+      />}
     </main>
   );
 }

@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { Clue } from "@cranea/core/palabra";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
+import { TryTutorial } from "@/components/tutorial/try-tutorial";
 import { ScoreLegend } from "@/games/palabra/components/legend";
 import { WordRow } from "@/games/palabra/components/word-row";
 
@@ -23,6 +24,7 @@ export default function HowTo() {
       <SiteHeader game={{ name: "Palabra", href: "/palabra" }} />
       <main className="mx-auto w-full max-w-2xl space-y-8 px-5 pt-4 pb-16 leading-relaxed sm:pl-16">
         <h1 className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">Cómo se juega Palabra</h1>
+        <TryTutorial href="/palabra/tutorial" />
         <p className="max-w-prose">
           Hay una palabra oculta de cinco letras. Escribí cualquier palabra y probala: cada letra se pinta para decirte si está en
           su lugar, si está en otro lugar o si no está. Con esas pistas elegí el próximo intento, hasta encontrarla.

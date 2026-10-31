@@ -14,7 +14,7 @@ export function NumberPad() {
   if (!puzzle) return null;
   const playing = status === "playing";
   return (
-    <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${puzzle.size + 1}, minmax(0, 1fr))` }}>
+    <div className="grid gap-1.5" data-tutorial="pad" style={{ gridTemplateColumns: `repeat(${puzzle.size + 1}, minmax(0, 1fr))` }}>
       {Array.from({ length: puzzle.size }, (_, k) => k + 1).map((v) => (
         <button
           key={v}
@@ -52,7 +52,7 @@ export function Toolbar() {
   const playing = status === "playing";
   return (
     <div className="grid grid-cols-4 gap-1.5">
-      <Button variant={notesMode ? "default" : "outline"} size="lg" onClick={toggleNotesMode} disabled={!playing} aria-pressed={notesMode} className="px-1.5 text-sm">
+      <Button data-tutorial="notes" variant={notesMode ? "default" : "outline"} size="lg" onClick={toggleNotesMode} disabled={!playing} aria-pressed={notesMode} className="px-1.5 text-sm">
         <PencilIcon className="max-[400px]:hidden" /> Notas
       </Button>
       <Button variant="outline" size="lg" onClick={undo} disabled={!playing || !canUndo} className="px-1.5 text-sm">

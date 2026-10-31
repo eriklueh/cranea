@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
+import { WORLDS } from "@cranea/core/torres";
+import { TutorialGate } from "@/components/tutorial/gate";
+import { TorresTutorial } from "@/games/torres/tutorial";
 import { TorresGame } from "@/games/torres/components/torres-game";
 import { allLevelParams, getLevel, getWorld } from "@/games/torres/data";
 
@@ -27,7 +30,14 @@ export default async function LevelPage({ params }: { params: Params }) {
   return (
     <>
       <SiteHeader game={{ name: "Torres", href: "/torres" }} />
-      <TorresGame puzzle={puzzle} mode={{ kind: "level", world: w, level: n, nextHref }} />
+      {w === WORLDS[0].id && n === 1 ? (
+        // La primera vez, el nivel 1 empieza con el tutorial.
+        <TutorialGate game="torres" levelKey={`w${w}-l${n}`} tutorial={<TorresTutorial />}>
+          <TorresGame puzzle={puzzle} mode={{ kind: "level", world: w, level: n, nextHref }} />
+        </TutorialGate>
+      ) : (
+        <TorresGame puzzle={puzzle} mode={{ kind: "level", world: w, level: n, nextHref }} />
+      )}
     </>
   );
 }

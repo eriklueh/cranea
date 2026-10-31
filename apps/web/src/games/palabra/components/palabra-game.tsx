@@ -18,11 +18,12 @@ import { cn } from "@/lib/utils";
 import { haptic, useOnChange, useSettled } from "@/lib/motion";
 import { WinBurst } from "@/components/win-burst";
 import { WORD_LENGTH } from "@cranea/core/palabra";
+import type { TutorialMode } from "@/components/tutorial/mode";
 
 /** Lo que tarda en darse vuelta una fila (y en saltar, si ganaste): el resultado espera a que termine. */
 const REVEAL_MS = { won: 1250, lost: 800 } as const;
 
-export function PalabraGame({ puzzle, mode }: { puzzle: PalabraPuzzle; mode: GameMode }) {
+export function PalabraGame({ puzzle, mode }: { puzzle: PalabraPuzzle; mode: GameMode | TutorialMode }) {
   const start = usePalabra((s) => s.start);
   const current = usePalabra((s) => s.puzzle);
   const status = usePalabra((s) => s.status);
@@ -65,7 +66,7 @@ export function PalabraGame({ puzzle, mode }: { puzzle: PalabraPuzzle; mode: Gam
 
   // Guardar el resultado una sola vez.
   useEffect(() => {
-    if (status === "playing" || recorded.current || current !== puzzle) return;
+    if (status === "playing" || recorded.current || current !== puzzle || mode.kind === "tutorial") return;
     recorded.current = true;
     const s = usePalabra.getState();
     const result = {
@@ -81,8 +82,8 @@ export function PalabraGame({ puzzle, mode }: { puzzle: PalabraPuzzle; mode: Gam
     return () => clearTimeout(t);
   }, [status, current, puzzle, mode]);
 
-  const title = mode.kind === "daily" ? `Palabra del día #${mode.number}` : `Nivel ${mode.level}`;
-  const subtitle = mode.kind === "daily" ? "Misma palabra para todos" : `Mundo ${mode.world}`;
+  const title = mode.kind === "tutorial" ? "Tutorial" : mode.kind === "daily" ? `Palabra del día #${mode.number}` : `Nivel ${mode.level}`;
+  const subtitle = mode.kind === "tutorial" ? "Palabra" : mode.kind === "daily" ? "Misma palabra para todos" : `Mundo ${mode.world}`;
 
   return (
     <main className="mx-auto w-full max-w-md px-4 pb-10">
@@ -121,7 +122,7 @@ export function PalabraGame({ puzzle, mode }: { puzzle: PalabraPuzzle; mode: Gam
         <Keyboard ready={Boolean(dict)} onSubmit={submit} />
       </section>
 
-      <ResultDialog
+      {mode.kind !== "tutorial" && <ResultDialog
         open={resultOpen && revealed}
         onOpenChange={setResultOpen}
         mode={mode}
@@ -130,7 +131,7 @@ export function PalabraGame({ puzzle, mode }: { puzzle: PalabraPuzzle; mode: Gam
           recorded.current = false;
           start(puzzle);
         }}
-      />
+      />}
     </main>
   );
 }
@@ -162,7 +163,7 @@ function Board() {
               // Cada fila se da vuelta letra por letra una sola vez, cuando aparece; la ganadora además salta.
               const flip = won && i === misses.length ? "anim-flip-win" : "anim-flip";
               return (
-                <li key={i} className="flex gap-1.5">
+                <li key={i} data-tutorial={`row-${i}`} className="flex gap-1.5">
                   <span className="sr-only">{`Intento ${i + 1}: ${row.word.toUpperCase()}. ${describeRow(row)}.`}</span>
                   {[...row.word].map((letter, j) => (
                     <LetterTile key={j} letter={letter} tone={toneFor(row.scores[j])} className={cn(TILE, flip)} style={{ "--i": j } as CSSProperties} />
@@ -172,7 +173,7 @@ function Board() {
             }
             if (i === rows.length && status === "playing") {
               return (
-                <li key={`in-${shakeKey}`} className={cn("flex gap-1.5", shakeKey > 0 && "animate-shake")} aria-label={`Tu palabra: ${input.join("").toUpperCase() || "vacía"}`}>
+                <li key={`in-${shakeKey}`} data-tutorial={`row-${i}`} className={cn("flex gap-1.5", shakeKey > 0 && "animate-shake")} aria-label={`Tu palabra: ${input.join("").toUpperCase() || "vacía"}`}>
                   {Array.from({ length: WORD_LENGTH }, (_, j) =>
                     input[j] === undefined
                       ? <LetterTile key={j} tone="empty" className={cn(TILE, "border-solid border-pencil/60")} />
