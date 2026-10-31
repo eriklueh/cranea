@@ -4,27 +4,9 @@ import { DeleteIcon } from "lucide-react";
 import { keyboardStates, WORD_LENGTH, type KeyState } from "@cranea/core/palabra";
 import { cn } from "@/lib/utils";
 import { usePalabra } from "../store";
-import { LetterTile, SCORE_LABEL } from "./letter-tile";
+import { SCORE_LABEL } from "./letter-tile";
 
 const ROWS = ["qwertyuiop", "asdfghjklñ", "zxcvbnm"];
-
-export function InputSlots() {
-  const input = usePalabra((s) => s.input);
-  const shakeKey = usePalabra((s) => s.shakeKey);
-  const message = usePalabra((s) => s.message);
-  return (
-    <div className="flex flex-col items-center gap-2">
-      <div key={shakeKey} className={cn("flex gap-1.5", shakeKey > 0 && "animate-shake")} role="img" aria-label={`Tu palabra: ${input.join("").toUpperCase() || "vacía"}`}>
-        {Array.from({ length: WORD_LENGTH }, (_, i) =>
-          input[i] === undefined ? <LetterTile key={i} tone="empty" /> : <LetterTile key={`${i}-${input[i]}`} letter={input[i]} tone="input" />,
-        )}
-      </div>
-      <p role="status" aria-live="polite" className="min-h-5 text-center text-sm text-muted-foreground">
-        {message}
-      </p>
-    </div>
-  );
-}
 
 function keyClass(state: KeyState | undefined) {
   if (state === 2) return "border-clue-exact bg-clue-exact text-paper";
@@ -33,15 +15,14 @@ function keyClass(state: KeyState | undefined) {
   return "border-ink bg-tile";
 }
 
-/** Teclado en pantalla (QWERTY español, con Ñ). Cada tecla muestra lo que ya dicen las filas a la vista. */
+/** Teclado en pantalla (QWERTY español, con Ñ). Cada tecla muestra lo que ya dijeron tus intentos. */
 export function Keyboard({ ready, onSubmit }: { ready: boolean; onSubmit: () => void }) {
-  const puzzle = usePalabra((s) => s.puzzle);
   const misses = usePalabra((s) => s.misses);
   const input = usePalabra((s) => s.input);
   const status = usePalabra((s) => s.status);
   const press = usePalabra((s) => s.press);
   const backspace = usePalabra((s) => s.backspace);
-  const states = useMemo(() => keyboardStates([...(puzzle?.clues ?? []), ...misses]), [puzzle, misses]);
+  const states = useMemo(() => keyboardStates(misses), [misses]);
   const playing = status === "playing";
   const full = input.length === WORD_LENGTH;
   const base =

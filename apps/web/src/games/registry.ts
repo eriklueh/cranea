@@ -26,7 +26,7 @@ export const GAMES: GameMeta[] = [
   {
     id: "palabra",
     name: "Palabra",
-    tagline: "Encontrá la palabra oculta cruzando palabras ya puntuadas.",
+    tagline: "Adiviná la palabra de cinco letras con la ayuda de los colores.",
     path: "/palabra",
     status: "live",
   },

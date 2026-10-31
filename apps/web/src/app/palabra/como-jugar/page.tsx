@@ -8,9 +8,11 @@ import { WordRow } from "@/games/palabra/components/word-row";
 
 export const metadata: Metadata = { title: "Cómo se juega Palabra" };
 
+// La palabra oculta del ejemplo es PALTA.
 const example: Clue[] = [
   { word: "pulpo", scores: [2, 0, 2, 0, 0] },
   { word: "manta", scores: [0, 2, 0, 2, 2] },
+  { word: "palta", scores: [2, 2, 2, 2, 2] },
 ];
 
 const repeated: Clue[] = [{ word: "error", scores: [1, 1, 2, 1, 0] }];
@@ -19,16 +21,15 @@ export default function HowTo() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto w-full max-w-2xl space-y-8 px-6 pt-4 pb-16 leading-relaxed sm:pl-16">
-        <h1 className="font-display text-4xl font-extrabold tracking-tight">Cómo se juega Palabra</h1>
+      <main className="mx-auto w-full max-w-2xl space-y-8 px-5 pt-4 pb-16 leading-relaxed sm:pl-16">
+        <h1 className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">Cómo se juega Palabra</h1>
         <p className="max-w-prose">
-          Hay una palabra oculta de cinco letras. El tablero ya trae algunas palabras probadas y puntuadas: cada letra te dice si
-          está en su lugar, si está en otro lugar o si no está. Cruzando las filas, una sola palabra encaja con todas. Tenés tres
-          intentos para escribirla.
+          Hay una palabra oculta de cinco letras. Escribí cualquier palabra y probala: cada letra se pinta para decirte si está en
+          su lugar, si está en otro lugar o si no está. Con esas pistas elegí el próximo intento, hasta encontrarla.
         </p>
 
         <div className="space-y-3">
-          <ol className="space-y-2.5">
+          <ol className="space-y-2">
             {example.map((c, i) => (
               <WordRow key={i} clue={c} />
             ))}
@@ -37,14 +38,10 @@ export default function HowTo() {
         </div>
 
         <section className="space-y-3">
-          <h2 className="font-display text-2xl font-bold">Cómo se resuelve este</h2>
+          <h2 className="font-display text-2xl font-bold">Cómo se resolvió este</h2>
           <p className="max-w-prose">
-            PULPO deja la P primera y la L en el medio. MANTA pone una A segunda, la T cuarta y otra A al final. Ya están las
-            cinco letras en su lugar: P, A, L, T, A. La palabra es PALTA.
-          </p>
-          <p className="max-w-prose">
-            Todas las letras de la palabra oculta aparecen en las pistas, en verde o en amarillo. No hace falta adivinar una letra
-            que nunca viste: alcanza con ubicar las que ya conocés.
+            PULPO dejó la P primera y la L en el medio. MANTA sumó una A segunda, la T cuarta y otra A al final. Con las cinco
+            letras ubicadas, el tercer intento fue PALTA.
           </p>
         </section>
 
@@ -57,8 +54,7 @@ export default function HowTo() {
           </ol>
           <p className="max-w-prose">
             Si la palabra fuera PERRO, al probar ERROR la R del medio queda en su lugar, la primera R está pero en otro lugar y la
-            última sale gris: PERRO no tiene una tercera R. Cada letra amarilla o verde corresponde a una letra distinta de la
-            palabra oculta.
+            última sale gris: PERRO no tiene una tercera R.
           </p>
         </section>
 
@@ -68,19 +64,20 @@ export default function HowTo() {
             <li>La palabra oculta es común: un sustantivo, un adjetivo o un verbo sin conjugar. Nunca un plural.</li>
             <li>Las tildes no cuentan: ÁRBOL se escribe ARBOL. La Ñ es una letra aparte.</li>
             <li>Tus intentos tienen que ser palabras del diccionario del juego. Si no está, no gastás intento.</li>
-            <li>Podés usar el teclado de la pantalla o el de tu computadora. Enter prueba la palabra y Borrar quita una letra.</li>
+            <li>El teclado de la pantalla se pinta con lo que ya descubriste.</li>
           </ul>
         </section>
 
         <section className="space-y-3">
           <h2 className="font-display text-2xl font-bold">Los mundos y el diario</h2>
           <p className="max-w-prose">
-            Cada mundo te da menos ayuda: primero muchas letras ya en su lugar, después casi todas amarillas y al final tres filas
-            para cruzar a la vez. La palabra del día es la misma para todos y se juega una sola vez.
+            En el primer mundo tenés seis intentos; después, cinco y cuatro. El último es el modo difícil: cada letra que
+            descubrís la tenés que usar en el intento siguiente, y las verdes no se mueven de su lugar. La palabra del día es la
+            misma para todos, con seis intentos, y se juega una sola vez.
           </p>
         </section>
 
-        <Button asChild size="lg">
+        <Button asChild size="lg" className="w-full sm:w-auto">
           <Link href="/palabra">Empezar a jugar</Link>
         </Button>
       </main>

@@ -67,13 +67,13 @@ Hashi: islas con números que se unen con puentes rectos (máximo dos por par), 
 
 ## Cómo funciona Palabra
 
-Palabra oculta de cinco letras (`/palabra`). El tablero trae palabras ya puntuadas como en Wordle (verde: en su lugar; amarilla: en otro lugar; gris: no está, o no hay más de esa letra) y hay tres intentos.
+Palabra oculta de cinco letras (`/palabra`), como Wordle: probás palabras y cada letra se pinta (verde: en su lugar; amarilla: en otro lugar; gris: no está, o no hay más de esa letra). Las pistas salen solo de tus intentos.
 
 - **Listas** (`packages/core/src/palabra/words.ts`): escritas a mano para el proyecto, sin datasets externos. ~900 respuestas (sustantivos, adjetivos y verbos en infinitivo comunes, sin plurales ni palabras ofensivas o de doble sentido rioplatense) y ~2150 palabras válidas para probar (respuestas + plurales, femeninos, conjugaciones de verbos regulares generadas y palabras menos comunes).
 - **Tildes**: todo se compara normalizado (`normalize.ts`): sin tildes ni diéresis (Á = A, Ü = U) y con la Ñ como letra propia. Las fichas muestran mayúsculas sin tilde; al terminar se muestra la respuesta con tildes.
 - **Puntaje** (`score.ts`): verdes primero; cada amarilla consume una aparición todavía libre de esa letra.
-- **Generador** (`generator.ts`): con una semilla elige la respuesta y suma filas (palabras de la lista de respuestas) hasta que una sola respuesta encaja, y quita las filas que sobran. Se acepta si todas las letras de la respuesta (con repeticiones) aparecen en verde o amarilla en alguna fila, si ninguna otra palabra válida encaja y si respeta el balance del mundo (filas, verdes, filas grises). Dificultad: `3·filas + 2·lugares sin verde + promedio de log2(respuestas que deja cada fila sola)`.
-- **Niveles**: 4 mundos de 24 (Pistas generosas, Menos verdes, Solo amarillas, Tres filas) en `levels.ts`, pregenerados con `pnpm --filter @cranea/core levels:palabra` → `levels/palabra.json` (sin respuestas repetidas, curva de dificultad como Cifra).
+- **Generador** (`generator.ts`): con una semilla elige la respuesta de la lista, sin repetir entre niveles. `hardModeError` valida el modo difícil (las verdes no se mueven y las letras descubiertas se vuelven a usar).
+- **Niveles**: 4 mundos de 24 en `levels.ts`: seis, cinco y cuatro intentos, y modo difícil con cinco. Pregenerados con `pnpm --filter @cranea/core levels:palabra` → `levels/palabra.json`. El diario tiene seis intentos.
 - **Diario**: se genera en el cliente con la fecha UTC; se juega una vez. Cambiar la lista de respuestas cambia los diarios futuros.
 - **Web**: las listas se cargan con un import dinámico solo en las páginas del juego (un chunk propio de ~7 KB gzip que el service worker guarda para jugar sin conexión). Una palabra fuera de la lista sacude la fila y no gasta intento.
 

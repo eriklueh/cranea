@@ -1,8 +1,6 @@
 "use client";
 import { create } from "zustand";
-import { isSolved, scoreWord, WORD_LENGTH, type Clue, type PalabraPuzzle } from "@cranea/core/palabra";
-
-export const MAX_ATTEMPTS = 3;
+import { hardModeError, isSolved, scoreWord, WORD_LENGTH, type Clue, type PalabraPuzzle } from "@cranea/core/palabra";
 
 interface PalabraSession {
   puzzle: PalabraPuzzle | null;
@@ -56,21 +54,26 @@ export const usePalabra = create<PalabraSession>((set, get) => ({
       set({ status: "won", finishedAt: Date.now(), message: null });
       return;
     }
-    // Una palabra que no está en la lista no gasta intento.
+    // Una palabra que no está en la lista, o que no respeta el modo difícil, no gasta intento.
     if (!allowed?.has(word)) {
       set({ shakeKey: shakeKey + 1, message: allowed ? "No está en la lista. No gastaste intento." : "Cargando palabras…" });
       return;
     }
+    const rule = puzzle.hard ? hardModeError(word, misses) : null;
+    if (rule) {
+      set({ shakeKey: shakeKey + 1, message: `${rule} No gastaste intento.` });
+      return;
+    }
     const scores = scoreWord(puzzle.answer, word);
     const next = [...misses, { word, scores }];
-    const lost = next.length >= MAX_ATTEMPTS && !isSolved(scores);
-    const left = MAX_ATTEMPTS - next.length;
+    const lost = next.length >= puzzle.attempts && !isSolved(scores);
+    const left = puzzle.attempts - next.length;
     set({
       misses: next,
       input: [],
       status: lost ? "lost" : "playing",
       finishedAt: lost ? Date.now() : null,
-      message: lost ? null : `No es. ${left === 1 ? "Te queda un intento." : `Te quedan ${left} intentos.`}`,
+      message: lost ? null : left === 1 ? "Te queda un intento." : null,
     });
   },
 }));

@@ -7,12 +7,15 @@ import { Button } from "@/components/ui/button";
 import { useProgress } from "@/stores/progress";
 import { GAME_ID, levelKey } from "../data";
 import { useDictionary } from "../dictionary";
-import { MAX_ATTEMPTS, usePalabra } from "../store";
-import { InputSlots, Keyboard } from "./keyboard";
+import { usePalabra } from "../store";
+import { Keyboard } from "./keyboard";
+import { LetterTile, toneFor } from "./letter-tile";
 import { Lives } from "./lives";
 import { ResultDialog, type GameMode } from "./result-dialog";
 import { Timer } from "./timer";
-import { WordRow } from "./word-row";
+import { describeRow } from "./word-row";
+import { cn } from "@/lib/utils";
+import { WORD_LENGTH } from "@cranea/core/palabra";
 
 export function PalabraGame({ puzzle, mode }: { puzzle: PalabraPuzzle; mode: GameMode }) {
   const start = usePalabra((s) => s.start);
@@ -61,7 +64,7 @@ export function PalabraGame({ puzzle, mode }: { puzzle: PalabraPuzzle; mode: Gam
     const s = usePalabra.getState();
     const result = {
       won: status === "won",
-      attempts: status === "won" ? s.misses.length + 1 : MAX_ATTEMPTS,
+      attempts: status === "won" ? s.misses.length + 1 : puzzle.attempts,
       timeMs: (s.finishedAt ?? Date.now()) - s.startedAt,
       at: Date.now(),
     };
@@ -77,7 +80,7 @@ export function PalabraGame({ puzzle, mode }: { puzzle: PalabraPuzzle; mode: Gam
 
   return (
     <main className="mx-auto w-full max-w-md px-4 pb-10">
-      <div className="mb-5 flex items-end justify-between gap-4">
+      <div className="mb-4 flex items-end justify-between gap-4">
         <div>
           <Link href="/palabra" className="mb-1 inline-flex items-center gap-0.5 text-sm text-muted-foreground hover:text-foreground">
             <ChevronLeftIcon className="size-4" /> {subtitle}
@@ -90,19 +93,12 @@ export function PalabraGame({ puzzle, mode }: { puzzle: PalabraPuzzle; mode: Gam
         </div>
       </div>
 
-      <section aria-label="Pistas" className="mb-5">
-        <ol className="space-y-2.5">
-          {puzzle.clues.map((c, i) => (
-            <WordRow key={i} clue={c} />
-          ))}
-          {misses.map((c, i) => (
-            <WordRow key={`m${i}`} clue={c} miss />
-          ))}
-        </ol>
+      <section aria-label="Tablero" className="mb-3 space-y-3">
+        <Board />
+        {puzzle.hard && <p className="text-center text-xs text-muted-foreground">Modo difícil: usá todo lo que ya descubriste.</p>}
       </section>
 
-      <section aria-label="Tu palabra" className="space-y-3">
-        <InputSlots />
+      <section aria-label="Teclado" className="space-y-3">
         {status !== "playing" && (
           <div className="flex justify-center">
             <button className="text-sm font-semibold underline decoration-margin decoration-2 underline-offset-4" onClick={() => setResultOpen(true)}>
@@ -130,5 +126,56 @@ export function PalabraGame({ puzzle, mode }: { puzzle: PalabraPuzzle; mode: Gam
         }}
       />
     </main>
+  );
+}
+
+const TILE = "size-[clamp(2.5rem,12vw,3rem)] text-[clamp(1.35rem,6vw,1.6rem)]";
+
+/** Una fila por intento, como Wordle: lo probado, la palabra que estás escribiendo y lo que queda. */
+function Board() {
+  const puzzle = usePalabra((s) => s.puzzle);
+  const misses = usePalabra((s) => s.misses);
+  const input = usePalabra((s) => s.input);
+  const status = usePalabra((s) => s.status);
+  const shakeKey = usePalabra((s) => s.shakeKey);
+  const message = usePalabra((s) => s.message);
+  if (!puzzle) return null;
+  const won = status === "won";
+  // Al ganar, la palabra correcta se ve como una fila toda verde.
+  const rows = won ? [...misses, { word: puzzle.answer, scores: Array(WORD_LENGTH).fill(2) as (0 | 1 | 2)[] }] : misses;
+
+  return (
+    <>
+      <ol className="flex flex-col items-center gap-1.5">
+        {Array.from({ length: puzzle.attempts }, (_, i) => {
+          const row = rows[i];
+          if (row) {
+            return (
+              <li key={i} className="flex gap-1.5">
+                <span className="sr-only">{`Intento ${i + 1}: ${row.word.toUpperCase()}. ${describeRow(row)}.`}</span>
+                {[...row.word].map((letter, j) => <LetterTile key={j} letter={letter} tone={toneFor(row.scores[j])} className={TILE} />)}
+              </li>
+            );
+          }
+          if (i === rows.length && status === "playing") {
+            return (
+              <li key={`in-${shakeKey}`} className={cn("flex gap-1.5", shakeKey > 0 && "animate-shake")} aria-label={`Tu palabra: ${input.join("").toUpperCase() || "vacía"}`}>
+                {Array.from({ length: WORD_LENGTH }, (_, j) =>
+                  input[j] === undefined
+                    ? <LetterTile key={j} tone="empty" className={cn(TILE, "border-solid border-pencil/60")} />
+                    : <LetterTile key={`${j}-${input[j]}`} letter={input[j]} tone="input" className={TILE} />,
+                )}
+              </li>
+            );
+          }
+          return (
+            <li key={i} aria-hidden className="flex gap-1.5">
+              {Array.from({ length: WORD_LENGTH }, (_, j) => <LetterTile key={j} tone="empty" className={cn(TILE, "opacity-50")} />)}
+            </li>
+          );
+        })}
+      </ol>
+      <p role="status" aria-live="polite" className="min-h-5 text-center text-sm text-muted-foreground">{message}</p>
+    </>
   );
 }

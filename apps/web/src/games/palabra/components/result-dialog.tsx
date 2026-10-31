@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatTime } from "@/lib/utils";
-import { MAX_ATTEMPTS, usePalabra } from "../store";
+import { usePalabra } from "../store";
 import { LetterTile } from "./letter-tile";
 
 export type GameMode =
@@ -26,13 +26,16 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry }: {
   if (!puzzle || status === "playing") return null;
 
   const won = status === "won";
-  const attempts = won ? misses.length + 1 : MAX_ATTEMPTS;
+  const total = puzzle.attempts;
+  const attempts = won ? misses.length + 1 : total;
   const time = formatTime((finishedAt ?? Date.now()) - startedAt);
   const title = mode.kind === "daily" ? `Palabra del día #${mode.number}` : `Nivel ${mode.world}-${mode.level}`;
 
   const share = async () => {
-    const marks = Array.from({ length: MAX_ATTEMPTS }, (_, i) => (i < misses.length ? "🟥" : won && i === misses.length ? "🟩" : "⬜")).join("");
-    const text = `Craneá · ${title}\n${marks} ${won ? `${attempts}/${MAX_ATTEMPTS}` : "X"} en ${time}\n${location.origin}/palabra`;
+    // Como Wordle: los colores de cada intento, sin las letras.
+    const rows = [...misses.map((m) => m.scores), ...(won ? [[2, 2, 2, 2, 2]] : [])];
+    const grid = rows.map((r) => r.map((x) => (x === 2 ? "🟩" : x === 1 ? "🟨" : "⬜")).join("")).join("\n");
+    const text = `Craneá · ${title} ${won ? `${attempts}/${total}` : `X/${total}`} en ${time}\n${grid}\n${location.origin}/palabra`;
     try {
       if (navigator.share) await navigator.share({ text });
       else {
@@ -50,7 +53,7 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry }: {
         <DialogHeader>
           <DialogTitle>{won ? (attempts === 1 ? "Al primer intento" : "La encontraste") : "Se acabaron los intentos"}</DialogTitle>
           <DialogDescription>
-            {won ? `${title}, en ${attempts} de ${MAX_ATTEMPTS} intentos y ${time}.` : `${title}, sin resolver. La palabra era «${puzzle.display}».`}
+            {won ? `${title}, en ${attempts} de ${total} intentos y ${time}.` : `${title}, sin resolver. La palabra era «${puzzle.display}».`}
           </DialogDescription>
         </DialogHeader>
         <div className="flex gap-1.5" role="img" aria-label={`Respuesta: ${puzzle.display}`}>
