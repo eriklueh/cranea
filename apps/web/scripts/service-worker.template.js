@@ -54,3 +54,30 @@ self.addEventListener("fetch", (event) => {
     })());
   }
 });
+
+// Daily reminder sent by Convex (convex/push.ts).
+self.addEventListener("push", (event) => {
+  let data = {};
+  try { data = event.data?.json() ?? {}; } catch {}
+  const url = typeof data.url === "string" && data.url.startsWith("/") ? data.url : "/cifra/diario";
+  event.waitUntil(self.registration.showNotification(data.title || "Craneá", {
+    body: data.body || "Ya está el desafío de hoy.",
+    icon: "/icons/icon-192.png",
+    badge: "/icons/icon-192.png",
+    tag: "cranea-diario",
+    data: { url },
+  }));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = new URL(event.notification.data?.url || "/cifra/diario", ORIGIN).href;
+  event.waitUntil((async () => {
+    const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    const open = windows.find((client) => client.url === target) || windows.find((client) => new URL(client.url).origin === ORIGIN);
+    if (!open) return self.clients.openWindow(target);
+    await open.focus();
+    // navigate() only works on pages this worker controls.
+    if (open.url !== target) await open.navigate(target).catch(() => self.clients.openWindow(target));
+  })());
+});

@@ -3,7 +3,11 @@ import { ChartColumnIcon } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { InstallApp } from "@/components/pwa-provider";
 import { AccountButton } from "@/components/account-button";
+<<<<<<< HEAD
 import { Button } from "@/components/ui/button";
+=======
+import { DailyReminder } from "@/components/daily-reminder";
+>>>>>>> t3/daily-challenge-push-reminders
 
 export function SiteHeader({ children }: { children?: React.ReactNode }) {
   return (
@@ -14,6 +18,7 @@ export function SiteHeader({ children }: { children?: React.ReactNode }) {
         </Link>
         {children}
       </div>
+<<<<<<< HEAD
       <div className="flex shrink-0 items-center gap-1">
         <InstallApp />
         <Button asChild variant="ghost" size="icon">
@@ -22,6 +27,9 @@ export function SiteHeader({ children }: { children?: React.ReactNode }) {
         <ThemeToggle />
         <AccountButton />
       </div>
+=======
+      <div className="flex shrink-0 items-center gap-1"><InstallApp /><DailyReminder /><ThemeToggle /><AccountButton /></div>
+>>>>>>> t3/daily-challenge-push-reminders
     </header>
   );
 }
