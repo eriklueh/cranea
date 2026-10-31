@@ -1,7 +1,9 @@
 "use client";
-import { useMemo, useRef, type KeyboardEvent, type PointerEvent } from "react";
+import { useMemo, useRef, type CSSProperties, type KeyboardEvent, type PointerEvent } from "react";
 import { colCells, emptyBoard, lineDone, rowCells, EMPTY, FILLED, type Cell, type NonogramaPuzzle } from "@cranea/core/nonograma";
 import { cn } from "@/lib/utils";
+import { haptic, play, useOnChange } from "@/lib/motion";
+import { WinBurst } from "@/components/win-burst";
 import { useNonograma } from "../store";
 
 const NONE: number[] = [];
@@ -23,6 +25,13 @@ export function Board({ puzzle }: { puzzle: NonogramaPuzzle }) {
   const flagged = useNonograma((s) => (live ? s.flagged : NONE));
   const status = useNonograma((s) => (live ? s.status : "playing"));
   const cellsRef = useRef<HTMLDivElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
+  useOnChange(flagged, (f) => {
+    if (!f.length) return;
+    haptic("invalid");
+    play(boxRef);
+  });
+  useOnChange(status, (s) => s === "won" && haptic("win"));
 
   const done = useMemo(
     () => ({
@@ -38,6 +47,8 @@ export function Board({ puzzle }: { puzzle: NonogramaPuzzle }) {
   const playing = status === "playing";
   const cursorRow = cursor === null ? -1 : Math.floor(cursor / W);
   const cursorCol = cursor === null ? -1 : cursor % W;
+  // Al terminar, el dibujo aparece (o late, si ganaste) en diagonal; el paso se ajusta para no pasar de ~0.7 s.
+  const step = `${Math.min(40, Math.round(700 / (W + H - 2)))}ms`;
 
   const indexAt = (x: number, y: number) => {
     const rect = cellsRef.current!.getBoundingClientRect();
@@ -92,14 +103,14 @@ export function Board({ puzzle }: { puzzle: NonogramaPuzzle }) {
   const cellState = (i: number): Cell => (finished ? (puzzle.solution[i] ? FILLED : 0) : board[i]);
 
   return (
-    <div className={cn("mx-auto grid w-full grid-cols-[auto_1fr] select-none", sizing.box)}>
+    <div ref={boxRef} className={cn("anim-fade-up relative mx-auto grid w-full grid-cols-[auto_1fr] select-none", sizing.box)}>
       <div />
       <div className="grid items-end pb-1" style={{ gridTemplateColumns: `repeat(${W}, minmax(0, 1fr))` }} aria-hidden>
         {puzzle.cols.map((clue, c) => (
           <div
             key={c}
             className={cn(
-              "flex flex-col items-center justify-end rounded-t-sm pb-0.5 font-display leading-tight font-bold tabular-nums transition-opacity",
+              "flex flex-col items-center justify-end rounded-t-sm pb-0.5 font-display leading-tight font-bold tabular-nums transition-[opacity,background-color] duration-300",
               sizing.clue,
               (done.cols[c] || finished) && "opacity-35",
               playing && c === cursorCol && "bg-accent",
@@ -117,7 +128,7 @@ export function Board({ puzzle }: { puzzle: NonogramaPuzzle }) {
           <div
             key={r}
             className={cn(
-              "flex items-center justify-end rounded-l-sm pl-1 font-display font-bold whitespace-nowrap tabular-nums transition-opacity",
+              "flex items-center justify-end rounded-l-sm pl-1 font-display font-bold whitespace-nowrap tabular-nums transition-[opacity,background-color] duration-300",
               sizing.clue,
               sizing.gap,
               (done.rows[r] || finished) && "opacity-35",
@@ -137,7 +148,7 @@ export function Board({ puzzle }: { puzzle: NonogramaPuzzle }) {
         aria-label={`Tablero de ${W} por ${H}`}
         aria-readonly={!playing}
         className={cn(
-          "grid aspect-square touch-none overflow-hidden rounded-sm border-2 border-ink bg-tile shadow-[0_4px_0_0_var(--shadow-ink)]",
+          "relative grid aspect-square touch-none overflow-hidden rounded-sm border-2 border-ink bg-tile shadow-[0_4px_0_0_var(--shadow-ink)] transition-[border-color,box-shadow] duration-500",
           finished && status === "won" && "border-ok shadow-[0_4px_0_0_var(--ok)]",
         )}
         style={{ gridTemplateColumns: `repeat(${W}, minmax(0, 1fr))`, aspectRatio: `${W} / ${H}` }}
@@ -167,29 +178,48 @@ export function Board({ puzzle }: { puzzle: NonogramaPuzzle }) {
                   aria-label={`Fila ${r + 1} (${rowClue}), columna ${c + 1} (${colClue}): ${STATE_LABEL[state]}${flaggedSet.has(i) ? ", revisar" : ""}`}
                   onFocus={() => useNonograma.getState().cursor !== i && useNonograma.getState().setCursor(i)}
                   className={cn(
-                    "relative outline-none focus-visible:z-10 focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:ring-inset",
+                    // El foco es un outline: queda encima de la tinta de la casilla.
+                    "relative outline-none focus-visible:z-10 focus-visible:outline-solid focus-visible:outline-3 focus-visible:outline-offset-[-3px] focus-visible:outline-ring",
                     c < W - 1 && ((c + 1) % 5 === 0 ? "border-r-2 border-r-ink/55" : "border-r border-r-ink/15"),
                     r < H - 1 && ((r + 1) % 5 === 0 ? "border-b-2 border-b-ink/55" : "border-b border-b-ink/15"),
-                    state === FILLED ? "bg-ink" : near ? "bg-accent/70" : "bg-tile",
+                    near ? "bg-accent/70" : "bg-tile",
                     finished && "transition-colors duration-500",
                   )}
+                  style={{ "--i": r + c, "--step": finished ? step : "0ms" } as CSSProperties}
                 >
-                  {state === EMPTY && <CrossMark />}
-                  {flaggedSet.has(i) && <span aria-hidden className="absolute inset-0 bg-margin/25 ring-2 ring-margin ring-inset" />}
+                  {/* La tinta entra con un golpe corto; al ganar, el dibujo late en diagonal. */}
+                  {state === FILLED && <span aria-hidden className={cn("absolute inset-0 bg-ink", status === "won" ? "anim-wave" : "anim-ink-in")} />}
+                  {state === EMPTY && <CrossMark animate />}
+                  {flaggedSet.has(i) && <span aria-hidden className="anim-flash absolute inset-0 bg-margin/25 ring-2 ring-margin ring-inset" />}
                 </div>
               );
             })}
           </div>
         ))}
+        {/* Una pasada de color sobre cada fila o columna que queda completa. */}
+        {playing &&
+          puzzle.rows.map((clue, r) =>
+            done.rows[r] && clue.length > 0 ? (
+              <span key={`r${r}`} aria-hidden className="anim-sweep pointer-events-none absolute inset-x-0 bg-ok/20" style={{ top: `${(r / H) * 100}%`, height: `${100 / H}%` }} />
+            ) : null,
+          )}
+        {playing &&
+          puzzle.cols.map((clue, c) =>
+            done.cols[c] && clue.length > 0 ? (
+              <span key={`c${c}`} aria-hidden className="anim-sweep-y pointer-events-none absolute inset-y-0 bg-ok/20" style={{ left: `${(c / W) * 100}%`, width: `${100 / W}%` }} />
+            ) : null,
+          )}
       </div>
+      {status === "won" && <WinBurst delay={300} />}
     </div>
   );
 }
 
-export function CrossMark({ className }: { className?: string }) {
+export function CrossMark({ className, animate = false }: { className?: string; animate?: boolean }) {
   return (
     <svg viewBox="0 0 10 10" aria-hidden className={cn("absolute inset-[18%] text-pencil", className)}>
-      <path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      {/* Con `animate`, la cruz se traza de un tirón: primero un palito y después el otro. */}
+      <path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" pathLength={animate ? 1 : undefined} className={animate ? "anim-draw" : undefined} />
     </svg>
   );
 }

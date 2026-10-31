@@ -15,7 +15,7 @@ function keyClass(state: KeyState | undefined) {
   return "border-ink bg-tile";
 }
 
-/** Teclado en pantalla (QWERTY español, con Ñ). Cada tecla muestra lo que ya dijeron tus intentos. */
+/** Teclado en pantalla (QWERTY español, con Ñ). Cada tecla muestra lo que ya dijeron tus intentos, cuando la fila termina de darse vuelta. */
 export function Keyboard({ ready, onSubmit }: { ready: boolean; onSubmit: () => void }) {
   const misses = usePalabra((s) => s.misses);
   const input = usePalabra((s) => s.input);
@@ -26,7 +26,7 @@ export function Keyboard({ ready, onSubmit }: { ready: boolean; onSubmit: () => 
   const playing = status === "playing";
   const full = input.length === WORD_LENGTH;
   const base =
-    "inline-flex h-12 min-w-0 flex-1 items-center justify-center rounded-md border-2 font-display text-lg font-bold uppercase shadow-[0_2px_0_0_var(--shadow-ink)] transition-transform outline-none active:translate-y-px focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-40";
+    "inline-flex h-12 min-w-0 flex-1 items-center justify-center rounded-md border-2 font-display text-lg font-bold uppercase shadow-[0_2px_0_0_var(--shadow-ink)] [transition:translate_90ms,scale_90ms,background-color_260ms_ease_var(--key-delay,0ms),border-color_260ms_ease_var(--key-delay,0ms),color_260ms_ease_var(--key-delay,0ms)] outline-none active:translate-y-px active:scale-95 focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-40";
 
   return (
     <div className="space-y-1.5" role="group" aria-label="Teclado">
@@ -51,7 +51,7 @@ export function Keyboard({ ready, onSubmit }: { ready: boolean; onSubmit: () => 
                 type="button"
                 disabled={!playing || full}
                 onClick={() => press(letter)}
-                className={cn(base, keyClass(state))}
+                className={cn(base, keyClass(state), "[--key-delay:600ms]")}
                 aria-label={`${letter.toUpperCase()}${state !== undefined && state !== "unknown" ? `, ${SCORE_LABEL[state]}` : ""}`}
               >
                 {letter}

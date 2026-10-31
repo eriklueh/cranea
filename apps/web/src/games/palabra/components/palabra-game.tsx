@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { ChevronLeftIcon } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { normalizeLetter, type PalabraPuzzle } from "@cranea/core/palabra";
 import { Button } from "@/components/ui/button";
 import { useProgress } from "@/stores/progress";
@@ -15,7 +15,12 @@ import { ResultDialog, type GameMode } from "./result-dialog";
 import { Timer } from "./timer";
 import { describeRow } from "./word-row";
 import { cn } from "@/lib/utils";
+import { haptic, useOnChange, useSettled } from "@/lib/motion";
+import { WinBurst } from "@/components/win-burst";
 import { WORD_LENGTH } from "@cranea/core/palabra";
+
+/** Lo que tarda en darse vuelta una fila (y en saltar, si ganaste): el resultado espera a que termine. */
+const REVEAL_MS = { won: 1250, lost: 800 } as const;
 
 export function PalabraGame({ puzzle, mode }: { puzzle: PalabraPuzzle; mode: GameMode }) {
   const start = usePalabra((s) => s.start);
@@ -24,6 +29,7 @@ export function PalabraGame({ puzzle, mode }: { puzzle: PalabraPuzzle; mode: Gam
   const misses = usePalabra((s) => s.misses);
   const { dict, failed, retry } = useDictionary();
   const [resultOpen, setResultOpen] = useState(false);
+  const revealed = useSettled(status !== "playing", status === "won" ? REVEAL_MS.won : REVEAL_MS.lost);
   const recorded = useRef(false);
 
   useEffect(() => {
@@ -93,7 +99,7 @@ export function PalabraGame({ puzzle, mode }: { puzzle: PalabraPuzzle; mode: Gam
         </div>
       </div>
 
-      <section aria-label="Tablero" className="mb-3 space-y-3">
+      <section aria-label="Tablero" className="anim-fade-up mb-3 space-y-3">
         <Board />
         {puzzle.hard && <p className="text-center text-xs text-muted-foreground">Modo difícil: usá todo lo que ya descubriste.</p>}
       </section>
@@ -116,7 +122,7 @@ export function PalabraGame({ puzzle, mode }: { puzzle: PalabraPuzzle; mode: Gam
       </section>
 
       <ResultDialog
-        open={resultOpen}
+        open={resultOpen && revealed}
         onOpenChange={setResultOpen}
         mode={mode}
         onRetry={() => {
@@ -139,6 +145,8 @@ function Board() {
   const status = usePalabra((s) => s.status);
   const shakeKey = usePalabra((s) => s.shakeKey);
   const message = usePalabra((s) => s.message);
+  useOnChange(shakeKey, (key) => key > 0 && haptic("invalid"));
+  useOnChange(status, (s) => s === "won" && haptic("win"));
   if (!puzzle) return null;
   const won = status === "won";
   // Al ganar, la palabra correcta se ve como una fila toda verde.
@@ -146,35 +154,42 @@ function Board() {
 
   return (
     <>
-      <ol className="flex flex-col items-center gap-1.5">
-        {Array.from({ length: puzzle.attempts }, (_, i) => {
-          const row = rows[i];
-          if (row) {
+      <div className="relative">
+        <ol className="flex flex-col items-center gap-1.5">
+          {Array.from({ length: puzzle.attempts }, (_, i) => {
+            const row = rows[i];
+            if (row) {
+              // Cada fila se da vuelta letra por letra una sola vez, cuando aparece; la ganadora además salta.
+              const flip = won && i === misses.length ? "anim-flip-win" : "anim-flip";
+              return (
+                <li key={i} className="flex gap-1.5">
+                  <span className="sr-only">{`Intento ${i + 1}: ${row.word.toUpperCase()}. ${describeRow(row)}.`}</span>
+                  {[...row.word].map((letter, j) => (
+                    <LetterTile key={j} letter={letter} tone={toneFor(row.scores[j])} className={cn(TILE, flip)} style={{ "--i": j } as CSSProperties} />
+                  ))}
+                </li>
+              );
+            }
+            if (i === rows.length && status === "playing") {
+              return (
+                <li key={`in-${shakeKey}`} className={cn("flex gap-1.5", shakeKey > 0 && "animate-shake")} aria-label={`Tu palabra: ${input.join("").toUpperCase() || "vacía"}`}>
+                  {Array.from({ length: WORD_LENGTH }, (_, j) =>
+                    input[j] === undefined
+                      ? <LetterTile key={j} tone="empty" className={cn(TILE, "border-solid border-pencil/60")} />
+                      : <LetterTile key={`${j}-${input[j]}`} letter={input[j]} tone="input" className={TILE} />,
+                  )}
+                </li>
+              );
+            }
             return (
-              <li key={i} className="flex gap-1.5">
-                <span className="sr-only">{`Intento ${i + 1}: ${row.word.toUpperCase()}. ${describeRow(row)}.`}</span>
-                {[...row.word].map((letter, j) => <LetterTile key={j} letter={letter} tone={toneFor(row.scores[j])} className={TILE} />)}
+              <li key={i} aria-hidden className="flex gap-1.5">
+                {Array.from({ length: WORD_LENGTH }, (_, j) => <LetterTile key={j} tone="empty" className={cn(TILE, "opacity-50")} />)}
               </li>
             );
-          }
-          if (i === rows.length && status === "playing") {
-            return (
-              <li key={`in-${shakeKey}`} className={cn("flex gap-1.5", shakeKey > 0 && "animate-shake")} aria-label={`Tu palabra: ${input.join("").toUpperCase() || "vacía"}`}>
-                {Array.from({ length: WORD_LENGTH }, (_, j) =>
-                  input[j] === undefined
-                    ? <LetterTile key={j} tone="empty" className={cn(TILE, "border-solid border-pencil/60")} />
-                    : <LetterTile key={`${j}-${input[j]}`} letter={input[j]} tone="input" className={TILE} />,
-                )}
-              </li>
-            );
-          }
-          return (
-            <li key={i} aria-hidden className="flex gap-1.5">
-              {Array.from({ length: WORD_LENGTH }, (_, j) => <LetterTile key={j} tone="empty" className={cn(TILE, "opacity-50")} />)}
-            </li>
-          );
-        })}
-      </ol>
+          })}
+        </ol>
+        {won && <WinBurst delay={900} />}
+      </div>
       <p role="status" aria-live="polite" className="min-h-5 text-center text-sm text-muted-foreground">{message}</p>
     </>
   );

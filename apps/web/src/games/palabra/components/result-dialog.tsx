@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatTime } from "@/lib/utils";
@@ -58,7 +58,7 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry }: {
         </DialogHeader>
         <div className="flex gap-1.5" role="img" aria-label={`Respuesta: ${puzzle.display}`}>
           {[...puzzle.answer].map((letter, i) => (
-            <LetterTile key={i} letter={letter} tone="solution" />
+            <LetterTile key={i} letter={letter} tone="solution" className="anim-pop-in [--base:140ms]" style={{ "--i": i } as CSSProperties} />
           ))}
         </div>
         <DialogFooter>

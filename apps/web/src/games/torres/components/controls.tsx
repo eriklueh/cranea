@@ -23,7 +23,7 @@ export function NumberPad() {
           onClick={() => input(v)}
           aria-label={notesMode ? `Nota ${v}` : `Altura ${v}`}
           className={cn(
-            "h-12 rounded-md border-2 border-ink bg-tile font-display text-xl font-bold tabular-nums shadow-[0_2px_0_0_var(--shadow-ink)] transition-transform outline-none active:translate-y-px focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-35",
+            "h-12 rounded-md border-2 border-ink bg-tile font-display text-xl font-bold tabular-nums shadow-[0_2px_0_0_var(--shadow-ink)] transition-transform duration-100 outline-none active:translate-y-px active:scale-95 focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-35",
             notesMode && "border-dashed text-base font-semibold text-pencil",
           )}
         >
@@ -35,7 +35,7 @@ export function NumberPad() {
         disabled={!playing}
         onClick={erase}
         aria-label="Borrar casilla"
-        className="grid h-12 place-items-center rounded-md border-2 border-ink bg-tile shadow-[0_2px_0_0_var(--shadow-ink)] transition-transform outline-none active:translate-y-px focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-35"
+        className="grid h-12 place-items-center rounded-md border-2 border-ink bg-tile shadow-[0_2px_0_0_var(--shadow-ink)] transition-transform duration-100 outline-none active:translate-y-px active:scale-95 focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-35"
       >
         <DeleteIcon className="size-5" />
       </button>
@@ -100,7 +100,7 @@ export function Lives() {
   return (
     <span className="inline-flex items-center gap-1" role="img" aria-label={`Te quedan ${left} de ${MAX_ATTEMPTS} intentos`}>
       {Array.from({ length: MAX_ATTEMPTS }, (_, i) => (
-        <span key={i} className={cn("h-4 w-1.5 rounded-full", i < left ? "bg-ink" : "bg-margin/40")} />
+        <span key={i} className={cn("h-4 w-1.5 rounded-full transition-[background-color,scale] duration-300 ease-out", i < left ? "bg-ink" : "scale-y-60 bg-margin/40")} />
       ))}
     </span>
   );

@@ -1,4 +1,6 @@
+import type { CSSProperties } from "react";
 import type { Edge, Island } from "@cranea/core/puentes";
+import { cn } from "@/lib/utils";
 
 /** Medidas en unidades de celda: el SVG usa viewBox = ancho × alto del tablero. */
 export const ISLAND_R = 0.4;
@@ -15,31 +17,45 @@ export function edgeEnds(islands: readonly Island[], e: Edge) {
   return { x1, y1, x2, y2 };
 }
 
-/** Uno o dos trazos paralelos según la cantidad de puentes. */
-export function BridgeLines({ islands, edge, count, className, strokeWidth = 0.09 }: {
+/**
+ * Uno o dos trazos paralelos según la cantidad de puentes.
+ * Con `animate`, el primer trazo se dibuja desde la isla `from` y el segundo se separa del primero.
+ */
+export function BridgeLines({ islands, edge, count, className, strokeWidth = 0.09, animate = false, from = "a" }: {
   islands: readonly Island[];
   edge: Edge;
   count: number;
   className?: string;
   strokeWidth?: number;
+  animate?: boolean;
+  from?: "a" | "b";
 }) {
   if (count <= 0) return null;
-  const { x1, y1, x2, y2 } = edgeEnds(islands, edge);
+  const ends = edgeEnds(islands, edge);
+  // El trazo arranca en la isla desde la que se tendió el puente.
+  const { x1, y1, x2, y2 } = from === "b" ? { x1: ends.x2, y1: ends.y2, x2: ends.x1, y2: ends.y1 } : ends;
   const offsets = count === 1 ? [0] : [-GAP, GAP];
   return (
     <g className={className}>
-      {offsets.map((o) => (
-        <line
-          key={o}
-          x1={edge.horizontal ? x1 : x1 + o}
-          x2={edge.horizontal ? x2 : x2 + o}
-          y1={edge.horizontal ? y1 + o : y1}
-          y2={edge.horizontal ? y2 + o : y2}
-          stroke="currentColor"
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-        />
-      ))}
+      {offsets.map((o, k) => {
+        // Unidades del viewBox: en SVG, los px de un transform CSS son unidades de usuario.
+        const shift: CSSProperties = { transform: edge.horizontal ? `translate(0px, ${o}px)` : `translate(${o}px, 0px)` };
+        return (
+          <line
+            key={k}
+            x1={x1}
+            x2={x2}
+            y1={y1}
+            y2={y2}
+            pathLength={animate ? 1 : undefined}
+            stroke="currentColor"
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+            style={shift}
+            className={cn(animate && "transition-[transform,stroke-width] duration-200 ease-out", animate && (k === 0 ? "anim-draw" : "anim-split"))}
+          />
+        );
+      })}
     </g>
   );
 }

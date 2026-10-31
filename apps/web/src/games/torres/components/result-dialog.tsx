@@ -56,6 +56,7 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry }: {
           values={puzzle.solution}
           readOnly
           feedback={false}
+          wave
           className="max-w-64"
         />
         <DialogFooter>

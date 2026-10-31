@@ -4,6 +4,8 @@ import { ChevronLeftIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { TorresPuzzle } from "@cranea/core/torres";
 import { useProgress } from "@/stores/progress";
+import { haptic, play, useOnChange } from "@/lib/motion";
+import { WinBurst } from "@/components/win-burst";
 import { GAME_ID, levelKey } from "../data";
 import { attemptsOf, useTorres } from "../store";
 import { Board } from "./board";
@@ -21,9 +23,16 @@ export function TorresGame({ puzzle, mode }: { puzzle: TorresPuzzle; mode: GameM
   const selected = useTorres((s) => s.selected);
   const wrong = useTorres((s) => s.wrong);
   const select = useTorres((s) => s.select);
+  const check = useTorres((s) => s.check);
   const [resultOpen, setResultOpen] = useState(false);
   const recorded = useRef(false);
   const gridRef = useRef<HTMLDivElement>(null);
+  useOnChange(check, (c) => {
+    if (c?.kind !== "wrong") return;
+    haptic("invalid");
+    play(gridRef);
+  });
+  useOnChange(status, (s) => s === "won" && haptic("win"));
 
   useEffect(() => {
     start(puzzle);
@@ -102,7 +111,7 @@ export function TorresGame({ puzzle, mode }: { puzzle: TorresPuzzle; mode: GameM
         </div>
       </div>
 
-      <section aria-label="Ciudad" className="mb-2">
+      <section aria-label="Ciudad" className="anim-fade-up relative mb-2">
         <Board
           size={puzzle.size}
           clues={puzzle.clues}
@@ -113,8 +122,10 @@ export function TorresGame({ puzzle, mode }: { puzzle: TorresPuzzle; mode: GameM
           wrong={ready ? wrong : []}
           onSelect={select}
           readOnly={status !== "playing"}
+          wave={status === "won"}
           gridRef={gridRef}
         />
+        {status === "won" && <WinBurst delay={250} />}
       </section>
 
       <CheckMessage />

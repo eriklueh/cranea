@@ -51,7 +51,7 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry }: {
           </DialogDescription>
         </DialogHeader>
         <div className="flex items-center gap-4">
-          <div className="rounded-md border-2 border-ink bg-tile p-2 shadow-[0_3px_0_0_var(--shadow-ink)]">
+          <div className="anim-pop-in rounded-md border-2 border-ink bg-tile p-2 shadow-[0_3px_0_0_var(--shadow-ink)] [--base:120ms]">
             <PixelArt rows={solutionRows(puzzle.solution, puzzle.width)} className="size-20" label={puzzle.title} />
           </div>
           {mode.kind === "level" && <p className="font-display text-2xl font-extrabold">{puzzle.title}</p>}

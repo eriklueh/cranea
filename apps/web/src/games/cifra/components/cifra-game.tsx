@@ -15,6 +15,7 @@ import { Timer } from "./timer";
 import { DrawingBoard } from "./drawing-board";
 import { ClearMarks } from "./clear-marks";
 import { HintButton, HintPanel, useHintRows } from "./hint";
+import { WinBurst } from "@/components/win-burst";
 import { STREAK_MILESTONES, worldCelebration, type Celebration } from "./celebration";
 
 export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMode }) {
@@ -139,13 +140,13 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
       </div>
 
       <DrawingBoard key={`${puzzle.id}:${drawingSession}`} active={drawing} onActiveChange={setDrawing} storageKey={status === "playing" ? puzzle.id : null} tools={<><HintButton /><ClearMarks /></>}>
-      <section aria-label="Pistas" className="mb-4">
+      <section aria-label="Pistas" className="anim-fade-up mb-4">
         <ol className="space-y-2.5">
           {puzzle.clues.map((c, i) => (
             <ClueRow key={i} clue={c} marks={marks} row={i} highlight={hintRows.includes(i)} interactive disabled={status !== "playing"} onCycleMark={cycleMark} />
           ))}
           {misses.map((c, i) => (
-            <ClueRow key={`m${i}`} clue={c} marks={marks} row={puzzle.clues.length + i} miss interactive disabled={status !== "playing"} onCycleMark={cycleMark} />
+            <ClueRow key={`m${i}`} clue={c} marks={marks} row={puzzle.clues.length + i} miss reveal interactive disabled={status !== "playing"} onCycleMark={cycleMark} />
           ))}
         </ol>
       </section>
@@ -153,8 +154,9 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
       <HintPanel />
 
       <section aria-label="Tu código" className="space-y-3">
-        <div className="flex flex-col items-center gap-3">
+        <div className="relative flex flex-col items-center gap-3">
           <InputSlots />
+          {status === "won" && <WinBurst delay={150} />}
           {status !== "playing" && (
             <button className="text-sm font-semibold underline decoration-margin decoration-2 underline-offset-4" onClick={() => setResultOpen(true)}>
               Ver resultado
