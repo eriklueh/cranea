@@ -1,6 +1,12 @@
 import { create } from "zustand";
 import { useHydrated } from "@/hooks/use-hydrated";
 
+/**
+ * Interruptor de Craneá Plus. Apagado (por defecto), todo queda libre y no se muestra nada de Plus:
+ * se prende cuando haya forma de comprarlo (la app en las tiendas o cobro en la web).
+ */
+export const PLUS_ENABLED = process.env.NEXT_PUBLIC_PLUS_ENABLED === "1";
+
 /** Precio de referencia; el real lo ponen las tiendas. */
 export const PLUS_PRICE = "desde USD 1,99/mes";
 
@@ -80,6 +86,8 @@ export function usePlus(): PlusState {
   const hydrated = useHydrated();
   const plus = usePlusStore((s) => s.plus);
   const ready = usePlusStore((s) => s.ready);
+  // Con Plus apagado, todo libre.
+  if (!PLUS_ENABLED) return { plus: true, ready: true };
   return hydrated ? { plus, ready } : { plus: false, ready: false };
 }
 

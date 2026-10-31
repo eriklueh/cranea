@@ -11,7 +11,7 @@ import { ActionRow, Choice, Toggle } from "@/components/settings/controls";
 import { PlusBadge } from "@/components/plus/paywall";
 import { TilePreview } from "@/components/settings/tile-preview";
 import { canVibrate } from "@/lib/motion";
-import { usePlus } from "@/lib/plus";
+import { PLUS_ENABLED, usePlus } from "@/lib/plus";
 import { usePrefs } from "@/lib/prefs";
 import { sound } from "@/lib/sound";
 
@@ -53,6 +53,7 @@ export function SettingsSheet() {
 /** Craneá Plus: pastilla junto al título si está activo, y una fila que lleva a /plus. */
 function PlusState({ badge = false }: { badge?: boolean }) {
   const { plus } = usePlus();
+  if (!PLUS_ENABLED) return null;
   if (badge) return plus ? <PlusBadge /> : null;
   return (
     <ActionRow label="Craneá Plus" hint={plus ? "Activo en tu cuenta. ¡Gracias!" : "Todos los niveles, el archivo y pistas sin límite."}>
