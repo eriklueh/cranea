@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { InstallApp } from "@/components/pwa-provider";
+import { AccountButton } from "@/components/account-button";
 
 export function SiteHeader({ children }: { children?: React.ReactNode }) {
   return (
@@ -11,7 +12,7 @@ export function SiteHeader({ children }: { children?: React.ReactNode }) {
         </Link>
         {children}
       </div>
-      <div className="flex shrink-0 items-center gap-1"><InstallApp /><ThemeToggle /></div>
+      <div className="flex shrink-0 items-center gap-1"><InstallApp /><ThemeToggle /><AccountButton /></div>
     </header>
   );
 }

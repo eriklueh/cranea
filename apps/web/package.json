@@ -10,9 +10,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@clerk/localizations": "^4.24.4",
+    "@clerk/nextjs": "^7.9.23",
     "@cranea/core": "workspace:*",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
+    "convex": "^1.49.0",
     "lucide-react": "1.52.0",
     "next": "16.4.0",
     "next-themes": "0.4.6",

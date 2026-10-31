@@ -2,14 +2,11 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-/** Progreso de todos los juegos. Vive en el dispositivo (localStorage), sin cuenta. */
+import { better, combine, type Kind, type Result } from "../../convex/results";
 
-export interface Result {
-  won: boolean;
-  attempts: number;
-  timeMs: number;
-  at: number;
-}
+/** Progreso de todos los juegos. Vive en el dispositivo (localStorage); con sesión se sincroniza con la cuenta. */
+
+export type { Result };
 
 export interface GameProgress {
   levels: Record<string, Result>;
@@ -20,17 +17,12 @@ interface ProgressState {
   games: Record<string, GameProgress>;
   recordLevel: (gameId: string, key: string, r: Result) => void;
   recordDaily: (gameId: string, date: string, r: Result) => void;
+  /** Combina partidas de la cuenta con las del dispositivo. */
+  mergeEntries: (entries: { gameId: string; kind: Kind; key: string; result: Result }[]) => void;
   reset: () => void;
 }
 
 const empty = (): GameProgress => ({ levels: {}, daily: {} });
-
-const better = (a: Result | undefined, b: Result) => {
-  if (!a || !a.won) return b.won || !a ? b : a;
-  if (!b.won) return a;
-  if (b.attempts !== a.attempts) return b.attempts < a.attempts ? b : a;
-  return b.timeMs < a.timeMs ? b : a;
-};
 
 export const useProgress = create<ProgressState>()(
   persist(
@@ -46,6 +38,18 @@ export const useProgress = create<ProgressState>()(
           const g = s.games[gameId] ?? empty();
           if (g.daily[date]) return s; // el diario se juega una sola vez
           return { games: { ...s.games, [gameId]: { ...g, daily: { ...g.daily, [date]: r } } } };
+        }),
+      mergeEntries: (entries) =>
+        set((s) => {
+          let games = s.games;
+          for (const { gameId, kind, key, result } of entries) {
+            const g = games[gameId] ?? empty();
+            const field = kind === "level" ? "levels" : "daily";
+            const next = combine(kind, g[field][key], result);
+            if (next === g[field][key]) continue;
+            games = { ...games, [gameId]: { ...g, [field]: { ...g[field], [key]: next } } };
+          }
+          return games === s.games ? s : { games };
         }),
       reset: () => set({ games: {} }),
     }),
