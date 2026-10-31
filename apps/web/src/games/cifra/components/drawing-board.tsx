@@ -13,9 +13,11 @@ function path(points: Stroke) {
 }
 
 /** Notas libres de la partida: no alteran las marcas ni el progreso. */
-export function DrawingBoard({ active, onActiveChange, children }: {
+export function DrawingBoard({ active, onActiveChange, tools, children }: {
   active: boolean;
   onActiveChange: (active: boolean) => void;
+  /** Acciones del tablero que se muestran a la izquierda cuando no se dibuja. */
+  tools?: ReactNode;
   children: ReactNode;
 }) {
   const surface = useRef<HTMLDivElement>(null);
@@ -52,7 +54,8 @@ export function DrawingBoard({ active, onActiveChange, children }: {
   const buttonClass = "inline-flex h-11 min-w-11 items-center justify-center gap-2 rounded-lg px-3 text-sm font-semibold transition-colors hover:bg-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-35 disabled:pointer-events-none";
 
   return <>
-    <div data-drawing-controls className="sticky top-2 z-20 mb-2 flex min-h-11 items-center justify-end gap-1 rounded-xl bg-paper/95 p-1 shadow-sm backdrop-blur-sm" role="group" aria-label="Herramientas de dibujo">
+    <div data-drawing-controls className="sticky top-2 z-20 mb-2 flex min-h-11 items-center justify-end gap-1 rounded-xl bg-paper/95 p-1 shadow-sm backdrop-blur-sm" role="group" aria-label="Herramientas del tablero">
+      {!active && tools && <div className="mr-auto flex items-center">{tools}</div>}
       {(active || strokes.length > 0) && <>
         {active && <button type="button" className={cn(buttonClass, panning && "bg-ink/10")} aria-pressed={panning} onClick={() => setPanning((value) => !value)} aria-label="Mover la página sin dibujar" title="Mover la página sin dibujar">
           <HandIcon className="size-4" />

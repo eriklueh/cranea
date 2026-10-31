@@ -12,6 +12,7 @@ import { Lives } from "./lives";
 import { ResultDialog, type GameMode } from "./result-dialog";
 import { Timer } from "./timer";
 import { DrawingBoard } from "./drawing-board";
+import { ClearMarks } from "./clear-marks";
 
 export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMode }) {
   const start = useCifra((s) => s.start);
@@ -90,7 +91,7 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
         </div>
       </div>
 
-      <DrawingBoard key={`${puzzle.id}:${drawingSession}`} active={drawing} onActiveChange={setDrawing}>
+      <DrawingBoard key={`${puzzle.id}:${drawingSession}`} active={drawing} onActiveChange={setDrawing} tools={<ClearMarks />}>
       <section aria-label="Pistas" className="mb-4">
         <ol className="space-y-2.5">
           {puzzle.clues.map((c, i) => (
