@@ -31,6 +31,8 @@ export interface GameHomeConfig {
   worlds: HomeWorld[];
   isWorldUnlocked: (world: number, done: Done) => boolean;
   isLevelUnlocked: (world: number, level: number, done: Done) => boolean;
+  /** Si el mundo está cerrado por no tener Craneá Plus (lo agrega GameHome). */
+  planLocked?: (world: number) => boolean;
   levelKey: (world: number, level: number) => string;
   levelHref: (world: number, level: number) => Href;
   howToHref?: Href;

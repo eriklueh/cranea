@@ -13,7 +13,8 @@ App nativa con **Expo SDK 58** + **expo-router**, para Google Play y App Store. 
 | Puentes, Nonograma, Torres | ⏳ Pantalla «Muy pronto» con enlace a la web |
 
 También: inicio con los diarios de hoy, pantalla de cada juego (diario, «Seguir jugando», mundos y niveles),
-ranking del día, estadísticas, cuenta (Apple / Google / código por mail), tema cuaderno/pizarrón, vibraciones.
+ranking del día, estadísticas, cuenta (Apple / Google / código por mail), tema cuaderno/pizarrón, vibraciones,
+**Craneá Plus** (RevenueCat) y anuncios con recompensa opcionales (AdMob). Ver [Monetización](#monetización).
 
 ## Cómo está armado
 
@@ -25,12 +26,13 @@ apps/mobile/
 ├─ assets/                Ícono, ícono adaptable y splash (salen de assets/brand)
 └─ src/
    ├─ app/                Rutas (expo-router): /, /cifra, /cifra/diario, /cifra/nivel/[mundo]/[nivel], /palabra…,
-   │                      /pronto/[juego], /ranking, /estadisticas, /cuenta
+   │                      /pronto/[juego], /ranking, /estadisticas, /cuenta, /plus, /archivo/[juego]/[fecha]
    ├─ account/            ClerkProvider + ConvexProviderWithClerk + sincronización del progreso
    ├─ components/         UI (ui.tsx), pantalla de juego (game-home), DailyGate, hoja de resultado
    ├─ games/              cifra/, palabra/ (store, datos, componentes) y registry.ts
    ├─ stores/progress.ts  Zustand + AsyncStorage, clave y formato idénticos a la web
-   ├─ entitlements/       Lugar único para compras futuras (hoy todo libre)
+   ├─ entitlements/       ¿Tiene Plus? (RevenueCat o Convex, guardado para jugar sin red) y qué es gratis
+   ├─ monetization/       RevenueCat (purchases.ts), AdMob (ads.ts), intento extra, guardas de Expo Go (native.ts)
    ├─ theme/              Tokens de color de globals.css y fuentes
    └─ config.ts           URL pública y de privacidad (a confirmar)
 ```
@@ -57,10 +59,13 @@ Variables (son públicas, van dentro de la app):
 - `EXPO_PUBLIC_CONVEX_URL`: la misma que `NEXT_PUBLIC_CONVEX_URL` de la web.
 - `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`: la misma que `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`.
 
-Sin ellas la app funciona igual, sin cuenta ni ranking.
+Sin ellas la app funciona igual, sin cuenta ni ranking. Las de RevenueCat y AdMob (opcionales, ver
+[Monetización](#monetización)) también están en `.env.example`; sin ellas no hay compras y los anuncios son de prueba.
 
 - **Expo Go** (escaneás el QR): sirve para jugar y probar la UI. El login con Apple/Google puede no
-  funcionar ahí; para eso usá un development build.
+  funcionar ahí, y **las compras y los anuncios están apagados** (son módulos nativos que Expo Go no trae;
+  `src/monetization/native.ts` los carga con `require` en línea y, si no están, la app sigue sin ellos).
+  Para todo eso usá un development build.
 - **Development build** (recomendado): `cd apps/mobile && eas build --profile development --platform android`
   (o `ios`), lo instalás y después `pnpm mobile`.
 
@@ -115,8 +120,9 @@ eas submit --profile production --platform ios       # sube a App Store Connect 
   cuenta de servicio (Play Console → Configuración → Acceso a la API).
 - Fichas de las tiendas: capturas (teléfono y tablet), descripción, ícono 512 px (Play), categoría «Juegos de
   lógica / Puzzle», clasificación por edades (cuestionario), y la **política de privacidad** publicada.
-- Formularios de privacidad: *Data safety* (Play) y *App Privacy* (Apple). Hoy la app guarda: progreso de juego
-  y, con cuenta, mail/nombre (Clerk) y resultados (Convex). Sin anuncios, sin analítica, sin tracking.
+- Formularios de privacidad: *Data safety* (Play) y *App Privacy* (Apple). La app guarda: progreso de juego
+  y, con cuenta, mail/nombre (Clerk), resultados (Convex) y compras (RevenueCat). Tiene anuncios con
+  recompensa de AdMob: ver [Privacidad y anuncios](#4-privacidad-y-anuncios) para lo que hay que declarar.
 
 ### 5. Clerk para la app nativa
 
@@ -147,20 +153,120 @@ No está implementado para no pedir permisos todavía.
 `npx expo install expo-updates`, `eas update:configure` y agregar `channel` a los perfiles de `eas.json`.
 Permite publicar arreglos de JS con `eas update` sin un build nuevo.
 
-## Monetización (sin implementar)
+## Monetización
 
-No hay compras ni anuncios. Todo pasa por `src/entitlements`: las pantallas preguntan `can("all-worlds")`,
-`useEntitlements()`, y el día que haya un modelo solo cambia ese módulo.
+Decisión del dueño (final):
 
-Opciones recomendadas:
+| Gratis | Craneá Plus (suscripción) |
+| --- | --- |
+| Los 5 desafíos de hoy, cómo se juega, ranking, estadísticas, el primer mundo de cada juego | Todos los mundos y niveles, archivo de diarios anteriores (práctica), pistas sin límite, sin anuncios |
 
-- **RevenueCat** (`react-native-purchases`) para «Craneá Plus»: suscripción mensual/anual o pago único,
-  con un mismo entitlement `plus` en iOS y Android, recibos validados y paywall configurable. Se puede
-  vincular el usuario de Clerk (`Purchases.logIn(userId)`) para que Plus valga también en la web.
-- **AdMob** (`react-native-google-mobile-ads`) solo con anuncios **con recompensa** (por ejemplo, una pista
-  extra o repetir un diario), nunca interrumpiendo una partida. Requiere el formulario de consentimiento (UMP)
-  para Europa y declarar los anuncios en las fichas.
-- Ideas de Plus: mundos extra, archivo de diarios pasados, pistas ilimitadas, estadísticas extendidas, sin anuncios.
+- **Pistas sin Plus**: 1 por tablero (diario o nivel). Volver a ver una pista ya pedida no gasta. Sin pistas,
+  «Ver un anuncio para una pista».
+- **Intento extra**: al perder un diario oficial (no práctica) la hoja de resultado ofrece «Ver un anuncio: un
+  intento más», una vez por diario; con Plus es «Usar un intento más», sin anuncio. La solución queda tapada
+  hasta que la persona elige (o toca «Ver la solución», que renuncia al intento). Se ofrece solo en esa hoja:
+  si salís del diario sin elegir, el diario queda perdido.
+- **Nunca** banners ni intersticiales, y nunca anuncios con Plus.
+- Lo que es gratis vive en `src/entitlements/index.ts` (`FREE_WORLDS`, `FREE_HINTS`). Las pantallas preguntan
+  `usePlus()` / `can(...)`, nunca a la tienda.
+
+### Cómo se sabe si hay Plus
+
+Hay Plus si **RevenueCat** lo dice en el dispositivo (`customerInfo.entitlements.active.plus`) **o** si lo dice
+**Convex** (`api.entitlements.mine`, escrito por el webhook de RevenueCat o por `entitlements:grant`). Así vale lo
+comprado en otro dispositivo, en la web o regalado a mano. Lo último que se supo se guarda (`cranea-plus`, por
+cuenta) para jugar sin conexión; un vencimiento se respeta con 3 días de gracia por si la renovación no llegó.
+
+- `appUserID` de RevenueCat = id de Clerk (`user.id`, igual al `subject` de Convex). `Purchases.logIn` al entrar,
+  `logOut` al salir (`src/monetization/sync.tsx`). **Para comprar hay que tener cuenta**: así el webhook marca
+  Plus en la cuenta y la web lo ve.
+- Precios: salen de la oferta actual de RevenueCat (`getOfferings`), nunca están escritos en el código.
+
+### Intento extra y el ranking
+
+El intento oficial se cierra con la derrota, como siempre (se guarda en el acto). Si el intento extra sale, se
+guarda **otro** resultado del diario: `won: true`, `attempts` = los de la derrota + 1 (más que el máximo del
+diario), `at` = ahora. La regla compartida `first` (`apps/web/convex/results.ts`, la misma en la app y en el
+servidor, la usa `recordDaily` del dispositivo) lo deja reemplazar a la derrota para racha y estadísticas, y el
+ranking lo sigue contando como no resuelto (`assisted` en `convex/ranking.ts`). Si no sale, no se guarda nada
+más. Las prácticas (repetir el de hoy, el archivo) nunca se guardan.
+
+### Qué tenés que hacer vos
+
+#### 1. Productos en las tiendas
+
+- **App Store Connect** → tu app → *Subscriptions*: creá un grupo «Craneá Plus» con dos suscripciones
+  auto-renovables: `plus_monthly` (USD 1,99/mes) y `plus_yearly` (USD 14,99/año). Precios por país con la
+  tabla de Apple. Completá nombre visible y descripción en español, captura de revisión, y aceptá el
+  *Paid Applications Agreement* (Business → Agreements, con datos bancarios e impuestos).
+- **Play Console** → *Monetize → Products → Subscriptions*: `plus_monthly` y `plus_yearly`, cada una con un
+  *base plan* (mensual / anual, auto-renovable). Hace falta un perfil de pagos y haber subido un AAB con la
+  librería de facturación (cualquier build de producción o de prueba interna sirve).
+- Opcional: prueba gratis (*introductory offer* / *free trial*); la pantalla de Plus la muestra sola.
+
+#### 2. RevenueCat (https://app.revenuecat.com)
+
+1. Proyecto «Craneá» con dos apps: App Store (bundle id de `app.config.ts`, con la *In-App Purchase Key* de App
+   Store Connect) y Play Store (package, con la cuenta de servicio de Google Cloud con acceso a Play).
+2. *Products*: importá `plus_monthly` y `plus_yearly` de las dos tiendas.
+3. *Entitlements*: uno con identificador **`plus`**, con los cuatro productos.
+4. *Offerings*: una oferta **`default`** marcada como *current*, con los paquetes `$rc_monthly` (mensual) y
+   `$rc_annual` (anual).
+5. *Integrations → Webhooks*: URL `https://<deployment>.convex.site/revenuecat` (es el dominio `.convex.site`,
+   no `.convex.cloud`) y en *Authorization header* un valor largo al azar. Ese mismo valor va en Convex:
+   `npx convex env set REVENUECAT_WEBHOOK_AUTH '<valor>'` (en dev y en prod). El botón «Send test event» debe
+   responder 200.
+6. *API keys*: las **public app-specific** de iOS (`appl_…`) y Android (`goog_…`) van en
+   `EXPO_PUBLIC_REVENUECAT_IOS_KEY` y `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY` (en `.env.local` y con
+   `eas env:create` en cada entorno). Son públicas; nunca pongas la secreta (`sk_…`) en la app.
+
+Para probar: iOS con una cuenta *Sandbox* (o el archivo StoreKit de RevenueCat) y Android con *License testers*
+en Play Console y la app instalada desde una pista de prueba. «Restaurar compras» está en la pantalla de Plus;
+«Gestionar suscripción» (Cuenta y Plus) abre la página de la tienda.
+
+#### 3. AdMob (https://admob.google.com)
+
+1. Creá dos apps (Android e iOS) y en cada una un bloque **Rewarded** («Pista y intento extra»).
+2. Variables (en `.env.local` y `eas env:create`):
+   - `EXPO_PUBLIC_ADMOB_ANDROID_APP_ID`, `EXPO_PUBLIC_ADMOB_IOS_APP_ID` (`ca-app-pub-…~…`). Se leen **al
+     compilar** (config plugin en `app.config.ts`): si cambian, hace falta un build nuevo.
+   - `EXPO_PUBLIC_ADMOB_ANDROID_REWARDED_ID`, `EXPO_PUBLIC_ADMOB_IOS_REWARDED_ID` (`ca-app-pub-…/…`).
+   Sin ellas se usan los ids de **prueba** de Google (anuncios de prueba, sin ingresos): es lo correcto en
+   desarrollo. Nunca toques tus propios anuncios reales.
+3. *Privacy & messaging*: creá un mensaje **GDPR** (Europa/Reino Unido/Suiza) y, si querés, uno de estados de EE.
+   UU. La app lo muestra con UMP antes del primer anuncio y solo donde corresponde; si la persona tiene que poder
+   cambiarlo, en Cuenta aparece «Privacidad de los anuncios».
+4. Publicá el `app-ads.txt` en el dominio de la web (el que figura como sitio en las fichas de las tiendas).
+
+**ATT (iOS)**: no se pide. La app solo pide anuncios **no personalizados** (`requestNonPersonalizedAdsOnly`),
+no lee el IDFA y no tiene `NSUserTrackingUsageDescription`. Paga algo menos por anuncio, pero evita el cartel
+de rastreo y simplifica las etiquetas de privacidad. Si algún día se quieren anuncios personalizados, habría que
+agregar `expo-tracking-transparency`, pedir permiso antes de inicializar y declarar tracking.
+
+#### 4. Privacidad y anuncios
+
+- **Google Play → Data safety**: «Contiene anuncios: sí». El SDK de anuncios recopila y comparte con Google:
+  *Device or other IDs* (ID de publicidad; Android lo lee aunque los anuncios sean no personalizados),
+  ubicación aproximada (por IP), interacciones con la app y diagnósticos, para **publicidad** y análisis/fraude.
+  Compras: historial de compras (RevenueCat/Google Play). Más lo que ya estaba (mail y nombre con cuenta, progreso).
+  Guía de Google: https://developers.google.com/admob/android/privacy/play-data-disclosure
+- **App Store → App Privacy**: *Identifiers → Device ID*, *Location → Coarse location*, *Usage Data → Advertising
+  data / Product interaction*, *Diagnostics*, usados para *Third-party advertising* y *Analytics*, **no**
+  vinculados a la identidad y **sin tracking** (no hay ATT). *Purchases → Purchase history* para funcionalidad.
+  Guía: https://developers.google.com/admob/ios/privacy/data-disclosure
+- Clasificación por edades: la app no está dirigida a menores; los anuncios piden contenido apto «PG». Si en
+  el cuestionario de Play elegís un público que incluye menores de 13, Google exige SDKs certificados para
+  Familias y otras reglas: dejalo en 13+.
+- La **política de privacidad** (`PRIVACY_URL`) tiene que mencionar AdMob (Google), RevenueCat, Clerk y Convex.
+- Apple pide en la pantalla de compra el precio, el período, que se renueva sola, y enlaces a Términos y
+  Privacidad: ya están. Si publicás términos propios, cambiá `TERMS_URL` en `src/config.ts` (hoy apunta al
+  EULA estándar de Apple).
+
+#### 5. Expo Go y builds
+
+Compras y anuncios necesitan un **development build** (`eas build --profile development`). En Expo Go la app
+anda igual: la pantalla de Plus explica que ahí no se puede comprar y no se ofrecen anuncios.
 
 Las compras dentro de la app tienen que usar el sistema de cada tienda (comisión 15 % en el programa para
-pequeños desarrolladores de ambas).
+pequeños desarrolladores de ambas; anotate en los dos).

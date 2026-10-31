@@ -1,0 +1,114 @@
+import { Linking, Platform } from "react-native";
+import type { CustomerInfo, PurchasesPackage } from "react-native-purchases";
+import { usePlusState } from "@/entitlements";
+import { purchasesModule } from "./native";
+
+/**
+ * Craneá Plus con RevenueCat. El appUserID es el id de Clerk (`user.id`, igual al `subject` de
+ * Convex): así el webhook de RevenueCat marca Plus en la cuenta y vale también en la web.
+ * Por eso solo se configura con sesión iniciada; sin cuenta no se puede comprar.
+ */
+
+/** Entitlement de RevenueCat (el mismo que `PLUS` en apps/web/convex/entitlements.ts). */
+export const PLUS_ENTITLEMENT = "plus";
+
+const apiKey = Platform.select({ ios: process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY, android: process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY }) || null;
+
+/** Si en esta versión se puede comprar: hay módulo nativo (no es Expo Go) y clave de RevenueCat. */
+export const purchasesAvailable = () => Boolean(apiKey && purchasesModule());
+
+const Purchases = () => purchasesModule()!.default;
+
+let configured = false;
+/** A quién está identificado RevenueCat ahora (null: anónimo o sin configurar). */
+let current: string | null = null;
+/** Los cambios de cuenta se aplican de a uno, en orden. */
+let queue: Promise<void> = Promise.resolve();
+
+function apply(info: CustomerInfo) {
+  if (!current) return; // anónimo (después de cerrar sesión): no hay Plus
+  const plus = info.entitlements.active[PLUS_ENTITLEMENT];
+  const until = plus?.expirationDate ? Date.parse(plus.expirationDate) : null;
+  usePlusState.getState().setStore({ active: Boolean(plus), until: Number.isFinite(until) ? until : null }, info.managementURL);
+}
+
+/** Al entrar o salir de la cuenta: `logIn` con el id de Clerk, `logOut` al cerrar sesión. */
+export function identify(userId: string | null) {
+  queue = queue.then(async () => {
+    if (!purchasesAvailable() || userId === current) return;
+    try {
+      if (!configured) {
+        if (!userId) return;
+        Purchases().configure({ apiKey: apiKey!, appUserID: userId });
+        Purchases().addCustomerInfoUpdateListener(apply);
+        configured = true;
+        current = userId;
+        apply(await Purchases().getCustomerInfo());
+        return;
+      }
+      current = userId;
+      if (userId) apply((await Purchases().logIn(userId)).customerInfo);
+      else await Purchases().logOut();
+    } catch {
+      // Sin conexión: RevenueCat reintenta solo y lo guardado en el dispositivo sigue valiendo.
+    }
+  });
+  return queue;
+}
+
+/** Vuelve a preguntar a la tienda (al volver la app al frente). */
+export async function refreshCustomerInfo() {
+  if (!configured || !current) return;
+  try {
+    apply(await Purchases().getCustomerInfo());
+  } catch {
+    /* sin conexión */
+  }
+}
+
+/** Planes de la oferta actual ("default" en RevenueCat), con los precios de la tienda. */
+export async function getPackages(): Promise<PurchasesPackage[]> {
+  if (!configured || !current) return [];
+  const offerings = await Purchases().getOfferings();
+  return offerings.current?.availablePackages ?? [];
+}
+
+export type PurchaseOutcome = { ok: true } | { ok: false; cancelled: boolean; message: string };
+
+const errorText = (e: unknown) => {
+  const x = e as { userCancelled?: boolean | null; code?: string; message?: string } | null;
+  const P = purchasesModule();
+  const codes = P?.PURCHASES_ERROR_CODE;
+  if (x?.userCancelled || (codes && x?.code === codes.PURCHASE_CANCELLED_ERROR)) return { cancelled: true, message: "" };
+  if (codes && x?.code === codes.NETWORK_ERROR) return { cancelled: false, message: "No hay conexión. Probá de nuevo en un rato." };
+  if (codes && x?.code === codes.PAYMENT_PENDING_ERROR) return { cancelled: false, message: "El pago quedó pendiente. Cuando se confirme, Plus se activa solo." };
+  if (codes && x?.code === codes.PURCHASE_NOT_ALLOWED_ERROR) return { cancelled: false, message: "Este dispositivo no permite compras." };
+  return { cancelled: false, message: "No se pudo completar la compra. Probá de nuevo más tarde." };
+};
+
+export async function purchase(pkg: PurchasesPackage): Promise<PurchaseOutcome> {
+  try {
+    const { customerInfo } = await Purchases().purchasePackage(pkg);
+    apply(customerInfo);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, ...errorText(e) };
+  }
+}
+
+/** Restaurar compras: trae lo comprado con la misma cuenta de la tienda. */
+export async function restore(): Promise<{ plus: boolean } | { error: string }> {
+  try {
+    const info = await Purchases().restorePurchases();
+    apply(info);
+    return { plus: Boolean(info.entitlements.active[PLUS_ENTITLEMENT]) };
+  } catch (e) {
+    return { error: errorText(e).message || "No se pudo restaurar. Probá de nuevo más tarde." };
+  }
+}
+
+/** Gestionar o cancelar la suscripción: la página de la tienda. */
+export function openManageSubscription() {
+  const fallback = Platform.OS === "ios" ? "https://apps.apple.com/account/subscriptions" : "https://play.google.com/store/account/subscriptions";
+  Linking.openURL(usePlusState.getState().managementURL ?? fallback).catch(() => Linking.openURL(fallback).catch(() => {}));
+}

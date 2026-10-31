@@ -14,6 +14,10 @@ export interface SavedSession {
   marks: Marks;
   elapsed: number;
   hintsUsed: number;
+  /** Pasos de la traza ya pedidos como pista (cada uno gasta una). */
+  hintSteps?: number[];
+  /** Pistas ganadas con un anuncio. */
+  bonusHints?: number;
 }
 
 /** Paso de la traza que muestra la pista (-1: ya está todo deducido) y cuánto se reveló. */
@@ -34,6 +38,12 @@ interface CifraSession {
   shakeKey: number;
   hint: Hint | null;
   hintsUsed: number;
+  hintSteps: number[];
+  bonusHints: number;
+  /** Se pidió una pista sin que quedaran: se ofrece un anuncio o Plus. */
+  outOfHints: boolean;
+  /** Diario perdido que sigue con un intento extra (anuncio o Plus). */
+  extraAttempt: boolean;
   start: (p: CifraPuzzle, saved?: SavedSession | null) => void;
   pause: () => void;
   resume: () => void;
@@ -43,8 +53,17 @@ interface CifraSession {
   cycleMark: (row: number, position: number) => void;
   clearMarks: () => void;
   showHint: (step: number) => void;
+  /** Pide la pista del paso `step`. `limit`: pistas gratis del tablero (null = sin límite, con Plus). */
+  askHint: (step: number, limit: number | null) => void;
+  /** Una pista más (anuncio visto). */
+  grantHint: () => void;
   closeHint: () => void;
+  /** Después de perder: un intento más. */
+  continueWithExtra: () => void;
 }
+
+/** Intentos de la partida: los del juego, más uno si se ganó el intento extra. */
+export const attemptLimit = (s: Pick<CifraSession, "extraAttempt">) => MAX_ATTEMPTS + (s.extraAttempt ? 1 : 0);
 
 /** Tiempo jugado: no cuenta mientras la app estuvo cerrada o en segundo plano. */
 export const playedMs = (s: Pick<CifraSession, "elapsed" | "startedAt">, now = Date.now()) =>
@@ -62,6 +81,10 @@ export const useCifra = create<CifraSession>((set, get) => ({
   shakeKey: 0,
   hint: null,
   hintsUsed: 0,
+  hintSteps: [],
+  bonusHints: 0,
+  outOfHints: false,
+  extraAttempt: false,
 
   start: (puzzle, saved) =>
     set({
@@ -76,6 +99,10 @@ export const useCifra = create<CifraSession>((set, get) => ({
       shakeKey: 0,
       hint: null,
       hintsUsed: saved?.hintsUsed ?? 0,
+      hintSteps: saved?.hintSteps ?? [],
+      bonusHints: saved?.bonusHints ?? 0,
+      outOfHints: false,
+      extraAttempt: false,
     }),
 
   pause: () => {
@@ -110,7 +137,7 @@ export const useCifra = create<CifraSession>((set, get) => ({
       return;
     }
     const next = [...misses, { guess: input, feedback }];
-    const lost = next.length >= MAX_ATTEMPTS;
+    const lost = next.length >= attemptLimit(s);
     set({
       misses: next,
       input: [],
@@ -140,5 +167,26 @@ export const useCifra = create<CifraSession>((set, get) => ({
     set({ hint: { step, level: 1 }, hintsUsed: hintsUsed + 1 });
   },
 
-  closeHint: () => set({ hint: null }),
+  askHint: (step, limit) => {
+    const { hintSteps, bonusHints, status } = get();
+    if (status !== "playing") return;
+    // Volver a ver una pista ya pedida, o el aviso de que ya está todo deducido, no gasta.
+    const known = step < 0 || hintSteps.includes(step);
+    if (!known && limit !== null && hintSteps.length >= limit + bonusHints) {
+      set({ hint: null, outOfHints: true });
+      return;
+    }
+    set({ outOfHints: false, hintSteps: known ? hintSteps : [...hintSteps, step] });
+    get().showHint(step);
+  },
+
+  grantHint: () => set((s) => ({ bonusHints: s.bonusHints + 1, outOfHints: false })),
+
+  closeHint: () => set({ hint: null, outOfHints: false }),
+
+  continueWithExtra: () => {
+    const { status, extraAttempt } = get();
+    if (status !== "lost" || extraAttempt) return;
+    set({ status: "playing", extraAttempt: true, input: [], startedAt: Date.now(), finishedAt: null, hint: null, outOfHints: false });
+  },
 }));

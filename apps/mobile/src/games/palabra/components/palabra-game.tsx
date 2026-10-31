@@ -6,6 +6,7 @@ import Animated, { FlipInXUp, ZoomIn, useAnimatedStyle, useSharedValue, withDela
 import { DailyNotice } from "@/components/daily-gate";
 import { GameHeader } from "@/components/game-header";
 import { ResultSheet, shareText } from "@/components/result-sheet";
+import { ExtraAttemptOffer, useExtraAttemptOffer } from "@/components/rewards";
 import { Button, Icon, Row, Screen, Text, shadow } from "@/components/ui";
 import { SHARE_URL } from "@/config";
 import { formatTime } from "@/lib/format";
@@ -16,7 +17,7 @@ import { useTheme } from "@/theme/theme";
 import { fonts, radius } from "@/theme/tokens";
 import { useShake } from "@/lib/motion";
 import { GAME_ID, getDictionary, levelKey } from "../data";
-import { usePalabra } from "../store";
+import { attemptLimit, usePalabra } from "../store";
 
 export type GameMode =
   | { kind: "level"; world: number; level: number; next: number | null }
@@ -50,7 +51,8 @@ export function PalabraGame({ puzzle, mode }: { puzzle: PalabraPuzzle; mode: Gam
     const result = { won: status === "won", attempts: status === "won" ? s.misses.length + 1 : puzzle.attempts, timeMs: (s.finishedAt ?? Date.now()) - s.startedAt, at: Date.now() };
     const p = useProgress.getState();
     if (mode.kind === "level") p.recordLevel(GAME_ID, levelKey(mode.world, mode.level), result);
-    else if (!mode.practice) p.recordDaily(GAME_ID, mode.date, result);
+    // Con el intento extra: si sale, reemplaza a la derrota (más intentos, `first`); si no, queda la derrota.
+    else if (!mode.practice && (result.won || !s.extraAttempt)) p.recordDaily(GAME_ID, mode.date, result);
     setResultOpen(true);
   }, [status, current, puzzle, mode]);
 
@@ -86,6 +88,11 @@ export function PalabraGame({ puzzle, mode }: { puzzle: PalabraPuzzle; mode: Gam
           recorded.current = false;
           start(puzzle);
         }}
+        onExtra={() => {
+          setResultOpen(false);
+          recorded.current = false;
+          usePalabra.getState().continueWithExtra();
+        }}
       />
     </>
   );
@@ -104,6 +111,7 @@ function Board() {
   const status = usePalabra((s) => s.status);
   const shakeKey = usePalabra((s) => s.shakeKey);
   const message = usePalabra((s) => s.message);
+  const total = usePalabra(attemptLimit);
   const tile = useTile();
   const shake = useShake(shakeKey);
   useOnChange(shakeKey, (key) => key > 0 && haptic("invalid"));
@@ -114,7 +122,7 @@ function Board() {
 
   return (
     <View style={{ gap: 6, alignItems: "center" }}>
-      {Array.from({ length: puzzle.attempts }, (_, i) => {
+      {Array.from({ length: total }, (_, i) => {
         const row = rows[i];
         if (row) {
           return (
@@ -185,7 +193,7 @@ export function LetterTile({ letter, tone = "absent", size = 48, flipDelay, hop 
 
 function Lives() {
   const { colors } = useTheme();
-  const attempts = usePalabra((s) => s.puzzle?.attempts ?? 6);
+  const attempts = usePalabra(attemptLimit);
   const used = usePalabra((s) => s.misses.length);
   const left = attempts - used;
   return (
@@ -293,8 +301,12 @@ function Key({ label, a11y, onPress, disabled, look, flex = 1, small, icon, flat
   );
 }
 
-function PalabraResult({ open, onClose, mode, onRetry }: { open: boolean; onClose: () => void; mode: GameMode; onRetry: () => void }) {
+function PalabraResult({ open, onClose, mode, onRetry, onExtra }: { open: boolean; onClose: () => void; mode: GameMode; onRetry: () => void; onExtra: () => void }) {
   const router = useRouter();
+  const extraAttempt = usePalabra((s) => s.extraAttempt);
+  const official = mode.kind === "daily" && !mode.practice;
+  const offer = useExtraAttemptOffer(GAME_ID, official ? mode.date : null);
+  const [revealed, setRevealed] = useState(false);
   const puzzle = usePalabra((s) => s.puzzle);
   const status = usePalabra((s) => s.status);
   const misses = usePalabra((s) => s.misses);
@@ -305,24 +317,39 @@ function PalabraResult({ open, onClose, mode, onRetry }: { open: boolean; onClos
   const attempts = won ? misses.length + 1 : puzzle.attempts;
   const time = formatTime((finishedAt ?? Date.now()) - startedAt);
   const title = mode.kind === "daily" ? `Palabra del día #${mode.number}` : `Nivel ${mode.world}-${mode.level}`;
+  // Diario perdido con el intento extra a mano: la palabra queda tapada hasta que se elige.
+  const offering = official && !won && !extraAttempt && offer.available && !revealed;
   const share = () => {
     const grid = [...misses.map((m) => m.scores), ...(won ? [Array(WORD_LENGTH).fill(2)] : [])]
       .map((row) => row.map((s: number) => (s === 2 ? "🟩" : s === 1 ? "🟨" : "⬜")).join(""))
       .join("\n");
-    void shareText(`Craneá · ${title}\n${won ? `${attempts}/${puzzle.attempts}` : `X/${puzzle.attempts}`} en ${time}\n${grid}\n${SHARE_URL}/palabra`);
+    const score = won ? (extraAttempt ? "con un intento extra" : `${attempts}/${puzzle.attempts}`) : `X/${puzzle.attempts}`;
+    void shareText(`Craneá · ${title}\n${score} en ${time}\n${grid}\n${SHARE_URL}/palabra`);
   };
   return (
     <ResultSheet
       visible={open}
       onClose={onClose}
-      title={won ? (attempts === 1 ? "¡A la primera!" : "¡Encontraste la palabra!") : "Se acabaron los intentos"}
-      description={won ? `${title}, en ${attempts} de ${puzzle.attempts} intentos y ${time}.` : `${title}, sin resolver. La palabra era «${puzzle.display}».`}
+      title={won ? (extraAttempt ? "¡Salió con el intento extra!" : attempts === 1 ? "¡A la primera!" : "¡Encontraste la palabra!") : "Se acabaron los intentos"}
+      description={
+        won
+          ? extraAttempt
+            ? `${title}, en ${time}. Suma a tu racha; en el ranking queda como no resuelto.`
+            : `${title}, en ${attempts} de ${puzzle.attempts} intentos y ${time}.`
+          : offering
+            ? `${title}, sin resolver por ahora.`
+            : `${title}, sin resolver. La palabra era «${puzzle.display}».`
+      }
     >
-      <Row gap={6} style={{ justifyContent: "center" }}>
-        {[...puzzle.answer].map((l, i) => (
-          <LetterTile key={i} letter={l} tone="solution" />
-        ))}
-      </Row>
+      {offering && mode.kind === "daily" ? (
+        <ExtraAttemptOffer gameId={GAME_ID} date={mode.date} onGranted={onExtra} onReveal={() => setRevealed(true)} />
+      ) : (
+        <Row gap={6} style={{ justifyContent: "center" }}>
+          {[...puzzle.answer].map((l, i) => (
+            <LetterTile key={i} letter={l} tone="solution" />
+          ))}
+        </Row>
+      )}
       <View style={{ gap: 8 }}>
         {mode.kind === "level" && mode.next ? (
           <Button

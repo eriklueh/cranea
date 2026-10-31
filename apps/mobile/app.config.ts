@@ -14,6 +14,13 @@ export const VERSION = "0.1.0";
 /** ID del proyecto en EAS (`eas init`). No es secreto. */
 export const EAS_PROJECT_ID: string = ""; // ← pegá acá el ID que da `eas init`
 
+/**
+ * IDs de app de AdMob (no son secretos). Sin variables se usan los de prueba de Google, que muestran
+ * anuncios de prueba: cargá los reales en EAS antes de publicar (docs/mobile.md → Anuncios).
+ */
+const ADMOB_ANDROID_APP_ID = process.env.EXPO_PUBLIC_ADMOB_ANDROID_APP_ID || "ca-app-pub-3940256099942544~3347511713";
+const ADMOB_IOS_APP_ID = process.env.EXPO_PUBLIC_ADMOB_IOS_APP_ID || "ca-app-pub-3940256099942544~1458002511";
+
 /** Colores del ícono y del splash: el verde pizarrón del ícono y el papel claro/oscuro de la app. */
 const BRAND_GREEN = "#1a4034";
 
@@ -59,6 +66,18 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     "expo-web-browser",
     "expo-font",
     "expo-apple-authentication",
+    [
+      "react-native-google-mobile-ads",
+      {
+        androidAppId: ADMOB_ANDROID_APP_ID,
+        iosAppId: ADMOB_IOS_APP_ID,
+        // Nada de medición antes del consentimiento (UMP): el SDK arranca recién con el primer anuncio.
+        delayAppMeasurementInit: true,
+        // Solo anuncios no personalizados: sin IDFA ni permiso de rastreo (ATT), así que no hay
+        // userTrackingUsageDescription. SKAdNetwork de Google, para atribuir sin identificar a nadie.
+        skAdNetworkItems: ["cstr6suwn9.skadnetwork"],
+      },
+    ],
     [
       "expo-splash-screen",
       {

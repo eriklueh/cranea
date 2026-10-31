@@ -7,8 +7,12 @@ import * as WebBrowser from "expo-web-browser";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { Alert, Platform, Pressable, StyleSheet, Switch, TextInput, View } from "react-native";
+import { PlusBadge, usePlusPaywall } from "@/components/plus";
 import { Button, Card, Icon, Row, Screen, Text } from "@/components/ui";
 import { PRIVACY_URL } from "@/config";
+import { usePlus } from "@/entitlements";
+import { adPrivacyOptionsRequired, adsAvailable, showAdPrivacyOptions } from "@/monetization/ads";
+import { openManageSubscription } from "@/monetization/purchases";
 import { api, accountsEnabled } from "@/lib/convex";
 import { useTheme, type ThemePreference } from "@/theme/theme";
 import { fonts, radius } from "@/theme/tokens";
@@ -21,6 +25,7 @@ export default function AccountScreen() {
   return (
     <Screen contentStyle={{ gap: 18 }}>
       {accountsEnabled ? <Account /> : <Card><Text variant="muted">Las cuentas no están configuradas en esta versión. Tu progreso se guarda en este dispositivo.</Text></Card>}
+      <PlusCard />
       <ThemePicker />
       <About />
     </Screen>
@@ -252,7 +257,10 @@ function SignedIn() {
       <Row gap={12}>
         <Icon name="person-circle" size={44} color={colors.ink} />
         <View style={{ flex: 1 }}>
-          <Text variant="bodyBold">{user?.fullName || user?.firstName || "Tu cuenta"}</Text>
+          <Row gap={6}>
+            <Text variant="bodyBold" style={{ flexShrink: 1 }}>{user?.fullName || user?.firstName || "Tu cuenta"}</Text>
+            <AccountPlusBadge />
+          </Row>
           <Text variant="small">{user?.primaryEmailAddress?.emailAddress}</Text>
         </View>
       </Row>
@@ -278,6 +286,55 @@ function SignedIn() {
         <Text style={{ color: colors.margin, fontFamily: fonts.bodyBold }}>Borrar mi cuenta</Text>
       </Pressable>
     </Card>
+  );
+}
+
+function AccountPlusBadge() {
+  return usePlus() ? <PlusBadge /> : null;
+}
+
+/** Plus: con suscripción, cómo gestionarla; sin ella, una invitación (y el consentimiento de anuncios). */
+function PlusCard() {
+  const plus = usePlus();
+  const paywall = usePlusPaywall();
+  const [privacy, setPrivacy] = useState(false);
+  useEffect(() => {
+    if (plus || !adsAvailable()) return;
+    let alive = true;
+    adPrivacyOptionsRequired().then((v) => alive && setPrivacy(v));
+    return () => {
+      alive = false;
+    };
+  }, [plus]);
+
+  if (plus) {
+    return (
+      <Card style={{ gap: 10 }}>
+        <Row gap={8}>
+          <Text variant="bodyBold">Tenés Craneá Plus</Text>
+          <PlusBadge />
+        </Row>
+        <Text variant="small">Todos los mundos, el archivo de diarios y pistas sin límite, sin anuncios. También vale en la web.</Text>
+        <Button title="Gestionar suscripción" variant="outline" icon="open-outline" onPress={openManageSubscription} />
+      </Card>
+    );
+  }
+  return (
+    <View style={{ gap: 4 }}>
+      <Card style={{ gap: 10 }}>
+        <Row gap={8}>
+          <Text variant="bodyBold">Craneá Plus</Text>
+          <PlusBadge />
+        </Row>
+        <Text variant="small">Todos los mundos, diarios anteriores, pistas sin límite y sin anuncios. Los desafíos del día siguen siendo gratis.</Text>
+        <Button title="Conocer Craneá Plus" variant="outline" icon="star" onPress={() => paywall()} />
+      </Card>
+      {privacy && (
+        <Pressable onPress={showAdPrivacyOptions} accessibilityRole="button" style={{ minHeight: 44, justifyContent: "center", alignSelf: "center" }}>
+          <Text variant="bodyBold" style={{ fontSize: 14, textDecorationLine: "underline" }}>Privacidad de los anuncios</Text>
+        </Pressable>
+      )}
+    </View>
   );
 }
 

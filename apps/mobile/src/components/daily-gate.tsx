@@ -9,6 +9,7 @@ import { Button, Card, Icon, Loading, Row, Screen, Text } from "@/components/ui"
 import { api, accountsEnabled } from "@/lib/convex";
 import { formatTime } from "@/lib/format";
 import { useClock } from "@/lib/hooks";
+import { isAssisted } from "@/monetization/extra-attempt";
 import { dailyStreak, useProgress, type Result } from "@/stores/progress";
 import { useTheme } from "@/theme/theme";
 
@@ -144,7 +145,9 @@ function DailyDone({ gameId, game, home, date, title, result, reveal, onPractice
             <View style={{ flex: 1 }}>
               <Text variant="title" style={{ fontSize: 20 }}>{result.won ? "Ya lo resolviste" : "Hoy no salió"}</Text>
               <Text variant="small">
-                {result.won ? `${result.attempts} ${result.attempts === 1 ? "intento" : "intentos"} · ${formatTime(result.timeMs)}` : "Para el ranking cuenta la primera partida."}
+                {result.won
+                  ? `${isAssisted(gameId, result.attempts) ? "Con un intento extra" : `${result.attempts} ${result.attempts === 1 ? "intento" : "intentos"}`} · ${formatTime(result.timeMs)}`
+                  : "Para el ranking cuenta la primera partida."}
               </Text>
             </View>
           </Row>
