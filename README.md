@@ -77,6 +77,21 @@ Palabra oculta de cinco letras (`/palabra`). El tablero trae palabras ya puntuad
 - **Diario**: se genera en el cliente con la fecha UTC; se juega una vez. Cambiar la lista de respuestas cambia los diarios futuros.
 - **Web**: las listas se cargan con un import dinámico solo en las páginas del juego (un chunk propio de ~7 KB gzip que el service worker guarda para jugar sin conexión). Una palabra fuera de la lista sacude la fila y no gasta intento.
 
+## Cómo funciona Torres
+
+Cuadrado latino de N×N con alturas 1..N; los números del borde dicen cuántas torres se ven desde ese lado. Rutas: `/torres`, `/torres/nivel/[mundo]/[nivel]`, `/torres/diario`, `/torres/como-jugar`.
+
+- **Motor** (`packages/core/src/torres`): `board.ts` tiene las reglas puras (torres visibles, pistas de un tablero, estado de cada pista y repetidos para la UI). `solver.ts` trabaja con candidatos por casilla y resuelve en tres niveles; si no llega sin adivinar, el tablero se descarta:
+  1. Lectura directa: límites por pista (a distancia i del borde, con pista c, nada mayor que N − c + 1 + i; un 1 pone la más alta pegada al borde), únicos desnudos y ocultos.
+  2. Cruce de una línea: combinaciones posibles de una fila o columna con sus candidatos y sus dos pistas.
+  3. Suposición: probar una altura y descartarla si las técnicas 1 y 2 llegan a una contradicción.
+- **Generador** (`generator.ts`): cuadrado latino al azar con semilla, todas las pistas, casillas dadas solo donde el solver se traba, y después quita dadas y pistas mientras siga siendo deducible con el techo de técnica. Como cada paso es deducción válida, deducible implica solución única. Máximo ⌊N²/8⌋ dadas y al menos N pistas.
+- **Niveles** (`levels.ts`): 4 mundos de 24 niveles (4×4, 5×5, 6×6, 7×7). `pnpm --filter @cranea/core levels:torres` genera 72 candidatos por mundo alternando el techo de técnica del mundo, elige 24 con la misma curva que Cifra y escribe `levels/torres.json` (determinístico, ~1 min). `d = pasos + 3 × usos de técnica 2 + 8 × usos de técnica 3`.
+- **Tests** (`torres.test.ts`): cada nivel publicado y una muestra de diarios se verifican con un conteo de soluciones independiente del solver (búsqueda solo con las reglas), además de resolución humana, técnica, dificultad y curva.
+- **Diario**: 5×5 con técnicas 2–3, generado en el cliente con la fecha UTC (`torres:daily:YYYY-MM-DD`). Se juega una vez: si ya hay resultado de hoy, se muestra en lugar del tablero.
+- **Intentos**: `1 + comprobaciones fallidas`, con 3 como máximo. **Comprobar** revisa lo escrito contra la solución: si está todo bien no cuesta nada; si hay errores los marca y gasta un intento. A la tercera fallida la partida se pierde (`attempts = 3`, `won = false`). Llenar el tablero sin repetidos y con todas las pistas cumplidas es ganar (con solución única no hay otra forma). Las ayudas visuales (pistas en verde o rojo, repetidos en rojo) no cuestan intentos.
+- **Juego** (`apps/web/src/games/torres`): tocá una casilla y elegí la altura; **Notas** anota candidatos chiquitos; **Deshacer**, **Reiniciar** (también se puede deshacer). Teclado: flechas, números, Shift + número o N para notas, Borrar, Ctrl + Z. Notas e historial son de la partida y no se guardan.
+
 ## Sumar un juego nuevo
 
 1. Lógica en `packages/core/src/<juego>/` (pura, testeable, reutilizable en Expo).

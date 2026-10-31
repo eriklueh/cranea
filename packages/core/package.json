@@ -15,7 +15,9 @@
     "./levels/nonograma.json": "./levels/nonograma.json",
     "./palabra": "./src/palabra/index.ts",
     "./palabra/words": "./src/palabra/words.ts",
-    "./levels/palabra.json": "./levels/palabra.json"
+    "./levels/palabra.json": "./levels/palabra.json",
+    "./torres": "./src/torres/index.ts",
+    "./levels/torres.json": "./levels/torres.json"
   },
   "scripts": {
     "test": "vitest run",
@@ -24,7 +26,8 @@
     "audit:levels": "tsx scripts/audit-levels.ts",
     "levels:puentes": "tsx scripts/build-puentes.ts",
     "levels:nonograma": "tsx scripts/build-nonograma.ts",
-    "levels:palabra": "tsx scripts/build-palabra-levels.ts"
+    "levels:palabra": "tsx scripts/build-palabra-levels.ts",
+    "levels:torres": "tsx scripts/build-torres.ts"
   },
   "devDependencies": {
     "tsx": "4.23.15",

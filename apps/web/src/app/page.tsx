@@ -6,6 +6,7 @@ import { Indicator } from "@/games/cifra/components/pegs";
 import { PuentesPreview } from "@/games/puentes/components/preview";
 import { NonogramaPreview } from "@/games/nonograma/components/preview";
 import { PalabraPreview } from "@/games/palabra/components/preview";
+import { TorresPreview } from "@/games/torres/components/preview";
 
 function CifraPreview() {
   return (
@@ -27,6 +28,7 @@ const PREVIEWS: Record<string, () => React.ReactNode> = {
   puentes: PuentesPreview,
   nonograma: NonogramaPreview,
   palabra: PalabraPreview,
+  torres: TorresPreview,
 };
 
 export default function Home() {
