@@ -23,7 +23,7 @@ function CifraPreview() {
 }
 
 /** Ilustración de cada juego en su tarjeta, por id. */
-const PREVIEWS: Record<string, () => React.ReactNode> = {
+const PREVIEWS: Record<string, React.ComponentType> = {
   cifra: CifraPreview,
   puentes: PuentesPreview,
   nonograma: NonogramaPreview,
@@ -47,7 +47,9 @@ export default function Home() {
 
         <h2 className="sr-only">Juegos</h2>
         <ul className="grid gap-4">
-          {GAMES.map((g) => (
+          {GAMES.map((g) => {
+            const Preview = PREVIEWS[g.id];
+            return (
             <li key={g.id}>
               <Link
                 href={g.path}
@@ -58,11 +60,12 @@ export default function Home() {
                     <h3 className="font-display text-3xl font-extrabold">{g.name}</h3>
                     <p className="mt-1 max-w-sm text-muted-foreground">{g.tagline}</p>
                   </div>
-                  {PREVIEWS[g.id]?.()}
+                  {Preview && <Preview />}
                 </div>
               </Link>
             </li>
-          ))}
+            );
+          })}
         </ul>
       </main>
     </>
