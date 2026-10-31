@@ -10,14 +10,17 @@
     "./cifra": "./src/cifra/index.ts",
     "./levels/cifra.json": "./levels/cifra.json",
     "./puentes": "./src/puentes/index.ts",
-    "./levels/puentes.json": "./levels/puentes.json"
+    "./levels/puentes.json": "./levels/puentes.json",
+    "./nonograma": "./src/nonograma/index.ts",
+    "./levels/nonograma.json": "./levels/nonograma.json"
   },
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "levels": "tsx scripts/build-levels.ts",
     "audit:levels": "tsx scripts/audit-levels.ts",
-    "levels:puentes": "tsx scripts/build-puentes.ts"
+    "levels:puentes": "tsx scripts/build-puentes.ts",
+    "levels:nonograma": "tsx scripts/build-nonograma.ts"
   },
   "devDependencies": {
     "tsx": "4.23.15",

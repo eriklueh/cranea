@@ -4,6 +4,28 @@ import { GAMES } from "@/games/registry";
 import { DigitTile } from "@/games/cifra/components/digit-tile";
 import { Indicator } from "@/games/cifra/components/pegs";
 import { PuentesPreview } from "@/games/puentes/components/preview";
+import { NonogramaPreview } from "@/games/nonograma/components/preview";
+
+function CifraPreview() {
+  return (
+    <div className="flex items-center justify-center gap-2" aria-hidden>
+      <Indicator kind="exact" value={1} />
+      <span className="flex gap-1.5">
+        {[4, 0, 7, 2].map((d, i) => (
+          <DigitTile key={i} digit={d} size="sm" mark={d === 0 ? "out" : "none"} />
+        ))}
+      </span>
+      <Indicator kind="present" value={2} />
+    </div>
+  );
+}
+
+/** Ilustración de cada juego en su tarjeta, por id. */
+const PREVIEWS: Record<string, () => React.ReactNode> = {
+  cifra: CifraPreview,
+  puentes: PuentesPreview,
+  nonograma: NonogramaPreview,
+};
 
 export default function Home() {
   return (
@@ -32,24 +54,11 @@ export default function Home() {
                     <h3 className="font-display text-3xl font-extrabold">{g.name}</h3>
                     <p className="mt-1 max-w-sm text-muted-foreground">{g.tagline}</p>
                   </div>
-                  {g.id === "puentes" ? <PuentesPreview /> : (
-                  <div className="flex items-center justify-center gap-2" aria-hidden>
-                    <Indicator kind="exact" value={1} />
-                    <span className="flex gap-1.5">
-                      {[4, 0, 7, 2].map((d, i) => (
-                        <DigitTile key={i} digit={d} size="sm" mark={d === 0 ? "out" : "none"} />
-                      ))}
-                    </span>
-                    <Indicator kind="present" value={2} />
-                  </div>
-                  )}
+                  {PREVIEWS[g.id]?.()}
                 </div>
               </Link>
             </li>
           ))}
-          <li className="rounded-xl border-2 border-dashed border-pencil/50 p-5 text-muted-foreground">
-            El próximo juego está en camino.
-          </li>
         </ul>
       </main>
     </>
