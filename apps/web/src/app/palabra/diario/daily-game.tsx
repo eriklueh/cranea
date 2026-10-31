@@ -8,7 +8,7 @@ import { LetterTile } from "@/games/palabra/components/letter-tile";
 import { dailyNumber, GAME_ID } from "@/games/palabra/data";
 import { useDictionary } from "@/games/palabra/dictionary";
 
-/** El diario se genera en el cliente con la fecha UTC como semilla: todos ven el mismo tablero. Se juega una vez. */
+/** El diario se genera en el cliente con la fecha UTC como semilla: todos ven el mismo tablero. Cuenta la primera partida. */
 export function DailyGame() {
   return (
     <DailyGate
@@ -18,7 +18,7 @@ export function DailyGame() {
       title={(date) => `Palabra del día #${dailyNumber(date)}`}
       reveal={(date) => <Answer date={date} />}
     >
-      {(date) => <Play date={date} />}
+      {(date, practice) => <Play key={String(practice)} date={date} practice={practice} />}
     </DailyGate>
   );
 }
@@ -34,10 +34,10 @@ function Answer({ date }: { date: string }) {
   );
 }
 
-function Play({ date }: { date: string }) {
+function Play({ date, practice }: { date: string; practice: boolean }) {
   const { dict, failed, retry } = useDictionary();
   const puzzle = useMemo(() => (dict ? generatePalabraDaily(date, dict) : null), [date, dict]);
-  const mode = useMemo(() => ({ kind: "daily" as const, date, number: dailyNumber(date) }), [date]);
+  const mode = useMemo(() => ({ kind: "daily" as const, date, number: dailyNumber(date), practice }), [date, practice]);
   if (failed) {
     return (
       <main className="mx-auto max-w-md space-y-3 px-4 text-muted-foreground">

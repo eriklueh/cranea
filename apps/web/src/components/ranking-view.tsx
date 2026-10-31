@@ -136,7 +136,7 @@ function JoinRanking() {
   if (isLoading) return null;
   if (!isAuthenticated) {
     return (
-      <Panel text="Iniciá sesión para aparecer en el ranking con tu nombre.">
+      <Panel text="Iniciá sesión antes de jugar el diario para aparecer en el ranking con tu nombre.">
         <SignInButton mode="modal">
           <Button className="w-full sm:w-auto">Iniciar sesión</Button>
         </SignInButton>
@@ -159,7 +159,7 @@ function JoinRanking() {
   return (
     <Panel
       text={profile.ranked
-        ? <>Aparecés como <strong className="text-foreground">{profile.name}</strong>. Solo cuenta la primera partida de cada diario.</>
+        ? <>Aparecés como <strong className="text-foreground">{profile.name}</strong>. Cuenta la primera partida de cada diario, jugada con sesión; el tiempo corre desde que abrís el tablero.</>
         : "No aparecés en el ranking. Tus partidas se siguen guardando."}
     >
       <Button variant={profile.ranked ? "ghost" : "default"} className="w-full sm:w-auto" onClick={toggle} disabled={busy}>

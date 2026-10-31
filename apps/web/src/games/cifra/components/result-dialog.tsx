@@ -12,7 +12,7 @@ import { Walkthrough } from "./walkthrough";
 
 export type GameMode =
   | { kind: "level"; world: number; level: number; nextHref: string | null }
-  | { kind: "daily"; date: string; number: number };
+  | { kind: "daily"; date: string; number: number; /** Repetición del diario: no se guarda ni cuenta para el ranking. */ practice?: boolean };
 
 export function ResultDialog({ open, onOpenChange, mode, onRetry, celebration }: {
   open: boolean;

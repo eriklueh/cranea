@@ -78,7 +78,7 @@ export function TorresGame({ puzzle, mode }: { puzzle: TorresPuzzle; mode: GameM
     };
     const p = useProgress.getState();
     if (mode.kind === "level") p.recordLevel(GAME_ID, levelKey(mode.world, mode.level), result);
-    else p.recordDaily(GAME_ID, mode.date, result);
+    else if (!mode.practice) p.recordDaily(GAME_ID, mode.date, result);
     const t = setTimeout(() => setResultOpen(true), status === "won" ? 600 : 300);
     return () => clearTimeout(t);
   }, [status, current, puzzle, mode]);

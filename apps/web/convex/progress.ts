@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
-import { publishDaily, syncProfile } from "./ranking";
+import { finishDaily, publishDaily, syncProfile } from "./ranking";
 import { combine, type Kind, type Result } from "./results";
 import { kind, result } from "./schema";
 
@@ -43,7 +43,10 @@ export const save = mutation({
       const next = existing ? combine(kind as Kind, existing.result, result) : result;
       if (!existing) await ctx.db.insert("progress", { userId: user, gameId, kind, key, result });
       else if (next !== existing.result) await ctx.db.patch(existing._id, { result: next });
-      if (ranked && kind === "daily") await publishDaily(ctx, user, gameId, key, next);
+      if (kind === "daily") {
+        const start = await finishDaily(ctx, user, gameId, key, result);
+        if (ranked) await publishDaily(ctx, user, start);
+      }
     }
   },
 });

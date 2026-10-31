@@ -22,6 +22,23 @@ export default defineSchema({
     nickname: v.optional(v.string()),
     ranked: v.boolean(),
   }).index("by_user", ["userId"]),
+  /**
+   * Intento oficial de cada diario: lo registra el servidor al abrir el tablero por primera vez
+   * con sesión, y se cierra con el primer resultado que llega. Solo este intento entra al ranking.
+   */
+  dailyStarts: defineTable({
+    userId: v.string(),
+    gameId: v.string(),
+    date: v.string(),
+    /** Hora del servidor al abrir el tablero. */
+    startedAt: v.number(),
+    /** Hora del servidor al recibir el primer resultado. */
+    finishedAt: v.optional(v.number()),
+    won: v.optional(v.boolean()),
+    attempts: v.optional(v.number()),
+  })
+    .index("by_entry", ["userId", "gameId", "date"])
+    .index("by_user", ["userId"]),
   /** Diarios de quienes aparecen en el ranking. Se copian desde `progress` al guardar o al sumarse. */
   dailyResults: defineTable({
     userId: v.string(),

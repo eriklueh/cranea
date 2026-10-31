@@ -8,7 +8,7 @@ import { usePuentes } from "../store";
 
 export type GameMode =
   | { kind: "level"; world: number; level: number; nextHref: string | null }
-  | { kind: "daily"; date: string; number: number };
+  | { kind: "daily"; date: string; number: number; /** Repetición del diario: no se guarda ni cuenta para el ranking. */ practice?: boolean };
 
 export const mistakesText = (n: number) => (n === 0 ? "sin errores" : n === 1 ? "con 1 error" : `con ${n} errores`);
 

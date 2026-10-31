@@ -107,7 +107,7 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
       p.recordLevel("cifra", levelKey(mode.world, mode.level), result);
       const after = useProgress.getState().games.cifra;
       if (!wasDone && after) reached = worldCelebration(after.levels, mode.world);
-    } else {
+    } else if (!mode.practice) {
       const played = before?.daily[mode.date];
       p.recordDaily("cifra", mode.date, result);
       const after = useProgress.getState().games.cifra;

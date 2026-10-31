@@ -61,7 +61,7 @@ export function PuentesGame({ puzzle, mode, alreadyPlayed = false }: { puzzle: P
     const result = { won: true, attempts: attemptsOf(s.mistakes), timeMs: (s.finishedAt ?? Date.now()) - s.startedAt, at: Date.now() };
     const p = useProgress.getState();
     if (mode.kind === "level") p.recordLevel(GAME_ID, levelKey(mode.world, mode.level), result);
-    else p.recordDaily(GAME_ID, mode.date, result);
+    else if (!mode.practice) p.recordDaily(GAME_ID, mode.date, result);
     const t = setTimeout(() => setResultOpen(true), 500);
     return () => clearTimeout(t);
   }, [status, current, puzzle, mode]);
