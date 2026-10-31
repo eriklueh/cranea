@@ -3,9 +3,7 @@
 import { CheckIcon, HandIcon, PencilIcon, Trash2Icon, Undo2Icon } from "lucide-react";
 import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
-
-type Point = { x: number; y: number };
-type Stroke = Point[];
+import { loadDrawing, saveDrawing, type Point, type Stroke } from "../session";
 
 function path(points: Stroke) {
   if (points.length === 1) return `M ${points[0].x} ${points[0].y} l 0.01 0`;
@@ -13,8 +11,10 @@ function path(points: Stroke) {
 }
 
 /** Notas libres de la partida: no alteran las marcas ni el progreso. */
-export function DrawingBoard({ active, onActiveChange, tools, children }: {
+export function DrawingBoard({ active, onActiveChange, tools, storageKey, children }: {
   active: boolean;
+  /** Tablero donde se guardan los trazos en el dispositivo; null deja de guardar. */
+  storageKey?: string | null;
   onActiveChange: (active: boolean) => void;
   /** Acciones del tablero que se muestran a la izquierda cuando no se dibuja. */
   tools?: ReactNode;
@@ -27,6 +27,19 @@ export function DrawingBoard({ active, onActiveChange, tools, children }: {
   const [draft, setDraft] = useState<Stroke>([]);
   const [panning, setPanning] = useState(false);
   const canDraw = active && !panning;
+  const loaded = useRef<string | null>(null);
+
+  // Guardar va antes que cargar: al montar no pisa lo guardado con un dibujo vacío.
+  useEffect(() => {
+    if (storageKey && loaded.current === storageKey) saveDrawing(storageKey, strokes);
+  }, [strokes, storageKey]);
+
+  useEffect(() => {
+    if (!storageKey || loaded.current === storageKey) return;
+    loaded.current = storageKey;
+    const saved = loadDrawing(storageKey);
+    if (saved.length) setStrokes(saved);
+  }, [storageKey]);
 
   useEffect(() => {
     const element = surface.current;

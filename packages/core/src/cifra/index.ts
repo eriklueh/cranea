@@ -4,3 +4,4 @@ export * from "./solver";
 export * from "./generator";
 export * from "./levels";
 export * from "./marks";
+export * from "./trace";

@@ -3,8 +3,9 @@ import Link from "next/link";
 import { ChevronLeftIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { CifraPuzzle } from "@cranea/core/cifra";
-import { useProgress } from "@/stores/progress";
+import { dailyStreak, useProgress } from "@/stores/progress";
 import { levelKey } from "../data";
+import { clearSession, loadSession, saveSession } from "../session";
 import { MAX_ATTEMPTS, useCifra } from "../store";
 import { ClueRow } from "./clue-row";
 import { InputSlots, Keypad } from "./keypad";
@@ -13,6 +14,8 @@ import { ResultDialog, type GameMode } from "./result-dialog";
 import { Timer } from "./timer";
 import { DrawingBoard } from "./drawing-board";
 import { ClearMarks } from "./clear-marks";
+import { HintButton, HintPanel, useHintRows } from "./hint";
+import { STREAK_MILESTONES, worldCelebration, type Celebration } from "./celebration";
 
 export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMode }) {
   const start = useCifra((s) => s.start);
@@ -24,13 +27,43 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
   const [resultOpen, setResultOpen] = useState(false);
   const [drawing, setDrawing] = useState(false);
   const [drawingSession, setDrawingSession] = useState(0);
+  const [celebration, setCelebration] = useState<Celebration | null>(null);
+  const hintRows = useHintRows();
   const recorded = useRef(false);
 
   useEffect(() => {
-    start(puzzle);
+    start(puzzle, loadSession(puzzle));
     setDrawing(false);
+    setCelebration(null);
     recorded.current = false;
   }, [puzzle, start]);
+
+  // Guardar la partida en curso en el dispositivo. En segundo plano el reloj se pausa.
+  useEffect(() => {
+    const save = () => {
+      const s = useCifra.getState();
+      if (s.puzzle === puzzle && s.status === "playing") saveSession(puzzle, s);
+    };
+    const unsubscribe = useCifra.subscribe((s, prev) => {
+      if (s.input !== prev.input || s.misses !== prev.misses || s.marks !== prev.marks || s.hintsUsed !== prev.hintsUsed || s.puzzle !== prev.puzzle) save();
+    });
+    const onVisibility = () => {
+      const s = useCifra.getState();
+      if (s.puzzle !== puzzle) return;
+      if (document.hidden) {
+        s.pause();
+        save();
+      } else s.resume();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pagehide", save);
+    return () => {
+      save();
+      unsubscribe();
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", save);
+    };
+  }, [puzzle]);
 
   // Teclado físico.
   useEffect(() => {
@@ -63,12 +96,26 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
     const result = {
       won: status === "won",
       attempts: status === "won" ? s.misses.length + 1 : MAX_ATTEMPTS,
-      timeMs: (s.finishedAt ?? Date.now()) - s.startedAt,
+      timeMs: s.elapsed,
       at: Date.now(),
     };
     const p = useProgress.getState();
-    if (mode.kind === "level") p.recordLevel("cifra", levelKey(mode.world, mode.level), result);
-    else p.recordDaily("cifra", mode.date, result);
+    const before = p.games.cifra;
+    let reached: Celebration | null = null;
+    if (mode.kind === "level") {
+      const wasDone = before && worldCelebration(before.levels, mode.world);
+      p.recordLevel("cifra", levelKey(mode.world, mode.level), result);
+      const after = useProgress.getState().games.cifra;
+      if (!wasDone && after) reached = worldCelebration(after.levels, mode.world);
+    } else {
+      const played = before?.daily[mode.date];
+      p.recordDaily("cifra", mode.date, result);
+      const after = useProgress.getState().games.cifra;
+      const streak = after ? dailyStreak(after.daily, mode.date) : 0;
+      if (!played && result.won && STREAK_MILESTONES.includes(streak)) reached = { kind: "streak", days: streak };
+    }
+    setCelebration(reached);
+    clearSession(puzzle.id);
     const t = setTimeout(() => setResultOpen(true), status === "won" ? 450 : 250);
     return () => clearTimeout(t);
   }, [status, current, puzzle, mode]);
@@ -91,17 +138,19 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
         </div>
       </div>
 
-      <DrawingBoard key={`${puzzle.id}:${drawingSession}`} active={drawing} onActiveChange={setDrawing} tools={<ClearMarks />}>
+      <DrawingBoard key={`${puzzle.id}:${drawingSession}`} active={drawing} onActiveChange={setDrawing} storageKey={status === "playing" ? puzzle.id : null} tools={<><HintButton /><ClearMarks /></>}>
       <section aria-label="Pistas" className="mb-4">
         <ol className="space-y-2.5">
           {puzzle.clues.map((c, i) => (
-            <ClueRow key={i} clue={c} marks={marks} row={i} interactive disabled={status !== "playing"} onCycleMark={cycleMark} />
+            <ClueRow key={i} clue={c} marks={marks} row={i} highlight={hintRows.includes(i)} interactive disabled={status !== "playing"} onCycleMark={cycleMark} />
           ))}
           {misses.map((c, i) => (
             <ClueRow key={`m${i}`} clue={c} marks={marks} row={puzzle.clues.length + i} miss interactive disabled={status !== "playing"} onCycleMark={cycleMark} />
           ))}
         </ol>
       </section>
+
+      <HintPanel />
 
       <section aria-label="Tu código" className="space-y-3">
         <div className="flex flex-col items-center gap-3">
@@ -116,10 +165,12 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
       </section>
       </DrawingBoard>
 
-      <ResultDialog open={resultOpen} onOpenChange={setResultOpen} mode={mode} onRetry={() => {
+      <ResultDialog open={resultOpen} onOpenChange={setResultOpen} mode={mode} celebration={celebration} onRetry={() => {
         setResultOpen(false);
         setDrawing(false);
+        clearSession(puzzle.id);
         setDrawingSession((session) => session + 1);
+        setCelebration(null);
         recorded.current = false;
         start(puzzle);
       }} />

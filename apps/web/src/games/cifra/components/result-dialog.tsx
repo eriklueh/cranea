@@ -5,25 +5,34 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatTime } from "@/lib/utils";
 import { MAX_ATTEMPTS, useCifra } from "../store";
+import { traceFor } from "../hints";
+import { CelebrationBanner, type Celebration } from "./celebration";
 import { DigitTile } from "./digit-tile";
+import { Walkthrough } from "./walkthrough";
 
 export type GameMode =
   | { kind: "level"; world: number; level: number; nextHref: string | null }
   | { kind: "daily"; date: string; number: number };
 
-export function ResultDialog({ open, onOpenChange, mode, onRetry }: {
+export function ResultDialog({ open, onOpenChange, mode, onRetry, celebration }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   mode: GameMode;
   onRetry: () => void;
+  celebration?: Celebration | null;
 }) {
-  const { puzzle, status, misses, startedAt, finishedAt } = useCifra();
+  const { puzzle, status, misses, elapsed, hintsUsed } = useCifra();
   const [copied, setCopied] = useState(false);
+  const [explaining, setExplaining] = useState(false);
   if (!puzzle || status === "playing") return null;
 
   const won = status === "won";
   const attempts = won ? misses.length + 1 : MAX_ATTEMPTS;
-  const time = formatTime((finishedAt ?? Date.now()) - startedAt);
+  const time = formatTime(elapsed);
+  const change = (o: boolean) => {
+    if (!o) setExplaining(false);
+    onOpenChange(o);
+  };
   const title = mode.kind === "daily" ? `Cifra del día #${mode.number}` : `Nivel ${mode.world}-${mode.level}`;
 
   const share = async () => {
@@ -41,8 +50,10 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry }: {
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+    <Dialog open={open} onOpenChange={change}>
+      <DialogContent className="max-h-[calc(100svh-2rem)] overflow-y-auto">
+        {explaining ? <Walkthrough puzzle={puzzle} onBack={() => setExplaining(false)} /> : <>
+        {won && celebration && <CelebrationBanner celebration={celebration} />}
         <DialogHeader>
           <DialogTitle>{won ? (attempts === 1 ? "Al primer intento" : "Código descifrado") : "Se acabaron los intentos"}</DialogTitle>
           <DialogDescription>
@@ -53,6 +64,14 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry }: {
           {puzzle.solution.map((d, i) => (
             <DigitTile key={i} digit={d} tone="solution" />
           ))}
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+          {traceFor(puzzle).solved && (
+            <button type="button" className="font-semibold underline decoration-margin decoration-2 underline-offset-4" onClick={() => setExplaining(true)}>
+              ¿Cómo se resolvía?
+            </button>
+          )}
+          {hintsUsed > 0 && <span className="text-muted-foreground">{hintsUsed === 1 ? "Usaste 1 pista" : `Usaste ${hintsUsed} pistas`}</span>}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={share}>
@@ -73,6 +92,7 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry }: {
             </Button>
           )}
         </DialogFooter>
+        </>}
       </DialogContent>
     </Dialog>
   );
