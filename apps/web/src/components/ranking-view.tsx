@@ -7,7 +7,6 @@ import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { todayKey, type GameMeta } from "@cranea/core";
 import { api } from "../../convex/_generated/api";
-import { cleanNickname, NICKNAME_MAX, NICKNAME_MIN } from "../../convex/results";
 import { accountsEnabled } from "@/components/account-provider";
 import { Button } from "@/components/ui/button";
 import { useHydrated } from "@/hooks/use-hydrated";
@@ -32,7 +31,7 @@ const subscribe = (cb: () => void) => {
 };
 const useOnline = () => useSyncExternalStore(subscribe, () => navigator.onLine, () => true);
 
-/** Ranking diario de cada juego. Se lee en vivo; para aparecer hace falta cuenta y apodo. */
+/** Ranking diario de cada juego. Se lee en vivo; con sesión iniciada aparecés con tu nombre. */
 export function RankingView({ games }: { games: GameMeta[] }) {
   const params = useSearchParams();
   const hydrated = useHydrated();
@@ -111,14 +110,14 @@ function Leaderboard({ gameId, date }: { gameId: string; date: string }) {
   );
 }
 
-type RowData = { rank: number; nickname: string; won: boolean; attempts: number; timeMs: number; mine: boolean };
+type RowData = { rank: number; name: string; won: boolean; attempts: number; timeMs: number; mine: boolean };
 
 function Row({ row }: { row: RowData }) {
   return (
     <li className={cn("flex items-center gap-3 py-2 tabular-nums", row.mine && "-mx-2 rounded-md bg-accent px-2 font-semibold")}>
       <span className="w-8 text-right font-display text-lg font-extrabold">{row.rank}</span>
       <span className="min-w-0 flex-1 truncate">
-        {row.nickname}
+        {row.name}
         {row.mine && <span className="text-muted-foreground"> (vos)</span>}
       </span>
       <span className="text-sm text-muted-foreground">
@@ -131,27 +130,25 @@ function Row({ row }: { row: RowData }) {
 function JoinRanking() {
   const { isLoading, isAuthenticated } = useConvexAuth();
   const profile = useQuery(api.ranking.profile, isAuthenticated ? {} : "skip");
-  const [editing, setEditing] = useState(false);
-  const setProfile = useMutation(api.ranking.setProfile);
+  const setRanked = useMutation(api.ranking.setRanked);
   const [busy, setBusy] = useState(false);
 
   if (isLoading) return null;
   if (!isAuthenticated) {
     return (
-      <Panel text="Iniciá sesión y elegí un apodo para aparecer en el ranking.">
+      <Panel text="Iniciá sesión para aparecer en el ranking con tu nombre.">
         <SignInButton mode="modal">
-          <Button>Iniciar sesión</Button>
+          <Button className="w-full sm:w-auto">Iniciar sesión</Button>
         </SignInButton>
       </Panel>
     );
   }
-  if (profile === undefined) return null;
+  if (!profile) return null;
 
-  const leave = async () => {
-    if (!profile) return;
+  const toggle = async () => {
     setBusy(true);
     try {
-      await setProfile({ nickname: profile.nickname, ranked: false });
+      await setRanked({ ranked: !profile.ranked });
     } catch {
       /* sin conexión: queda como estaba */
     } finally {
@@ -159,71 +156,24 @@ function JoinRanking() {
     }
   };
 
-  if (profile?.ranked && !editing) {
-    return (
-      <Panel text={<>Aparecés como <strong className="text-foreground">{profile.nickname}</strong>.</>}>
-        <Button variant="outline" onClick={() => setEditing(true)}>Cambiar apodo</Button>
-        <Button variant="ghost" onClick={leave} disabled={busy}>Dejar de aparecer</Button>
-      </Panel>
-    );
-  }
-  return <NicknameForm initial={profile?.nickname ?? ""} editing={editing} onDone={() => setEditing(false)} />;
-}
-
-function NicknameForm({ initial, editing, onDone }: { initial: string; editing: boolean; onDone: () => void }) {
-  const setProfile = useMutation(api.ranking.setProfile);
-  const [value, setValue] = useState(initial);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const nickname = cleanNickname(value);
-    if (!nickname) {
-      setError(`Usá entre ${NICKNAME_MIN} y ${NICKNAME_MAX} letras o números. También valen espacios, puntos y guiones.`);
-      return;
-    }
-    setBusy(true);
-    setError(null);
-    try {
-      await setProfile({ nickname, ranked: true });
-      onDone();
-    } catch {
-      setError("No se pudo guardar. Probá de nuevo en un rato.");
-    } finally {
-      setBusy(false);
-    }
-  };
-
   return (
-    <form onSubmit={submit} className="space-y-3 rounded-xl border-2 border-dashed border-pencil/50 p-5">
-      <label htmlFor="apodo" className="block text-muted-foreground">
-        {editing ? "Elegí tu nuevo apodo." : "Elegí un apodo para aparecer en el ranking. Lo ve todo el mundo."}
-      </label>
-      <div className="flex flex-wrap gap-2">
-        <input
-          id="apodo"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          maxLength={NICKNAME_MAX}
-          autoComplete="nickname"
-          aria-invalid={!!error}
-          aria-describedby={error ? "apodo-error" : undefined}
-          className="h-10 min-w-0 flex-1 rounded-md border-2 border-foreground/80 bg-card px-3 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-        />
-        <Button type="submit" disabled={busy}>{editing ? "Guardar" : "Aparecer en el ranking"}</Button>
-        {editing && <Button type="button" variant="ghost" onClick={onDone}>Cancelar</Button>}
-      </div>
-      {error && <p id="apodo-error" className="text-sm text-destructive">{error}</p>}
-    </form>
+    <Panel
+      text={profile.ranked
+        ? <>Aparecés como <strong className="text-foreground">{profile.name}</strong>. Solo cuenta la primera partida de cada diario.</>
+        : "No aparecés en el ranking. Tus partidas se siguen guardando."}
+    >
+      <Button variant={profile.ranked ? "ghost" : "default"} className="w-full sm:w-auto" onClick={toggle} disabled={busy}>
+        {profile.ranked ? "Ocultarme del ranking" : "Aparecer en el ranking"}
+      </Button>
+    </Panel>
   );
 }
 
 function Panel({ text, children }: { text: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-dashed border-pencil/50 p-5">
+    <div className="flex flex-col gap-3 rounded-xl border-2 border-dashed border-pencil/50 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
       <p className="text-muted-foreground">{text}</p>
-      <div className="flex flex-wrap gap-2">{children}</div>
+      <div className="flex flex-col gap-2 sm:flex-row">{children}</div>
     </div>
   );
 }

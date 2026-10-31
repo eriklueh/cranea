@@ -14,10 +14,12 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_entry", ["userId", "gameId", "kind", "key"]),
-  /** Apodo público y si el jugador quiere aparecer en los rankings. */
+  /** Nombre público (de la cuenta de Clerk) y si el jugador aparece en los rankings. */
   profiles: defineTable({
     userId: v.string(),
-    nickname: v.string(),
+    name: v.optional(v.string()),
+    /** Apodo de la primera versión del ranking; ya no se muestra. */
+    nickname: v.optional(v.string()),
     ranked: v.boolean(),
   }).index("by_user", ["userId"]),
   /** Diarios de quienes aparecen en el ranking. Se copian desde `progress` al guardar o al sumarse. */

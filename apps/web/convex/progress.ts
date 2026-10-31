@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
-import { publishDaily, rankedProfile } from "./ranking";
+import { publishDaily, syncProfile } from "./ranking";
 import { combine, type Kind, type Result } from "./results";
 import { kind, result } from "./schema";
 
@@ -33,7 +33,7 @@ export const save = mutation({
     const user = await userId(ctx);
     if (!user) throw new Error("Necesitás iniciar sesión para guardar el progreso.");
     if (entries.length > MAX_BATCH) throw new Error("Demasiadas partidas en un solo envío.");
-    const ranked = Boolean(await rankedProfile(ctx, user));
+    const ranked = await syncProfile(ctx, user);
     for (const { gameId, kind, key, result } of entries) {
       if (!valid(result) || gameId.length > 40 || key.length > 40) continue;
       const existing = await ctx.db

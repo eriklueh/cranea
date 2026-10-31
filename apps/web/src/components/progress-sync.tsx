@@ -2,6 +2,7 @@
 
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { useEffect, useRef } from "react";
+import { create } from "zustand";
 import { api } from "../../convex/_generated/api";
 import type { Kind, Result } from "../../convex/results";
 import { useProgress, type GameProgress } from "@/stores/progress";
@@ -20,15 +21,23 @@ function entries(games: Record<string, GameProgress>): Entry[] {
   ]);
 }
 
+/** true cuando el dispositivo ya tiene todo lo de la cuenta (o no hay sesión). */
+export const useAccountReady = create<{ ready: boolean }>(() => ({ ready: false }));
+
 /**
  * Con sesión iniciada, combina el progreso del dispositivo con el de la cuenta
  * y sube cada partida nueva. Sin conexión, lo pendiente se reintenta después.
  */
 export function ProgressSync() {
-  const { isAuthenticated } = useConvexAuth();
+  const { isLoading, isAuthenticated } = useConvexAuth();
   const remote = useQuery(api.progress.mine, isAuthenticated ? {} : "skip");
   const save = useMutation(api.progress.save);
   const sending = useRef(false);
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) useAccountReady.setState({ ready: true });
+    else if (isAuthenticated && remote === undefined) useAccountReady.setState({ ready: false });
+  }, [isLoading, isAuthenticated, remote === undefined]);
 
   // Lo que llega de la cuenta se combina en el dispositivo.
   useEffect(() => {
@@ -41,6 +50,7 @@ export function ProgressSync() {
       const local = games[gameId]?.[kind === "level" ? "levels" : "daily"][key];
       if (local && same(local, result)) synced.add(local);
     }
+    useAccountReady.setState({ ready: true });
   }, [remote]);
 
   // Lo que todavía no está en la cuenta se sube.

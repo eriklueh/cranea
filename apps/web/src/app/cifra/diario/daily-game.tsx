@@ -1,17 +1,32 @@
 "use client";
 import { useMemo } from "react";
-import { todayKey } from "@cranea/core";
 import { generateDaily } from "@cranea/core/cifra";
-import { useHydrated } from "@/hooks/use-hydrated";
+import { DailyGate } from "@/components/daily-gate";
 import { CifraGame } from "@/games/cifra/components/cifra-game";
+import { DigitTile } from "@/games/cifra/components/digit-tile";
 import { dailyNumber } from "@/games/cifra/data";
 
-/** El diario se genera en el cliente con la fecha UTC como semilla: todos ven el mismo tablero. */
+/** El diario se genera en el cliente con la fecha UTC como semilla: todos ven el mismo tablero. Se juega una vez. */
 export function DailyGame() {
-  const hydrated = useHydrated();
-  const date = hydrated ? todayKey() : null;
-  const puzzle = useMemo(() => (date ? generateDaily(date) : null), [date]);
-  const mode = useMemo(() => (date ? { kind: "daily" as const, date, number: dailyNumber(date) } : null), [date]);
-  if (!puzzle || !mode) return <main className="mx-auto max-w-md px-4 text-muted-foreground sm:pl-16">Preparando el tablero…</main>;
+  return (
+    <DailyGate
+      gameId="cifra"
+      game="Cifra"
+      home="/cifra"
+      title={(date) => `Cifra del día #${dailyNumber(date)}`}
+      reveal={(date) => (
+        <div className="flex gap-1.5" aria-label="Solución">
+          {generateDaily(date).solution.map((d, i) => <DigitTile key={i} digit={d} tone="solution" />)}
+        </div>
+      )}
+    >
+      {(date) => <Play date={date} />}
+    </DailyGate>
+  );
+}
+
+function Play({ date }: { date: string }) {
+  const puzzle = useMemo(() => generateDaily(date), [date]);
+  const mode = useMemo(() => ({ kind: "daily" as const, date, number: dailyNumber(date) }), [date]);
   return <CifraGame puzzle={puzzle} mode={mode} />;
 }

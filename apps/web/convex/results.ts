@@ -36,12 +36,13 @@ export function rankable(date: string, r: Result, now = Date.now()): boolean {
   return r.at >= start && r.at <= start + DAY_MS + 2 * 3_600_000 && r.at <= now + 5 * 60_000 && r.timeMs >= 1000 && r.timeMs <= DAY_MS;
 }
 
-export const NICKNAME_MIN = 3;
-export const NICKNAME_MAX = 20;
-
-/** Limpia un apodo; devuelve null si no es válido (letras, números, espacio, punto, guion y guion bajo). */
-export function cleanNickname(raw: string): string | null {
-  const name = raw.trim().replace(/\s+/g, " ");
-  if (name.length < NICKNAME_MIN || name.length > NICKNAME_MAX) return null;
-  return /^[\p{L}\p{N}][\p{L}\p{N} ._-]*$/u.test(name) ? name : null;
+/** Nombre público en el ranking: nombre de la cuenta e inicial del apellido ("Erik L."). */
+export function publicName(identity: { givenName?: string; familyName?: string; name?: string }): string {
+  const clean = (x?: string) => (x ?? "").trim().replace(/s+/g, " ").slice(0, 40);
+  const given = clean(identity.givenName), family = clean(identity.familyName);
+  if (given) return family ? `${given} ${family[0].toUpperCase()}.` : given;
+  const [first, ...rest] = clean(identity.name).split(" ");
+  if (!first) return "Jugador";
+  const last = rest.at(-1);
+  return last ? `${first} ${last[0].toUpperCase()}.` : first;
 }
