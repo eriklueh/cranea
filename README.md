@@ -50,6 +50,21 @@ pnpm levels              # regenera packages/core/levels/cifra.json (~1 min)
 - **/estadisticas** calcula todo con el progreso del dispositivo (`gameStats` en `stores/progress.ts`), así que funciona sin sesión y sin red. Recorre los juegos `live` del registro.
 - **/ranking?juego=<id>&fecha=YYYY-MM-DD** muestra el diario de cada juego en vivo (`convex/ranking.ts`): primero quienes ganaron, después menos intentos y menos tiempo. Para aparecer hay que iniciar sesión y elegir un apodo (tabla `profiles`). Al sumarse se copian a `dailyResults` los diarios ya guardados; después, `progress.save` copia cada diario nuevo. Solo entran partidas del jugador autenticado, válidas y terminadas durante ese día UTC (`rankable` en `convex/results.ts`). Al dejar de aparecer se borran sus filas.
 
+## Cómo funciona Puentes
+
+Hashi: islas con números que se unen con puentes rectos (máximo dos por par), sin cruces y formando un solo grupo. Rutas: `/puentes`, `/puentes/nivel/[mundo]/[nivel]`, `/puentes/diario`, `/puentes/como-jugar`.
+
+- **Generador** (`packages/core/src/puentes/generator.ts`): con una semilla hace crecer un árbol de puentes desde una isla (saltos casi siempre cortos, sin islas pegadas), suma algunos ciclos que no cruzan nada y escribe los números. Las conexiones posibles se derivan de las islas (`findEdges`, en orden de lectura).
+- **Solver** (`solver.ts`): deduce como una persona, guardando para cada conexión un rango de 0 a 2 puentes. Si no termina sin adivinar, el tablero se descarta; como cada deducción es válida para cualquier solución, terminar implica solución única.
+  1. Conteo: lo que le falta a cada isla contra lo que pueden darle sus vecinas; un puente tendido cierra los que lo cortan.
+  2. Conexión: no cerrar un grupo que no incluya todas las islas y usar la única salida de un grupo.
+  3. Suposición: probar un valor en una conexión y llegar a una contradicción con 1 y 2.
+- **Niveles** (`levels.ts`): 4 mundos de 24 niveles (5×5 conteo, 7×7 conexión, 9×9 y 11×11 con suposición). `pnpm --filter @cranea/core levels:puentes` genera 96 candidatos por mundo, descarta los que quedan debajo de la mediana del mundo anterior y elige la curva más suave, como Cifra. `d = steps + 3 * tier2Uses + 8 * tier3Uses + islas`. Se guardan en `levels/puentes.json` (filas del tablero + puentes de la solución, ~15 KB).
+- **Tests** (`puentes.test.ts`): cada nivel publicado y 40 diarios se validan con el solver, con `countSolutions` y con una búsqueda exhaustiva independiente que no usa el código de producción.
+- **Diario**: 7×7, se genera en el cliente con la fecha UTC como semilla. Se juega una vez: si ya está guardado, se muestra resuelto.
+- **Errores e intentos**: no se pierde. **Revisar** marca en rojo los puentes que sobran respecto de la solución; si hay alguno suma un error, si no dice cuántos faltan sin costo. Un puente que cruzaría otro directamente no se tiende y no cuenta. Al conectar todo se guarda `won: true`, `attempts = 1 + errores`. En el mapa: 3 puntitos sin errores, 2 con uno, 1 con más.
+- **Controles**: deslizar desde una isla, tocar dos islas o tocar el espacio entre ellas cicla 0 → 1 → 2 → 0. Deshacer (también Ctrl+Z) y empezar de nuevo (deshacible). Teclado: flechas entre islas, Mayús + flecha tiende un puente, Enter selecciona.
+
 ## Sumar un juego nuevo
 
 1. Lógica en `packages/core/src/<juego>/` (pura, testeable, reutilizable en Expo).

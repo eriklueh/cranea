@@ -8,13 +8,16 @@
   "exports": {
     ".": "./src/index.ts",
     "./cifra": "./src/cifra/index.ts",
-    "./levels/cifra.json": "./levels/cifra.json"
+    "./levels/cifra.json": "./levels/cifra.json",
+    "./puentes": "./src/puentes/index.ts",
+    "./levels/puentes.json": "./levels/puentes.json"
   },
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "levels": "tsx scripts/build-levels.ts",
-    "audit:levels": "tsx scripts/audit-levels.ts"
+    "audit:levels": "tsx scripts/audit-levels.ts",
+    "levels:puentes": "tsx scripts/build-puentes.ts"
   },
   "devDependencies": {
     "tsx": "4.23.15",
