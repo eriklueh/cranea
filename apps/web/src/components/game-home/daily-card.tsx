@@ -8,8 +8,8 @@ import { dailyStreak, type GameProgress } from "@/stores/progress";
 import { formatCountdown, msToNextDaily } from "./progress";
 import type { GameHomeConfig } from "./types";
 
-/** Texto del enlace al tablero del diario ya jugado. Pasa a «Jugar de nuevo» cuando el diario tenga práctica. */
-const REPLAY_LABEL = "Ver tablero";
+/** Texto del enlace al diario ya jugado: ahí se puede repetir como práctica. */
+const REPLAY_LABEL = "Jugar de nuevo";
 
 /**
  * El desafío de hoy. Sin jugar es la acción principal de la pantalla; una vez jugado
