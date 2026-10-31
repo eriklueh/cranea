@@ -1,0 +1,15 @@
+node_modules/
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+# Builds nativos locales (prebuild): la fuente de verdad es app.config.ts.
+/ios
+/android
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+.env*.local

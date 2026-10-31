@@ -7,7 +7,8 @@
     "build": "turbo run build",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
-    "levels": "pnpm --filter @cranea/core levels"
+    "levels": "pnpm --filter @cranea/core levels",
+    "mobile": "pnpm --filter @cranea/mobile start"
   },
   "devDependencies": {
     "turbo": "2.11.7",

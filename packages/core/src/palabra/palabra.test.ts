@@ -20,6 +20,19 @@ describe("normalización", () => {
     expect(normalizeLetter("1")).toBeNull();
     expect(normalizeLetter("Enter")).toBeNull();
   });
+
+  it("da lo mismo sin String.prototype.normalize (React Native sin ICU)", () => {
+    const words = [...dict.display.values(), "Árbol", "PINGÜINO", "Ñandú", "ñandu", "Ñ", "é"];
+    const withNfd = words.map(normalizeWord);
+    const original = String.prototype.normalize;
+    try {
+      // @ts-expect-error: se simula un motor sin normalize
+      delete String.prototype.normalize;
+      expect(words.map(normalizeWord)).toEqual(withNfd);
+    } finally {
+      String.prototype.normalize = original;
+    }
+  });
 });
 
 describe("puntaje", () => {
