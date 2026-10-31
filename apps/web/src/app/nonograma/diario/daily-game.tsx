@@ -4,7 +4,7 @@ import { generateDaily } from "@cranea/core/nonograma";
 import { DailyGate } from "@/components/daily-gate";
 import { NonogramaGame } from "@/games/nonograma/components/nonograma-game";
 import { PixelArt, solutionRows } from "@/games/nonograma/components/pixel-art";
-import { dailyNumber, GAME_ID } from "@/games/nonograma/data";
+import { dailyNumber, GAME_ID, LAUNCH_DATE } from "@/games/nonograma/data";
 
 /** El diario se genera en el cliente con la fecha UTC como semilla: todos ven el mismo tablero. Cuenta la primera partida. */
 export function DailyGame() {
@@ -13,6 +13,7 @@ export function DailyGame() {
       gameId={GAME_ID}
       game="Nonograma"
       home="/nonograma"
+      launch={LAUNCH_DATE}
       title={(date) => `Nonograma del día #${dailyNumber(date)}`}
       reveal={(date) => {
         const puzzle = generateDaily(date);
@@ -23,7 +24,7 @@ export function DailyGame() {
         );
       }}
     >
-      {(date, practice) => <Play key={String(practice)} date={date} practice={practice} />}
+      {(date, practice) => <Play key={`${date}-${practice}`} date={date} practice={practice} />}
     </DailyGate>
   );
 }

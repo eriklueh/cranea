@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { CheckIcon, ChevronLeftIcon, FlameIcon, RotateCcwIcon, XIcon } from "lucide-react";
+import { ArchiveIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, FlameIcon, PartyPopperIcon, RotateCcwIcon, XIcon } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useConvexAuth, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { todayKey } from "@cranea/core";
 import { accountsEnabled } from "@/components/account-provider";
+import { archiveDate, dailiesFor, shortDate } from "@/components/daily-hub/dailies";
 import { useAccountReady } from "@/components/progress-sync";
 import { Button } from "@/components/ui/button";
 import { useHydrated } from "@/hooks/use-hydrated";
@@ -21,6 +23,8 @@ interface Props {
   /** Nombre del juego, para "Volver a …". */
   game: string;
   home: string;
+  /** Primer diario del juego (LAUNCH_DATE): desde ahí se pueden jugar fechas pasadas con `?fecha=`. */
+  launch: string;
   title: (date: string) => string;
   /** La solución de hoy, para mostrar cuando ya se jugó. */
   reveal?: (date: string) => ReactNode;
@@ -33,12 +37,15 @@ interface Props {
  * de la cuenta, así una repetición desde otro dispositivo no pasa por primera partida.
  * Ya jugado, se puede repetir como práctica: no se guarda ni entra al ranking.
  * El resultado se lee al entrar: terminar la partida no cambia la pantalla.
+ * Con `?fecha=AAAA-MM-DD` (del archivo) se juega ese día como práctica; una fecha
+ * inválida, futura o de hoy cae en el diario de hoy. Usa useSearchParams: va dentro de Suspense.
  */
-export function DailyGate({ gameId, game, home, title, reveal, children }: Props) {
+export function DailyGate({ gameId, game, home, launch, title, reveal, children }: Props) {
+  const requested = useSearchParams().get("fecha");
   const hydrated = useHydrated();
   const accountReady = useAccountReady((s) => s.ready);
   const [waited, setWaited] = useState(false);
-  const [entry, setEntry] = useState<{ date: string; played: Result | null } | null>(null);
+  const [entry, setEntry] = useState<{ date: string; played: Result | null; archive: boolean; requested: string | null } | null>(null);
   const [practice, setPractice] = useState(false);
   const ready = hydrated && (!accountsEnabled || accountReady || waited);
 
@@ -48,16 +55,39 @@ export function DailyGate({ gameId, game, home, title, reveal, children }: Props
   }, []);
 
   useEffect(() => {
-    if (!ready || entry) return;
-    const date = todayKey();
-    setEntry({ date, played: useProgress.getState().games[gameId]?.daily[date] ?? null });
-  }, [ready, entry, gameId]);
+    if (!ready || (entry && entry.requested === requested)) return;
+    const today = todayKey();
+    const past = archiveDate(requested, launch, today);
+    const date = past ?? today;
+    setEntry({ date, played: useProgress.getState().games[gameId]?.daily[date] ?? null, archive: past !== null, requested });
+  }, [ready, entry, gameId, requested, launch]);
 
   if (!entry) {
     return (
       <main className="mx-auto w-full max-w-md px-4 pt-4 text-muted-foreground" aria-busy>
         {hydrated && !ready ? "Buscando tus partidas…" : "Preparando el tablero…"}
       </main>
+    );
+  }
+  if (entry.archive) {
+    const played = entry.played;
+    return (
+      <>
+        <div className="mx-auto mb-2 flex w-full max-w-md items-start justify-between gap-2 px-4 text-sm text-muted-foreground">
+          <p role="status" className="flex min-w-0 items-start gap-2 pt-0.5">
+            <ArchiveIcon className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <span>
+              <span className="font-semibold text-foreground">Diario del {shortDate(entry.date)}</span>
+              {played && <> · {played.won ? "lo resolviste" : "no salió"}</>}
+              <span className="block">Práctica: no se guarda ni cuenta.</span>
+            </span>
+          </p>
+          <Link href={`${home}/archivo`} className="-my-2.5 inline-flex min-h-11 shrink-0 items-center rounded-md px-2 font-semibold text-foreground underline decoration-border decoration-2 underline-offset-4 hover:decoration-current">
+            Archivo
+          </Link>
+        </div>
+        {children(entry.date, true)}
+      </>
     );
   }
   if (!entry.played) {
@@ -120,6 +150,9 @@ function DailyDone({ gameId, game, home, date, title, result, reveal, onPractice
     return () => clearInterval(t);
   }, []);
   const tomorrow = todayKey(new Date(now)) !== date;
+  const games = useProgress((s) => s.games);
+  const dailies = dailiesFor(games, date);
+  const next = dailies.find((d) => !d.result);
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-col gap-5 px-4 pt-2 pb-10">
@@ -160,19 +193,43 @@ function DailyDone({ gameId, game, home, date, title, result, reveal, onPractice
       <div className="flex flex-col gap-2">
         {tomorrow ? (
           <Button size="lg" className="h-12 w-full" onClick={() => location.reload()}>Jugar el de hoy</Button>
+        ) : next ? (
+          <>
+            <Button asChild size="lg" className="h-12 w-full">
+              <Link href={next.href}>
+                <span className="truncate">Siguiente diario: <span className="font-extrabold">{next.name}</span></span>
+                <ChevronRightIcon aria-hidden className="size-5" />
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="h-12 w-full">
+              <Link href={`/ranking?juego=${gameId}`}>Ver ranking del día</Link>
+            </Button>
+          </>
         ) : (
-          <Button asChild size="lg" className="h-12 w-full">
-            <Link href={`/ranking?juego=${gameId}`}>Ver ranking del día</Link>
-          </Button>
+          <>
+            <p className="py-1 text-center text-sm font-semibold">
+              <PartyPopperIcon aria-hidden className="mr-1.5 inline size-4 align-[-3px] text-ok" />
+              Jugaste los {dailies.length} diarios de hoy.{" "}
+              <Link href="/" className="underline decoration-border decoration-2 underline-offset-4 hover:decoration-current">Compartir el día</Link>
+            </p>
+            <Button asChild size="lg" className="h-12 w-full">
+              <Link href={`/ranking?juego=${gameId}`}>Ver ranking del día</Link>
+            </Button>
+          </>
         )}
         {!tomorrow && (
           <Button size="lg" variant="outline" className="h-12 w-full" onClick={onPractice}>
             <RotateCcwIcon /> Jugar de nuevo (práctica)
           </Button>
         )}
-        <Button asChild size="lg" variant="ghost" className="h-12 w-full">
-          <Link href={home}>Volver a {game}</Link>
-        </Button>
+        <div className="mt-1 flex items-center justify-between gap-2 text-sm font-semibold text-muted-foreground">
+          <Link href={home} className="-ml-2 inline-flex min-h-11 items-center gap-0.5 rounded-md px-2 hover:text-foreground">
+            <ChevronLeftIcon aria-hidden className="size-4" /> Volver a {game}
+          </Link>
+          <Link href={`${home}/archivo`} className="-mr-2 inline-flex min-h-11 items-center gap-1.5 rounded-md px-2 hover:text-foreground">
+            <ArchiveIcon aria-hidden className="size-4" /> Diarios anteriores
+          </Link>
+        </div>
       </div>
     </main>
   );

@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { ChevronRightIcon, CircleHelpIcon, PartyPopperIcon } from "lucide-react";
+import { ArchiveIcon, ChevronRightIcon, CircleHelpIcon, PartyPopperIcon } from "lucide-react";
 import { todayKey } from "@cranea/core";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { cn } from "@/lib/utils";
@@ -80,8 +80,17 @@ export function GameHome({ config }: { config: GameHomeConfig }) {
           </>
         )}
       </div>
+      <div className="mt-1 flex justify-end">
+        <Link
+          href={`/${config.id}/archivo`}
+          className="-mr-2 inline-flex min-h-11 items-center gap-1.5 rounded-md px-2 text-sm font-semibold text-muted-foreground outline-none hover:bg-accent hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        >
+          <ArchiveIcon aria-hidden className="size-4" />
+          Diarios anteriores
+        </Link>
+      </div>
 
-      <div className="mt-7">
+      <div className="mt-5">
         <WorldMap
           config={config}
           progress={progress}

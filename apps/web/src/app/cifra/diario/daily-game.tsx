@@ -4,7 +4,7 @@ import { generateDaily } from "@cranea/core/cifra";
 import { DailyGate } from "@/components/daily-gate";
 import { CifraGame } from "@/games/cifra/components/cifra-game";
 import { DigitTile } from "@/games/cifra/components/digit-tile";
-import { dailyNumber } from "@/games/cifra/data";
+import { dailyNumber, LAUNCH_DATE } from "@/games/cifra/data";
 
 /** El diario se genera en el cliente con la fecha UTC como semilla: todos ven el mismo tablero. Cuenta la primera partida. */
 export function DailyGame() {
@@ -13,6 +13,7 @@ export function DailyGame() {
       gameId="cifra"
       game="Cifra"
       home="/cifra"
+      launch={LAUNCH_DATE}
       title={(date) => `Cifra del día #${dailyNumber(date)}`}
       reveal={(date) => (
         <div className="flex gap-1.5" aria-label="Solución">
@@ -20,7 +21,7 @@ export function DailyGame() {
         </div>
       )}
     >
-      {(date, practice) => <Play key={String(practice)} date={date} practice={practice} />}
+      {(date, practice) => <Play key={`${date}-${practice}`} date={date} practice={practice} />}
     </DailyGate>
   );
 }
