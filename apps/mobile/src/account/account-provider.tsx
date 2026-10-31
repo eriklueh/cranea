@@ -5,6 +5,7 @@ import { ConvexReactClient } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import type { ReactNode } from "react";
 import { accountsEnabled, clerkPublishableKey, convexUrl } from "@/lib/convex";
+import { EntitlementsSync } from "@/monetization/sync";
 import { ProgressSync } from "./progress-sync";
 
 const convex = accountsEnabled ? new ConvexReactClient(convexUrl!, { unsavedChangesWarning: false }) : null;
@@ -20,6 +21,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     <ClerkProvider publishableKey={clerkPublishableKey} tokenCache={tokenCache} localization={esES}>
       <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
         <ProgressSync />
+        <EntitlementsSync />
         {children}
       </ConvexProviderWithClerk>
     </ClerkProvider>

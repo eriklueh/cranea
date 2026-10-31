@@ -43,7 +43,10 @@ function parse(raw: unknown, p: CifraPuzzle): SavedSession | null {
   const elapsed = Number(o.elapsed);
   if (!Number.isFinite(elapsed) || elapsed < 0) return null;
   const hintsUsed = Number.isInteger(o.hintsUsed) && (o.hintsUsed as number) >= 0 ? (o.hintsUsed as number) : 0;
-  return { input: o.input, misses, marks, elapsed, hintsUsed };
+  // Pistas gastadas y ganadas (solo la app las guarda; sin ellas, ninguna).
+  const hintSteps = Array.isArray(o.hintSteps) ? o.hintSteps.filter((n): n is number => Number.isInteger(n) && n >= 0) : [];
+  const bonusHints = Number.isInteger(o.bonusHints) && (o.bonusHints as number) >= 0 ? (o.bonusHints as number) : 0;
+  return { input: o.input, misses, marks, elapsed, hintsUsed, hintSteps, bonusHints };
 }
 
 /** Los diarios de otros días ya no se pueden retomar. */
@@ -70,6 +73,8 @@ export function saveSession(p: CifraPuzzle, s: SavedSession & { startedAt: numbe
     marks: s.marks,
     elapsed: Math.round(playedMs(s)),
     hintsUsed: s.hintsUsed,
+    hintSteps: s.hintSteps,
+    bonusHints: s.bonusHints,
   });
 }
 

@@ -6,8 +6,10 @@ import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { DailyNotice } from "@/components/daily-gate";
 import { GameHeader } from "@/components/game-header";
 import { ResultSheet, shareText } from "@/components/result-sheet";
+import { ExtraAttemptOffer, HintOffer, useExtraAttemptOffer } from "@/components/rewards";
 import { Button, Icon, Row, Screen, Text } from "@/components/ui";
 import { SHARE_URL } from "@/config";
+import { FREE_HINTS, usePlus } from "@/entitlements";
 import { formatTime } from "@/lib/format";
 import { useProgress } from "@/stores/progress";
 import { useTheme } from "@/theme/theme";
@@ -15,7 +17,7 @@ import { fonts, radius } from "@/theme/tokens";
 import { GAME_ID, MAX_ATTEMPTS, levelKey } from "../data";
 import { hintNudge, nextHintStep, traceFor } from "../hints";
 import { clearSession, loadSession, saveSession } from "../session";
-import { playedMs, useCifra } from "../store";
+import { attemptLimit, playedMs, useCifra } from "../store";
 import { InputSlots, Keypad } from "./keypad";
 import { ClueRow, DigitTile, Symbol, useTileSize } from "./tiles";
 
@@ -37,13 +39,15 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
   const recorded = useRef(false);
   const size = useTileSize(puzzle.length);
   const hintRows = hint && hint.step >= 0 ? (traceFor(puzzle).steps[hint.step]?.rows ?? []) : [];
+  /** La práctica (repetir el de hoy o un diario del archivo) no se retoma: no se guarda la partida. */
+  const persist = !(mode.kind === "daily" && mode.practice);
 
   // Retomar la partida guardada en el dispositivo (o empezar de cero).
   useEffect(() => {
     let alive = true;
     setLoaded(false);
     recorded.current = false;
-    loadSession(puzzle).then((saved) => {
+    (persist ? loadSession(puzzle) : Promise.resolve(null)).then((saved) => {
       if (!alive) return;
       start(puzzle, saved);
       setLoaded(true);
@@ -51,14 +55,15 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
     return () => {
       alive = false;
     };
-  }, [puzzle, start]);
+  }, [puzzle, start, persist]);
 
   // Guardar la partida en curso. En segundo plano el reloj se pausa.
   useEffect(() => {
     if (!loaded) return;
     const save = () => {
       const s = useCifra.getState();
-      if (s.puzzle === puzzle && s.status === "playing") saveSession(puzzle, s);
+      // El intento extra de un diario perdido no se retoma: la derrota ya está guardada.
+      if (persist && s.puzzle === puzzle && s.status === "playing" && !s.extraAttempt) saveSession(puzzle, s);
     };
     const unsubscribe = useCifra.subscribe((s, prev) => {
       if (s.input !== prev.input || s.misses !== prev.misses || s.marks !== prev.marks || s.hintsUsed !== prev.hintsUsed) save();
@@ -77,7 +82,7 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
       unsubscribe();
       app.remove();
     };
-  }, [puzzle, loaded]);
+  }, [puzzle, loaded, persist]);
 
   // Guardar el resultado una sola vez, con las mismas claves que la web.
   useEffect(() => {
@@ -87,7 +92,8 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
     const result = { won: status === "won", attempts: status === "won" ? s.misses.length + 1 : MAX_ATTEMPTS, timeMs: s.elapsed, at: Date.now() };
     const p = useProgress.getState();
     if (mode.kind === "level") p.recordLevel(GAME_ID, levelKey(mode.world, mode.level), result);
-    else if (!mode.practice) p.recordDaily(GAME_ID, mode.date, result);
+    // Con el intento extra: si sale, reemplaza a la derrota (más intentos, `first`); si no, queda la derrota.
+    else if (!mode.practice && (result.won || !s.extraAttempt)) p.recordDaily(GAME_ID, mode.date, result);
     clearSession(puzzle.id);
     const t = setTimeout(() => setResultOpen(true), status === "won" ? 700 : 350);
     return () => clearTimeout(t);
@@ -139,6 +145,11 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
           recorded.current = false;
           start(puzzle);
         }}
+        onExtra={() => {
+          setResultOpen(false);
+          recorded.current = false;
+          useCifra.getState().continueWithExtra();
+        }}
       />
     </>
   );
@@ -147,10 +158,11 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
 function Lives() {
   const { colors } = useTheme();
   const misses = useCifra((s) => s.misses.length);
-  const left = MAX_ATTEMPTS - misses;
+  const total = useCifra(attemptLimit);
+  const left = total - misses;
   return (
     <Row gap={3} accessibilityLabel={`Te ${left === 1 ? "queda" : "quedan"} ${left} ${left === 1 ? "intento" : "intentos"}`}>
-      {Array.from({ length: MAX_ATTEMPTS }, (_, i) => (
+      {Array.from({ length: total }, (_, i) => (
         <Icon key={i} name={i < left ? "heart" : "heart-outline"} size={16} color={i < left ? colors.margin : colors.border} />
       ))}
     </Row>
@@ -178,11 +190,12 @@ function Tools() {
   const status = useCifra((s) => s.status);
   const hasMarks = useCifra((s) => Object.keys(s.marks).length > 0);
   const hint = useCifra((s) => s.hint);
+  const plus = usePlus();
   if (status !== "playing") return null;
   const ask = () => {
     const s = useCifra.getState();
     if (!s.puzzle || !traceFor(s.puzzle).solved) return;
-    s.showHint(nextHintStep(s.puzzle, s.misses, s.marks));
+    s.askHint(nextHintStep(s.puzzle, s.misses, s.marks), plus ? null : FREE_HINTS);
   };
   return (
     <Row style={{ justifyContent: "center" }} gap={4}>
@@ -199,7 +212,21 @@ function HintPanel() {
   const status = useCifra((s) => s.status);
   const showHint = useCifra((s) => s.showHint);
   const closeHint = useCifra((s) => s.closeHint);
-  if (!hint || !puzzle || status !== "playing") return null;
+  const outOfHints = useCifra((s) => s.outOfHints);
+  if (!puzzle || status !== "playing") return null;
+  if (outOfHints) {
+    return (
+      <HintOffer
+        onClose={closeHint}
+        onEarned={() => {
+          const s = useCifra.getState();
+          s.grantHint();
+          s.askHint(nextHintStep(puzzle, s.misses, s.marks), FREE_HINTS);
+        }}
+      />
+    );
+  }
+  if (!hint) return null;
   const step = hint.step >= 0 ? traceFor(puzzle).steps[hint.step] : null;
   return (
     <Animated.View entering={FadeInUp.duration(200)} style={[styles.hint, { backgroundColor: colors.card, borderColor: colors.border }]} accessibilityLiveRegion="polite">
@@ -225,8 +252,12 @@ function HintPanel() {
   );
 }
 
-function CifraResult({ open, onClose, mode, onRetry }: { open: boolean; onClose: () => void; mode: GameMode; onRetry: () => void }) {
+function CifraResult({ open, onClose, mode, onRetry, onExtra }: { open: boolean; onClose: () => void; mode: GameMode; onRetry: () => void; onExtra: () => void }) {
   const router = useRouter();
+  const extraAttempt = useCifra((s) => s.extraAttempt);
+  const official = mode.kind === "daily" && !mode.practice;
+  const offer = useExtraAttemptOffer(GAME_ID, official ? mode.date : null);
+  const [revealed, setRevealed] = useState(false);
   const puzzle = useCifra((s) => s.puzzle);
   const status = useCifra((s) => s.status);
   const misses = useCifra((s) => s.misses);
@@ -238,23 +269,38 @@ function CifraResult({ open, onClose, mode, onRetry }: { open: boolean; onClose:
   const attempts = won ? misses.length + 1 : MAX_ATTEMPTS;
   const time = formatTime(elapsed);
   const title = mode.kind === "daily" ? `Cifra del día #${mode.number}` : `Nivel ${mode.world}-${mode.level}`;
+  // Diario perdido con el intento extra a mano: la solución queda tapada hasta que se elige.
+  const offering = official && !won && !extraAttempt && offer.available && !revealed;
   const share = () => {
-    const marks = Array.from({ length: MAX_ATTEMPTS }, (_, i) => (i < misses.length ? "🟥" : won && i === misses.length ? "🟩" : "⬜")).join("");
-    void shareText(`Craneá · ${title}\n${marks} ${won ? `${attempts}/${MAX_ATTEMPTS}` : "X"} en ${time}\n${SHARE_URL}/cifra`);
+    const marks = Array.from({ length: misses.length + (won ? 1 : 0) }, (_, i) => (i < misses.length ? "🟥" : "🟩")).join("") + "⬜".repeat(Math.max(0, MAX_ATTEMPTS - misses.length - (won ? 1 : 0)));
+    const score = won ? (extraAttempt ? "con un intento extra" : `${attempts}/${MAX_ATTEMPTS}`) : "X";
+    void shareText(`Craneá · ${title}\n${marks} ${score} en ${time}\n${SHARE_URL}/cifra`);
   };
 
   return (
     <ResultSheet
       visible={open}
       onClose={onClose}
-      title={won ? (attempts === 1 ? "Al primer intento" : "Código descifrado") : "Se acabaron los intentos"}
-      description={won ? `${title}, en ${attempts} de ${MAX_ATTEMPTS} intentos y ${time}.` : `${title}, sin resolver. Este era el código:`}
+      title={won ? (extraAttempt ? "¡Salió con el intento extra!" : attempts === 1 ? "Al primer intento" : "Código descifrado") : "Se acabaron los intentos"}
+      description={
+        won
+          ? extraAttempt
+            ? `${title}, en ${time}. Suma a tu racha; en el ranking queda como no resuelto.`
+            : `${title}, en ${attempts} de ${MAX_ATTEMPTS} intentos y ${time}.`
+          : offering
+            ? `${title}, sin resolver por ahora.`
+            : `${title}, sin resolver. Este era el código:`
+      }
     >
-      <Row gap={6} style={{ justifyContent: "center" }}>
-        {puzzle.solution.map((d, i) => (
-          <DigitTile key={i} digit={d} tone="solution" enterDelay={140 + i * 70} />
-        ))}
-      </Row>
+      {offering && mode.kind === "daily" ? (
+        <ExtraAttemptOffer gameId={GAME_ID} date={mode.date} onGranted={onExtra} onReveal={() => setRevealed(true)} />
+      ) : (
+        <Row gap={6} style={{ justifyContent: "center" }}>
+          {puzzle.solution.map((d, i) => (
+            <DigitTile key={i} digit={d} tone="solution" enterDelay={140 + i * 70} />
+          ))}
+        </Row>
+      )}
       {hintsUsed > 0 && <Text variant="small" style={{ textAlign: "center" }}>{hintsUsed === 1 ? "Usaste 1 pista" : `Usaste ${hintsUsed} pistas`}</Text>}
       <View style={{ gap: 8 }}>
         {mode.kind === "level" && mode.next ? (

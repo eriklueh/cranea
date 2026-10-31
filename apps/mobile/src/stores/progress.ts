@@ -42,8 +42,10 @@ export const useProgress = create<ProgressState>()(
       recordDaily: (gameId, date, r) =>
         set((s) => {
           const g = s.games[gameId] ?? empty();
-          if (g.daily[date]) return s; // el diario se juega una sola vez
-          return { games: { ...s.games, [gameId]: { ...g, daily: { ...g.daily, [date]: r } } } };
+          // El diario se juega una sola vez: solo un intento extra ganado reemplaza a la derrota (`first`).
+          const next = combine("daily", g.daily[date], r);
+          if (next === g.daily[date]) return s;
+          return { games: { ...s.games, [gameId]: { ...g, daily: { ...g.daily, [date]: next } } } };
         }),
       mergeEntries: (entries) =>
         set((s) => {
