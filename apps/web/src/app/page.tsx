@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { GAMES } from "@/games/registry";
+import { DailyBadge } from "@/components/game-home/daily-badge";
 import { DigitTile } from "@/games/cifra/components/digit-tile";
 import { Indicator } from "@/games/cifra/components/pegs";
 import { PuentesPreview } from "@/games/puentes/components/preview";
@@ -35,32 +36,35 @@ export default function Home() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto w-full max-w-3xl px-6 pb-16 sm:pl-16">
-        <section className="pt-10 pb-12">
-          <h1 className="font-display text-6xl leading-[0.95] font-extrabold tracking-tight sm:text-7xl">
+      <main className="mx-auto w-full max-w-3xl px-5 pb-16 sm:pr-6 sm:pl-16">
+        <section className="pt-4 pb-8 sm:pt-10 sm:pb-12">
+          <h1 className="font-display text-5xl leading-[0.95] font-extrabold tracking-tight sm:text-7xl">
             Craneá
           </h1>
-          <p className="mt-4 max-w-md text-lg text-muted-foreground">
+          <p className="mt-3 max-w-md text-muted-foreground sm:mt-4 sm:text-lg">
             Juegos de lógica cortos para pensar un rato. Uno por día, o todos los que quieras.
           </p>
         </section>
 
         <h2 className="sr-only">Juegos</h2>
-        <ul className="grid gap-4">
+        <ul className="grid gap-3 sm:gap-4">
           {GAMES.map((g) => {
             const Preview = PREVIEWS[g.id];
             return (
             <li key={g.id}>
               <Link
                 href={g.path}
-                className="group block rounded-xl border-2 border-ink bg-card p-5 shadow-[0_4px_0_0_var(--shadow-ink)] transition-transform hover:-translate-y-0.5 focus-visible:ring-[3px] focus-visible:ring-ring/50 outline-none"
+                className="group block rounded-xl border-2 border-ink bg-card p-4 sm:p-5 shadow-[0_4px_0_0_var(--shadow-ink)] transition-transform hover:-translate-y-0.5 focus-visible:ring-[3px] focus-visible:ring-ring/50 outline-none"
               >
-                <div className="flex flex-wrap items-center justify-between gap-5">
-                  <div>
-                    <h3 className="font-display text-3xl font-extrabold">{g.name}</h3>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-5">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 sm:justify-start">
+                      <h3 className="font-display text-3xl font-extrabold">{g.name}</h3>
+                      <DailyBadge gameId={g.id} />
+                    </div>
                     <p className="mt-1 max-w-sm text-muted-foreground">{g.tagline}</p>
                   </div>
-                  {Preview && <Preview />}
+                  {Preview && <div className="self-center sm:self-auto"><Preview /></div>}
                 </div>
               </Link>
             </li>

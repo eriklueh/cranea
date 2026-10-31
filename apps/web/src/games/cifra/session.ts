@@ -136,3 +136,8 @@ export function saveDrawing(id: string, strokes: Stroke[]) {
   if (strokes.reduce((n, s) => n + s.length, 0) > MAX_POINTS) return;
   write(DRAWING + id, strokes.map((stroke) => stroke.map(({ x, y }) => ({ x: round(x), y: round(y) }))));
 }
+
+/** Si hay una partida guardada de un tablero, sin validarla (para mostrar "Seguir"). */
+export function hasSession(id: string) {
+  return read(SESSION + id) !== null;
+}
