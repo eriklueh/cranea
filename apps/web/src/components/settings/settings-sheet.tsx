@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { ChartColumnIcon, SettingsIcon, XIcon } from "lucide-react";
+import { ChartColumnIcon, SettingsIcon, SparklesIcon, XIcon } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { useEffect, useState, type ReactNode } from "react";
 import { DailyReminder } from "@/components/daily-reminder";
@@ -8,8 +8,10 @@ import { InstallApp } from "@/components/pwa-provider";
 import { ThemeChoice } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { ActionRow, Choice, Toggle } from "@/components/settings/controls";
+import { PlusBadge } from "@/components/plus/paywall";
 import { TilePreview } from "@/components/settings/tile-preview";
 import { canVibrate } from "@/lib/motion";
+import { usePlus } from "@/lib/plus";
 import { usePrefs } from "@/lib/prefs";
 import { sound } from "@/lib/sound";
 
@@ -29,7 +31,10 @@ export function SettingsSheet() {
           className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] flex-col rounded-t-2xl border-2 border-b-0 border-foreground/80 bg-card text-card-foreground shadow-[0_-4px_0_0_var(--shadow-ink)] duration-200 outline-none data-[state=open]:animate-in data-[state=open]:slide-in-from-bottom data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom sm:inset-x-auto sm:top-1/2 sm:bottom-auto sm:left-1/2 sm:max-h-[min(44rem,90dvh)] sm:w-full sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:border-b-2 sm:shadow-[0_6px_0_0_var(--shadow-ink)] sm:data-[state=open]:animate-dialog-in data-[state=closed]:fade-out-0"
         >
           <div className="flex items-center justify-between gap-2 border-b-2 border-border py-2 pr-2 pl-5">
-            <DialogPrimitive.Title className="font-display text-2xl font-bold">Ajustes</DialogPrimitive.Title>
+            <div className="flex items-center gap-2">
+              <DialogPrimitive.Title className="font-display text-2xl font-bold">Ajustes</DialogPrimitive.Title>
+              <PlusState badge />
+            </div>
             <DialogPrimitive.Close asChild>
               <Button variant="ghost" size="icon" aria-label="Cerrar" className="size-11 [&_svg:not([class*='size-'])]:size-5">
                 <XIcon />
@@ -42,6 +47,21 @@ export function SettingsSheet() {
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>
+  );
+}
+
+/** Craneá Plus: pastilla junto al título si está activo, y una fila que lleva a /plus. */
+function PlusState({ badge = false }: { badge?: boolean }) {
+  const { plus } = usePlus();
+  if (badge) return plus ? <PlusBadge /> : null;
+  return (
+    <ActionRow label="Craneá Plus" hint={plus ? "Activo en tu cuenta. ¡Gracias!" : "Todos los niveles, el archivo y pistas sin límite."}>
+      <DialogPrimitive.Close asChild>
+        <Button asChild variant="ghost" size="icon" className="size-11">
+          <Link href="/plus" aria-label="Craneá Plus"><SparklesIcon /></Link>
+        </Button>
+      </DialogPrimitive.Close>
+    </ActionRow>
   );
 }
 
@@ -115,6 +135,7 @@ function Preferences() {
 
       <Section title="Más">
         <div className="-mx-2 space-y-1">
+          <PlusState />
           <ActionRow label="Estadísticas" hint="Rachas y resultados de cada juego.">
             <DialogPrimitive.Close asChild>
               <Button asChild variant="ghost" size="icon" className="size-11">

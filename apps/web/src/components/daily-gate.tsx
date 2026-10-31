@@ -10,6 +10,7 @@ import { todayKey } from "@cranea/core";
 import { accountsEnabled } from "@/components/account-provider";
 import { archiveDate, dailiesFor, shortDate } from "@/components/daily-hub/dailies";
 import { useAccountReady } from "@/components/progress-sync";
+import { PlusGate } from "@/components/plus/paywall";
 import { Button } from "@/components/ui/button";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { cn, formatTime } from "@/lib/utils";
@@ -86,7 +87,8 @@ export function DailyGate({ gameId, game, home, launch, title, reveal, children 
             Archivo
           </Link>
         </div>
-        {children(entry.date, true)}
+        {/* Los diarios anteriores son de Craneá Plus. */}
+        <PlusGate reason="archive" daily={`${home}/diario`}>{children(entry.date, true)}</PlusGate>
       </>
     );
   }

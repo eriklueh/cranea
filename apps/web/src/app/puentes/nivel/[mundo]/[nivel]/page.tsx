@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
 import { WORLDS } from "@cranea/core/puentes";
+import { PlusGate } from "@/components/plus/paywall";
 import { TutorialGate } from "@/components/tutorial/gate";
 import { PuentesTutorial } from "@/games/puentes/tutorial";
 import { PuentesGame } from "@/games/puentes/components/puentes-game";
@@ -33,10 +34,14 @@ export default async function LevelPage({ params }: { params: Params }) {
       {w === WORLDS[0].id && n === 1 ? (
         // La primera vez, el nivel 1 empieza con el tutorial.
         <TutorialGate game="puentes" levelKey={`w${w}-l${n}`} tutorial={<PuentesTutorial />}>
-          <PuentesGame puzzle={puzzle} mode={{ kind: "level", world: w, level: n, nextHref }} />
+          <PlusGate reason="levels" daily="/puentes/diario">
+            <PuentesGame puzzle={puzzle} mode={{ kind: "level", world: w, level: n, nextHref }} />
+          </PlusGate>
         </TutorialGate>
       ) : (
-        <PuentesGame puzzle={puzzle} mode={{ kind: "level", world: w, level: n, nextHref }} />
+        <PlusGate reason="levels" daily="/puentes/diario">
+          <PuentesGame puzzle={puzzle} mode={{ kind: "level", world: w, level: n, nextHref }} />
+        </PlusGate>
       )}
     </>
   );

@@ -53,6 +53,14 @@ pnpm levels              # regenera packages/core/levels/cifra.json (~1 min)
 - **Semana, mes y General**: `/ranking?periodo=semana|mes&juego=<id>|general&fecha=YYYY-MM-DD`. Sin `juego`, muestra el General (los 5 juegos); el General también tiene tablero del día. Cada diario oficial suma por su resultado (`convex/scoring.ts`): 2 por jugarlo, 8 más por resolverlo, hasta 5 por intentos (todos con el primero, ninguno con el último permitido) y hasta 5 por el tiempo del servidor (todos hasta el tiempo de referencia del juego, ninguno desde cuatro veces ese tiempo). Máximo 20 por diario. Empates: más resueltos, después menos tiempo. Semanas ISO (lunes a domingo) y meses calendario, en UTC.
   Se puntúa por resultado y no por puesto para que el total no cambie cuando llegan otros jugadores. `periodScores` guarda los totales por jugador, tablero y período: `publishDaily` los recalcula desde `dailyResults` de ese jugador (≤ 5 lecturas por índice), así que consultar no recorre partidas y recalcular es idempotente. Para los diarios publicados antes de esta tabla: `npx convex run leaderboards:rebuild` (se puede repetir).
 
+## Craneá Plus (web)
+
+- **Gratis**: los cinco diarios de hoy (también repetirlos como práctica), tutoriales, ranking, estadísticas y logros. **Plus**: todos los niveles, el archivo de diarios anteriores, pistas sin límite y la app sin publicidad. Se compra en la app (RevenueCat); la misma cuenta de Clerk lo activa en la web.
+- `lib/plus.ts`: `usePlus()` → `{ plus, ready }`. `components/plus/plus-sync.tsx` lee `api.entitlements.mine` y guarda el último valor en `cranea-plus`: quien ya tenía Plus no ve candados al abrir, ni sin conexión; un dispositivo nuevo arranca sin Plus. Solo al cerrar sesión se olvida. En `next dev`, `localStorage["cranea-plus-dev"] = "1"` (o `"0"`) lo fuerza.
+- `components/plus/paywall.tsx`: `openPaywall(motivo)` abre la hoja (montada en `AccountProvider`); `<PlusGate>` muestra la propuesta en lugar de un nivel o un diario anterior, sin montar el tablero. Las páginas siguen siendo estáticas: se decide en el cliente.
+- Pistas de Cifra: sin Plus, una por tablero (`cranea-pistas:<id>`, los pasos ya vistos se pueden volver a ver).
+- Tiendas: `NEXT_PUBLIC_APP_STORE_URL` y `NEXT_PUBLIC_PLAY_STORE_URL`; vacías, el botón lleva a `/plus#app`. Precio de muestra: `PLUS_PRICE`.
+
 ## Logros
 
 - **Catálogo y evaluación** en `packages/core/src/achievements` (`evaluateAchievements`, pura y con tests): ~20 logros que salen del progreso del dispositivo (`cranea-progress`), así que funcionan sin sesión. Cada uno informa avance (`value`/`goal`) y cuándo se cumplió según las partidas.

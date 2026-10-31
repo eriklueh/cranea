@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
 import { WORLDS } from "@cranea/core/nonograma";
+import { PlusGate } from "@/components/plus/paywall";
 import { TutorialGate } from "@/components/tutorial/gate";
 import { NonogramaTutorial } from "@/games/nonograma/tutorial";
 import { NonogramaGame } from "@/games/nonograma/components/nonograma-game";
@@ -33,10 +34,14 @@ export default async function LevelPage({ params }: { params: Params }) {
       {w === WORLDS[0].id && n === 1 ? (
         // La primera vez, el nivel 1 empieza con el tutorial.
         <TutorialGate game="nonograma" levelKey={`w${w}-l${n}`} tutorial={<NonogramaTutorial />}>
-          <NonogramaGame puzzle={puzzle} mode={{ kind: "level", world: w, level: n, nextHref }} />
+          <PlusGate reason="levels" daily="/nonograma/diario">
+            <NonogramaGame puzzle={puzzle} mode={{ kind: "level", world: w, level: n, nextHref }} />
+          </PlusGate>
         </TutorialGate>
       ) : (
-        <NonogramaGame puzzle={puzzle} mode={{ kind: "level", world: w, level: n, nextHref }} />
+        <PlusGate reason="levels" daily="/nonograma/diario">
+          <NonogramaGame puzzle={puzzle} mode={{ kind: "level", world: w, level: n, nextHref }} />
+        </PlusGate>
       )}
     </>
   );

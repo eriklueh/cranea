@@ -1,8 +1,10 @@
 "use client";
 import Link from "next/link";
-import { CalendarClockIcon, CheckIcon, ChevronRightIcon, XIcon } from "lucide-react";
+import { CalendarClockIcon, CheckIcon, ChevronRightIcon, LockIcon, XIcon } from "lucide-react";
 import { todayKey } from "@cranea/core";
 import { useClock } from "@/components/game-home/use-clock";
+import { PlusBadge, openPaywall } from "@/components/plus/paywall";
+import { usePlus } from "@/lib/plus";
 import { cn } from "@/lib/utils";
 import { useGameProgress, type Result } from "@/stores/progress";
 import { addDays, dayNumber, resultLine } from "./dailies";
@@ -33,10 +35,12 @@ function months(from: string, to: string) {
 /**
  * Calendario de diarios pasados de un juego, desde su lanzamiento hasta ayer, con tu resultado.
  * Tocar un día lo juega como práctica (`/<juego>/diario?fecha=`): no se guarda ni entra al ranking.
+ * Jugar días pasados es de Craneá Plus; sin Plus se ve el calendario y tocar un día abre la hoja.
  */
 export function ArchiveView({ gameId, home, launch }: { gameId: string; home: string; launch: string }) {
   const now = useClock(60_000);
   const progress = useGameProgress(gameId);
+  const { plus } = usePlus();
 
   if (now === null) {
     return (
@@ -58,6 +62,18 @@ export function ArchiveView({ gameId, home, launch }: { gameId: string; home: st
     <main className="mx-auto w-full max-w-md px-5 pt-1 pb-16">
       <h1 className="font-display text-3xl font-extrabold tracking-tight">Diarios anteriores</h1>
       <p className="mt-1 text-muted-foreground">Jugalos como práctica: no cambian tu racha ni el ranking.</p>
+      {past && !plus && (
+        <button
+          type="button"
+          onClick={() => openPaywall("archive")}
+          aria-haspopup="dialog"
+          className="mt-3 flex w-full items-center gap-2 rounded-lg bg-muted px-3 py-2.5 text-left text-sm outline-none hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        >
+          <PlusBadge className="shrink-0" />
+          <span className="min-w-0 flex-1">Volver a jugar un día es parte de Craneá Plus.</span>
+          <ChevronRightIcon aria-hidden className="size-4 shrink-0 text-pencil" />
+        </button>
+      )}
 
       {!past ? (
         <div className="mt-5 rounded-xl border-2 border-dashed border-border bg-card p-4">
@@ -88,7 +104,7 @@ export function ArchiveView({ gameId, home, launch }: { gameId: string; home: st
                 <ol className="grid grid-cols-7 gap-1">
                   {m.days.map((d, i) => (
                     <li key={d} style={i === 0 ? { gridColumnStart: m.offset + 1 } : undefined}>
-                      <DayCell gameId={gameId} date={d} today={d === today} result={progress.daily[d]} home={home} launch={launch} />
+                      <DayCell gameId={gameId} date={d} today={d === today} result={progress.daily[d]} home={home} launch={launch} needsPlus={!plus} />
                     </li>
                   ))}
                 </ol>
@@ -102,31 +118,42 @@ export function ArchiveView({ gameId, home, launch }: { gameId: string; home: st
   );
 }
 
-function DayCell({ gameId, date, today, result, home, launch }: { gameId: string; date: string; today: boolean; result?: Result; home: string; launch: string }) {
+function DayCell({ gameId, date, today, result, home, launch, needsPlus }: { gameId: string; date: string; today: boolean; result?: Result; home: string; launch: string; needsPlus: boolean }) {
   const day = Number(date.slice(8));
   const number = dayNumber(date, launch);
   const state = today ? "hoy" : !result ? "sin jugar" : result.won ? `resuelto, ${resultLine(gameId, result)}` : "no salió";
-  const label = `${LONG_DAY.format(utc(date))}, #${number}: ${state}${today ? "" : ". Jugar como práctica"}`;
-  return (
-    <Link
-      href={today ? `${home}/diario` : `${home}/diario?fecha=${date}`}
-      aria-label={label}
-      title={label}
-      className={cn(
-        "relative grid aspect-square min-h-11 w-full place-items-center rounded-md font-display text-base font-bold tabular-nums outline-none transition-transform hover:-translate-y-px focus-visible:ring-[3px] focus-visible:ring-ring/50",
-        today && "border-2 border-ink bg-card",
-        !today && !result && "border-2 border-dashed border-border bg-card text-muted-foreground hover:border-ink hover:text-foreground",
-        !today && result?.won && "bg-ok text-card",
-        !today && result && !result.won && "border-2 border-margin bg-card text-margin",
-      )}
-    >
+  const gated = needsPlus && !today;
+  const label = `${LONG_DAY.format(utc(date))}, #${number}: ${state}${today ? "" : gated ? ". Jugar como práctica, con Craneá Plus" : ". Jugar como práctica"}`;
+  const cls = cn(
+    "relative grid aspect-square min-h-11 w-full place-items-center rounded-md font-display text-base font-bold tabular-nums outline-none transition-transform hover:-translate-y-px focus-visible:ring-[3px] focus-visible:ring-ring/50",
+    today && "border-2 border-ink bg-card",
+    !today && !result && "border-2 border-dashed border-border bg-card text-muted-foreground hover:border-ink hover:text-foreground",
+    !today && result?.won && "bg-ok text-card",
+    !today && result && !result.won && "border-2 border-margin bg-card text-margin",
+  );
+  const content = (
+    <>
       {day}
       {!today && result && (
         <span aria-hidden className="absolute top-0.5 right-0.5">
           {result.won ? <CheckIcon className="size-3" strokeWidth={3.5} /> : <XIcon className="size-3" strokeWidth={3.5} />}
         </span>
       )}
+      {gated && !result && <LockIcon aria-hidden className="absolute top-1 right-1 size-2.5 opacity-60" strokeWidth={2.75} />}
       {today && <span aria-hidden className="absolute bottom-0.5 text-[9px] leading-none font-bold tracking-wide uppercase">hoy</span>}
+    </>
+  );
+  // Sin Plus, un día pasado abre la hoja de Plus en vez de jugarse.
+  if (gated) {
+    return (
+      <button type="button" onClick={() => openPaywall("archive")} aria-label={label} title={label} aria-haspopup="dialog" className={cls}>
+        {content}
+      </button>
+    );
+  }
+  return (
+    <Link href={today ? `${home}/diario` : `${home}/diario?fecha=${date}`} aria-label={label} title={label} className={cls}>
+      {content}
     </Link>
   );
 }

@@ -1,8 +1,10 @@
 "use client";
 import Link from "next/link";
-import { ArchiveIcon, ChevronRightIcon, CircleHelpIcon, PartyPopperIcon } from "lucide-react";
+import { ArchiveIcon, ChevronRightIcon, CircleHelpIcon, PartyPopperIcon, SparklesIcon } from "lucide-react";
 import { todayKey } from "@cranea/core";
+import { openPaywall } from "@/components/plus/paywall";
 import { useHydrated } from "@/hooks/use-hydrated";
+import { PLUS_PRICE, usePlus } from "@/lib/plus";
 import { cn } from "@/lib/utils";
 import { useGameProgress } from "@/stores/progress";
 import { DailyCard } from "./daily-card";
@@ -25,9 +27,34 @@ export function GameHome({ config }: { config: GameHomeConfig }) {
   const dailyDone = Boolean(today && progress.daily[today]);
   const worldIndex = next ? config.worlds.indexOf(next.world) : -1;
   const fresh = Object.keys(progress.levels).length === 0;
+  const { plus, ready } = usePlus();
+  const unit = config.unit ?? { one: "nivel", many: "niveles" };
+  const totalLevels = config.worlds.reduce((sum, w) => sum + w.levels, 0);
 
-  const continueCard = !hydrated ? (
+  const upsell = (
+    <button
+      type="button"
+      onClick={() => openPaywall("levels")}
+      aria-haspopup="dialog"
+      className="group flex w-full min-w-0 items-center gap-3 rounded-xl border-2 border-border bg-card p-2.5 pr-3 text-left outline-none hover:border-ink focus-visible:ring-[3px] focus-visible:ring-ring/50"
+    >
+      <span aria-hidden className="grid size-12 shrink-0 place-items-center rounded-lg bg-clue-present-bg text-clue-present">
+        <SparklesIcon className="size-5" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block font-bold">Más {unit.many} con Plus</span>
+        <span className="block text-sm text-muted-foreground">
+          {totalLevels} en {config.worlds.length} mundos, <span className="whitespace-nowrap">{PLUS_PRICE}</span>
+        </span>
+      </span>
+      <ChevronRightIcon aria-hidden className="size-5 shrink-0 text-pencil transition-transform group-hover:translate-x-0.5" />
+    </button>
+  );
+
+  const continueCard = !hydrated || !ready ? (
     <div aria-hidden className="h-[68px] rounded-xl border-2 border-border bg-card motion-safe:animate-pulse" />
+  ) : !plus ? (
+    upsell
   ) : next ? (
     <Link
       href={config.levelHref(next.world.id, next.level)}
@@ -66,9 +93,9 @@ export function GameHome({ config }: { config: GameHomeConfig }) {
     <main className="mx-auto w-full max-w-3xl px-5 pt-1 pb-16 sm:pr-6 sm:pl-16">
       <h1 className="sr-only">{config.name}</h1>
 
-      {/* Lo pendiente va primero: el diario sin jugar, o seguir con los niveles si ya está hecho. */}
+      {/* Lo pendiente va primero: el diario sin jugar, o seguir con los niveles si ya está hecho. Sin Plus, el diario siempre arriba. */}
       <div className="grid gap-3">
-        {dailyDone ? (
+        {dailyDone && plus ? (
           <>
             {continueCard}
             <DailyCard config={config} progress={progress} now={now} />
@@ -96,7 +123,8 @@ export function GameHome({ config }: { config: GameHomeConfig }) {
           progress={progress}
           hydrated={hydrated}
           initialWorld={next?.world.id ?? config.worlds[0].id}
-          nextKey={next ? `${next.world.id}-${next.level}` : null}
+          nextKey={next && plus ? `${next.world.id}-${next.level}` : null}
+          needsPlus={!plus}
           aside={
             <Link
               href={`/${config.id}/como-jugar`}

@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { LockIcon } from "lucide-react";
+import { PlusBadge, openPaywall } from "@/components/plus/paywall";
 import { cn } from "@/lib/utils";
 import type { GameProgress } from "@/stores/progress";
 import { doneFor, wonIn } from "./progress";
@@ -18,6 +19,7 @@ export function WorldMap({
   initialWorld,
   nextKey,
   aside,
+  needsPlus = false,
 }: {
   config: GameHomeConfig;
   progress: GameProgress;
@@ -28,6 +30,8 @@ export function WorldMap({
   nextKey: string | null;
   /** Al lado del título de la sección (el enlace a "Cómo se juega"). */
   aside?: React.ReactNode;
+  /** Sin Craneá Plus: los niveles abren la hoja de Plus en vez de jugarse. */
+  needsPlus?: boolean;
 }) {
   const { worlds } = config;
   const [picked, setPicked] = useState<number | null>(null);
@@ -56,7 +60,10 @@ export function WorldMap({
   return (
     <section aria-labelledby={`${idBase}s`}>
       <div className="mb-1.5 flex items-center justify-between gap-3">
-        <h2 id={`${idBase}s`} className="text-xs font-bold tracking-wider text-muted-foreground uppercase">Niveles</h2>
+        <div className="flex items-center gap-2">
+          <h2 id={`${idBase}s`} className="text-xs font-bold tracking-wider text-muted-foreground uppercase">Niveles</h2>
+          {needsPlus && <PlusBadge />}
+        </div>
         {aside}
       </div>
 
@@ -123,7 +130,7 @@ export function WorldMap({
 
         <ol className="grid grid-cols-6 gap-1.5 sm:grid-cols-10 sm:gap-2">
           {Array.from({ length: world.levels }, (_, i) => (
-            <LevelCell key={i} config={config} progress={progress} hydrated={hydrated} worldId={world.id} n={i + 1} done={done} next={nextKey === `${world.id}-${i + 1}`} />
+            <LevelCell key={i} config={config} progress={progress} hydrated={hydrated} worldId={world.id} n={i + 1} done={done} next={nextKey === `${world.id}-${i + 1}`} needsPlus={needsPlus} />
           ))}
         </ol>
       </div>
@@ -139,6 +146,7 @@ function LevelCell({
   n,
   done,
   next,
+  needsPlus,
 }: {
   config: GameHomeConfig;
   progress: GameProgress;
@@ -147,6 +155,7 @@ function LevelCell({
   n: number;
   done: (w: number, l: number) => boolean;
   next: boolean;
+  needsPlus: boolean;
 }) {
   const result = hydrated ? progress.levels[config.levelKey(worldId, n)] : undefined;
   const won = Boolean(result?.won);
@@ -177,17 +186,34 @@ function LevelCell({
 
   const title = won ? config.levelTitle?.(worldId, n) : "";
   const label = `Nivel ${n}${title ? `, ${title}` : ""}${won ? `, resuelto ${config.resultText(result!)}` : tried ? ", sin resolver" : ""}${next ? ", el próximo" : ""}`;
+  const content = (
+    <>
+      {thumb ?? n}
+      {won && (
+        <span aria-hidden className="absolute bottom-0.5 flex gap-0.5">
+          {Array.from({ length: 3 }, (_, k) => (
+            <span key={k} className={cn("size-1.5 rounded-full", k < stars ? "bg-ok" : "bg-border")} />
+          ))}
+        </span>
+      )}
+    </>
+  );
+  if (needsPlus) {
+    return (
+      <li>
+        <button type="button" onClick={() => openPaywall("levels")} className={cls} aria-label={`${label}. Con Craneá Plus`} aria-haspopup="dialog">
+          {content}
+          <span aria-hidden className="absolute -top-1 -right-1 grid size-4 place-items-center rounded-full border border-border bg-card text-muted-foreground">
+            <LockIcon className="size-2.5" strokeWidth={2.75} />
+          </span>
+        </button>
+      </li>
+    );
+  }
   return (
     <li>
       <Link href={config.levelHref(worldId, n)} className={cls} aria-label={label} aria-current={next ? "step" : undefined}>
-        {thumb ?? n}
-        {won && (
-          <span aria-hidden className="absolute bottom-0.5 flex gap-0.5">
-            {Array.from({ length: 3 }, (_, k) => (
-              <span key={k} className={cn("size-1.5 rounded-full", k < stars ? "bg-ok" : "bg-border")} />
-            ))}
-          </span>
-        )}
+        {content}
       </Link>
     </li>
   );

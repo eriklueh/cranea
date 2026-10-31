@@ -1,27 +1,51 @@
 "use client";
 
-import { LightbulbIcon, XIcon } from "lucide-react";
+import { LightbulbIcon, LockIcon, XIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { openPaywall } from "@/components/plus/paywall";
+import { FREE_HINTS, addFreeHintStep, freeHintSteps, usePlus } from "@/lib/plus";
 import { useCifra } from "../store";
 import { hintNudge, nextHintStep, traceFor } from "../hints";
 
 const base = "inline-flex h-11 min-w-11 items-center justify-center gap-2 rounded-lg px-3 text-sm font-semibold transition-colors hover:bg-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2";
 
-/** Primer toque: qué filas cruzar. Segundo toque: la deducción. */
+/**
+ * Primer toque: qué filas cruzar. Segundo toque: la deducción.
+ * Sin Craneá Plus hay `FREE_HINTS` pistas por tablero; volver a ver una ya dada no cuenta. Después, la hoja de Plus.
+ */
 export function HintButton() {
   const status = useCifra((s) => s.status);
   const hint = useCifra((s) => s.hint);
+  const id = useCifra((s) => s.puzzle?.id);
+  const { plus } = usePlus();
+  const [used, setUsed] = useState(0);
+  useEffect(() => {
+    if (id) setUsed(freeHintSteps(id).length);
+  }, [id]);
   if (status !== "playing") return null;
+  const out = !plus && used >= FREE_HINTS;
 
   const ask = () => {
     const s = useCifra.getState();
     if (!s.puzzle || !traceFor(s.puzzle).solved) return;
-    s.showHint(nextHintStep(s.puzzle, s.misses, s.marks));
+    const step = nextHintStep(s.puzzle, s.misses, s.marks);
+    if (step >= 0 && !plus) {
+      const seen = freeHintSteps(s.puzzle.id);
+      if (!seen.includes(step)) {
+        if (seen.length >= FREE_HINTS) return openPaywall("hints");
+        addFreeHintStep(s.puzzle.id, step);
+        setUsed(seen.length + 1);
+      }
+    }
+    s.showHint(step);
   };
 
+  const title = hint?.level === 1 ? "Ver la deducción" : out ? "Más pistas con Craneá Plus" : "Pedir una pista";
   return (
-    <button type="button" className={base} onClick={ask} aria-pressed={hint !== null} title={hint?.level === 1 ? "Ver la deducción" : "Pedir una pista"}>
+    <button type="button" className={base} onClick={ask} aria-pressed={hint !== null} title={title} aria-label={out && hint?.level !== 1 ? "Pista, más pistas con Craneá Plus" : undefined}>
       <LightbulbIcon className="size-4" />
       Pista
+      {out && hint?.level !== 1 && <LockIcon aria-hidden className="size-3 opacity-60" />}
     </button>
   );
 }
