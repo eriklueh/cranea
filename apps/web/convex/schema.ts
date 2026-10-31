@@ -14,7 +14,6 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_entry", ["userId", "gameId", "kind", "key"]),
-<<<<<<< HEAD
   /** Apodo público y si el jugador quiere aparecer en los rankings. */
   profiles: defineTable({
     userId: v.string(),
@@ -34,7 +33,6 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_entry", ["userId", "gameId", "date"])
     .index("by_day", ["gameId", "date", "won", "attempts", "timeMs"]),
-=======
   /** Suscripciones Web Push al recordatorio del diario. Sin sesión, se identifican solo por el endpoint. */
   reminders: defineTable({
     endpoint: v.string(),
@@ -51,5 +49,4 @@ export default defineSchema({
   })
     .index("by_endpoint", ["endpoint"])
     .index("by_next", ["nextAt"]),
->>>>>>> t3/daily-challenge-push-reminders
 });
