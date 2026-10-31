@@ -5,6 +5,7 @@ import { DigitTile } from "@/games/cifra/components/digit-tile";
 import { Indicator } from "@/games/cifra/components/pegs";
 import { PuentesPreview } from "@/games/puentes/components/preview";
 import { NonogramaPreview } from "@/games/nonograma/components/preview";
+import { PalabraPreview } from "@/games/palabra/components/preview";
 
 function CifraPreview() {
   return (
@@ -25,6 +26,7 @@ const PREVIEWS: Record<string, () => React.ReactNode> = {
   cifra: CifraPreview,
   puentes: PuentesPreview,
   nonograma: NonogramaPreview,
+  palabra: PalabraPreview,
 };
 
 export default function Home() {
