@@ -15,8 +15,8 @@ import { createJSONStorage, persist } from "zustand/middleware";
 
 export type Feature = "all-worlds" | "archive" | "unlimited-hints" | "no-ads";
 
-/** Mundos gratis de cada juego (los primeros del mapa). */
-export const FREE_WORLDS = 1;
+/** Mundos gratis de cada juego (los primeros del mapa). Gratis son solo los diarios, como en la web. */
+export const FREE_WORLDS = 0;
 /** Pistas gratis por tablero (diario o nivel). Con un anuncio se gana una más. */
 export const FREE_HINTS = 1;
 
