@@ -166,6 +166,7 @@ export function PuentesBoard({ puzzle }: { puzzle: PuentesPuzzle }) {
   return (
     <div
       ref={boardRef}
+      data-tutorial="board"
       className="@container relative mx-auto w-full select-none"
       style={{ aspectRatio: `${W} / ${H}`, maxWidth: `${Math.min(36, W * 3.25)}rem` }}
     >
@@ -230,6 +231,7 @@ export function PuentesBoard({ puzzle }: { puzzle: PuentesPuzzle }) {
               key={i}
               ref={(el) => { islandRefs.current[i] = el; }}
               type="button"
+              data-tutorial={`island-${i}`}
               tabIndex={focus === i ? 0 : -1}
               aria-pressed={playing ? isSelected : undefined}
               aria-disabled={!playing || undefined}

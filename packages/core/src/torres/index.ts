@@ -3,3 +3,4 @@ export * from "./board";
 export * from "./solver";
 export * from "./generator";
 export * from "./levels";
+export * from "./tutorial";

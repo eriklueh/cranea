@@ -10,8 +10,9 @@ import { GAME_ID, levelKey } from "../data";
 import { attemptsOf, MAX_ATTEMPTS, MAX_CHECKS, useNonograma } from "../store";
 import { Board } from "./board";
 import { ResultDialog, type GameMode } from "./result-dialog";
+import type { TutorialMode } from "@/components/tutorial/mode";
 
-export function NonogramaGame({ puzzle, mode }: { puzzle: NonogramaPuzzle; mode: GameMode }) {
+export function NonogramaGame({ puzzle, mode }: { puzzle: NonogramaPuzzle; mode: GameMode | TutorialMode }) {
   const start = useNonograma((s) => s.start);
   const current = useNonograma((s) => s.puzzle);
   const status = useNonograma((s) => s.status);
@@ -40,7 +41,7 @@ export function NonogramaGame({ puzzle, mode }: { puzzle: NonogramaPuzzle; mode:
 
   // Guardar el resultado una sola vez.
   useEffect(() => {
-    if (status === "playing" || recorded.current || current !== puzzle) return;
+    if (status === "playing" || recorded.current || current !== puzzle || mode.kind === "tutorial") return;
     recorded.current = true;
     const s = useNonograma.getState();
     const result = { won: status === "won", attempts: attemptsOf(s), timeMs: (s.finishedAt ?? Date.now()) - s.startedAt, at: Date.now() };
@@ -51,8 +52,8 @@ export function NonogramaGame({ puzzle, mode }: { puzzle: NonogramaPuzzle; mode:
     return () => clearTimeout(t);
   }, [status, current, puzzle, mode]);
 
-  const title = mode.kind === "daily" ? `Nonograma del día #${mode.number}` : `Nivel ${mode.level}`;
-  const subtitle = mode.kind === "daily" ? "Mismo tablero para todos" : `Mundo ${mode.world} · ${puzzle.width}×${puzzle.height}`;
+  const title = mode.kind === "tutorial" ? "Tutorial" : mode.kind === "daily" ? `Nonograma del día #${mode.number}` : `Nivel ${mode.level}`;
+  const subtitle = mode.kind === "tutorial" ? "Nonograma" : mode.kind === "daily" ? "Mismo tablero para todos" : `Mundo ${mode.world} · ${puzzle.width}×${puzzle.height}`;
 
   return (
     <main className={cn("mx-auto w-full px-2 pb-10 sm:px-4", puzzle.width >= 15 ? "max-w-xl" : "max-w-md")}>
@@ -70,7 +71,7 @@ export function NonogramaGame({ puzzle, mode }: { puzzle: NonogramaPuzzle; mode:
       </div>
 
       <Board puzzle={puzzle} />
-      <Reveal mode={mode.kind} />
+      <Reveal mode={mode.kind === "daily" ? "daily" : "level"} />
 
       {status === "playing" ? (
         <Controls />
@@ -82,7 +83,7 @@ export function NonogramaGame({ puzzle, mode }: { puzzle: NonogramaPuzzle; mode:
         </div>
       )}
 
-      <ResultDialog
+      {mode.kind !== "tutorial" && <ResultDialog
         open={resultOpen}
         onOpenChange={setResultOpen}
         mode={mode}
@@ -91,7 +92,7 @@ export function NonogramaGame({ puzzle, mode }: { puzzle: NonogramaPuzzle; mode:
           recorded.current = false;
           start(puzzle);
         }}
-      />
+      />}
     </main>
   );
 }
@@ -128,10 +129,11 @@ function Controls() {
 
   return (
     <div className="mt-2 space-y-4 px-2">
-      <div role="group" aria-label="Herramienta" className="mx-auto grid max-w-xs grid-cols-2 rounded-lg border-2 border-ink bg-card p-1 shadow-[0_3px_0_0_var(--shadow-ink)]">
+      <div role="group" aria-label="Herramienta" data-tutorial="tools" className="mx-auto grid max-w-xs grid-cols-2 rounded-lg border-2 border-ink bg-card p-1 shadow-[0_3px_0_0_var(--shadow-ink)]">
         {(["fill", "cross"] as const).map((t) => (
           <button
             key={t}
+            data-tutorial={`tool-${t}`}
             aria-pressed={tool === t}
             onClick={() => setTool(t)}
             className={cn(

@@ -17,8 +17,10 @@ import { ClearMarks } from "./clear-marks";
 import { HintButton, HintPanel, useHintRows } from "./hint";
 import { WinBurst } from "@/components/win-burst";
 import { STREAK_MILESTONES, worldCelebration, type Celebration } from "./celebration";
+import type { TutorialMode } from "@/components/tutorial/mode";
 
-export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMode }) {
+export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMode | TutorialMode }) {
+  const tutorial = mode.kind === "tutorial";
   const start = useCifra((s) => s.start);
   const current = useCifra((s) => s.puzzle);
   const status = useCifra((s) => s.status);
@@ -33,14 +35,15 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
   const recorded = useRef(false);
 
   useEffect(() => {
-    start(puzzle, loadSession(puzzle));
+    start(puzzle, tutorial ? null : loadSession(puzzle));
     setDrawing(false);
     setCelebration(null);
     recorded.current = false;
-  }, [puzzle, start]);
+  }, [puzzle, start, tutorial]);
 
   // Guardar la partida en curso en el dispositivo. En segundo plano el reloj se pausa.
   useEffect(() => {
+    if (tutorial) return;
     const save = () => {
       const s = useCifra.getState();
       if (s.puzzle === puzzle && s.status === "playing") saveSession(puzzle, s);
@@ -64,7 +67,7 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("pagehide", save);
     };
-  }, [puzzle]);
+  }, [puzzle, tutorial]);
 
   // Teclado físico.
   useEffect(() => {
@@ -91,7 +94,7 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
 
   // Guardar el resultado una sola vez.
   useEffect(() => {
-    if (status === "playing" || recorded.current || current !== puzzle) return;
+    if (status === "playing" || recorded.current || current !== puzzle || mode.kind === "tutorial") return;
     recorded.current = true;
     const s = useCifra.getState();
     const result = {
@@ -121,8 +124,8 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
     return () => clearTimeout(t);
   }, [status, current, puzzle, mode]);
 
-  const title = mode.kind === "daily" ? `Cifra del día #${mode.number}` : `Nivel ${mode.level}`;
-  const subtitle = mode.kind === "daily" ? "Mismo tablero para todos" : `Mundo ${mode.world}`;
+  const title = mode.kind === "tutorial" ? "Tutorial" : mode.kind === "daily" ? `Cifra del día #${mode.number}` : `Nivel ${mode.level}`;
+  const subtitle = mode.kind === "tutorial" ? "Cifra" : mode.kind === "daily" ? "Mismo tablero para todos" : `Mundo ${mode.world}`;
 
   return (
     <main className="mx-auto w-full max-w-md px-4 pb-10">
@@ -139,8 +142,8 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
         </div>
       </div>
 
-      <DrawingBoard key={`${puzzle.id}:${drawingSession}`} active={drawing} onActiveChange={setDrawing} storageKey={status === "playing" ? puzzle.id : null} tools={<><HintButton /><ClearMarks /></>}>
-      <section aria-label="Pistas" className="anim-fade-up mb-4">
+      <DrawingBoard key={`${puzzle.id}:${drawingSession}`} active={drawing} onActiveChange={setDrawing} storageKey={status === "playing" && !tutorial ? puzzle.id : null} tools={<><HintButton /><ClearMarks /></>}>
+      <section aria-label="Pistas" data-tutorial="clues" className="anim-fade-up mb-4">
         <ol className="space-y-2.5">
           {puzzle.clues.map((c, i) => (
             <ClueRow key={i} clue={c} marks={marks} row={i} highlight={hintRows.includes(i)} interactive disabled={status !== "playing"} onCycleMark={cycleMark} />
@@ -167,7 +170,7 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
       </section>
       </DrawingBoard>
 
-      <ResultDialog open={resultOpen} onOpenChange={setResultOpen} mode={mode} celebration={celebration} onRetry={() => {
+      {mode.kind !== "tutorial" && <ResultDialog open={resultOpen} onOpenChange={setResultOpen} mode={mode} celebration={celebration} onRetry={() => {
         setResultOpen(false);
         setDrawing(false);
         clearSession(puzzle.id);
@@ -175,7 +178,7 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
         setCelebration(null);
         recorded.current = false;
         start(puzzle);
-      }} />
+      }} />}
     </main>
   );
 }

@@ -22,7 +22,7 @@ interface Props {
 
 export function ClueRow({ clue, marks, row = 0, miss, size = "md", interactive = false, disabled = false, onCycleMark, highlight, dim, reveal }: Props) {
   return (
-    <li className={cn("flex items-center justify-center gap-2 rounded-lg transition-[background-color,box-shadow,opacity] duration-300 motion-reduce:transition-none", highlight && "bg-clue-present-bg shadow-[0_0_0_6px_var(--clue-present-bg)]", dim && "opacity-40")}>
+    <li data-tutorial={interactive ? `clue-${row}` : undefined} className={cn("flex items-center justify-center gap-2 rounded-lg transition-[background-color,box-shadow,opacity] duration-300 motion-reduce:transition-none", highlight && "bg-clue-present-bg shadow-[0_0_0_6px_var(--clue-present-bg)]", dim && "opacity-40")}>
       {highlight && <span className="sr-only">Fila señalada: </span>}
       <Indicator kind="exact" value={clue.feedback.exact} className={reveal ? "anim-pop-in" : undefined} style={reveal ? ({ "--base": `${clue.guess.length * 70 + 120}ms` } as CSSProperties) : undefined} />
       <span className={cn("relative flex shrink-0 gap-1.5", miss && "after:absolute after:-bottom-1.5 after:inset-x-0 after:h-0.5 after:rounded-full after:bg-margin")}>
@@ -32,6 +32,7 @@ export function ClueRow({ clue, marks, row = 0, miss, size = "md", interactive =
             key={i}
             digit={d}
             position={i}
+            tutorial={interactive ? `tile-${row}-${i}` : undefined}
             mark={marks ? tileMarkState(marks, row, i) : "none"}
             size={size}
             interactive={interactive}

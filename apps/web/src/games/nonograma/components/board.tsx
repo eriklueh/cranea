@@ -11,6 +11,7 @@ const NONE: number[] = [];
 const STATE_LABEL: Record<Cell, string> = { 0: "vacía", 1: "pintada", 2: "con cruz" };
 
 const SIZING: Record<number, { box: string; clue: string; gap: string }> = {
+  4: { box: "max-w-[17rem]", clue: "text-lg", gap: "gap-2" },
   5: { box: "max-w-[21rem]", clue: "text-base", gap: "gap-1.5" },
   10: { box: "max-w-[27rem]", clue: "text-sm", gap: "gap-1" },
   15: { box: "max-w-[34rem]", clue: "text-[0.66rem] sm:text-sm", gap: "gap-[3px] sm:gap-1" },
@@ -106,12 +107,13 @@ export function Board({ puzzle }: { puzzle: NonogramaPuzzle }) {
   const cellState = (i: number): Cell => (finished ? (puzzle.solution[i] ? FILLED : 0) : board[i]);
 
   return (
-    <div ref={boxRef} className={cn("anim-fade-up relative mx-auto grid w-full grid-cols-[auto_1fr] select-none", sizing.box)}>
+    <div ref={boxRef} data-tutorial="board" className={cn("anim-fade-up relative mx-auto grid w-full grid-cols-[auto_1fr] select-none", sizing.box)}>
       <div />
       <div className="grid items-end pb-1" style={{ gridTemplateColumns: `repeat(${W}, minmax(0, 1fr))` }} aria-hidden>
         {puzzle.cols.map((clue, c) => (
           <div
             key={c}
+            data-tutorial={`col-clue-${c}`}
             className={cn(
               "flex flex-col items-center justify-end rounded-t-sm pb-0.5 font-display leading-tight font-bold tabular-nums transition-[opacity,background-color] duration-300",
               sizing.clue,
@@ -130,6 +132,7 @@ export function Board({ puzzle }: { puzzle: NonogramaPuzzle }) {
         {puzzle.rows.map((clue, r) => (
           <div
             key={r}
+            data-tutorial={`row-clue-${r}`}
             className={cn(
               "flex items-center justify-end rounded-l-sm pl-1 font-display font-bold whitespace-nowrap tabular-nums transition-[opacity,background-color] duration-300",
               sizing.clue,
@@ -177,6 +180,7 @@ export function Board({ puzzle }: { puzzle: NonogramaPuzzle }) {
                   key={c}
                   role="gridcell"
                   data-cell={i}
+                  data-tutorial={`cell-${i}`}
                   tabIndex={i === (cursor ?? 0) ? 0 : -1}
                   aria-label={`Fila ${r + 1} (${rowClue}), columna ${c + 1} (${colClue}): ${STATE_LABEL[state]}${flaggedSet.has(i) ? ", revisar" : ""}`}
                   onFocus={() => useNonograma.getState().cursor !== i && useNonograma.getState().setCursor(i)}

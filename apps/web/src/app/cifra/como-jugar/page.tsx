@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
+import { TryTutorial } from "@/components/tutorial/try-tutorial";
 import { ClueRow } from "@/games/cifra/components/clue-row";
 import { PegLegend } from "@/games/cifra/components/pegs";
 import { MarkLegend } from "@/games/cifra/components/mark-legend";
@@ -19,6 +20,7 @@ export default function HowTo() {
       <SiteHeader game={{ name: "Cifra", href: "/cifra" }} />
       <main className="mx-auto w-full max-w-2xl space-y-8 px-6 pt-4 pb-16 leading-relaxed sm:pl-16">
         <h1 className="font-display text-4xl font-extrabold tracking-tight">Cómo se juega Cifra</h1>
+        <TryTutorial href="/cifra/tutorial" />
         <p className="max-w-prose">
           Hay un código secreto de cifras distintas. El tablero ya trae varios intentos puntuados. Cada fila te dice cuántas de sus
           cifras están en el código y cuántas están en su lugar, pero nunca cuáles. Cruzando las filas, solo un código encaja con

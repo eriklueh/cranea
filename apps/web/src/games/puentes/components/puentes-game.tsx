@@ -10,6 +10,7 @@ import { attemptsOf, usePuentes, type Notice } from "../store";
 import { PuentesBoard } from "./board";
 import { mistakesText, ResultDialog, type GameMode } from "./result-dialog";
 import { Timer } from "./timer";
+import type { TutorialMode } from "@/components/tutorial/mode";
 
 function noticeText(n: Notice, status: string) {
   if (status === "won") return "Todas las islas quedaron conectadas.";
@@ -20,7 +21,7 @@ function noticeText(n: Notice, status: string) {
   return n.missing === 1 ? "Vas bien. Falta un puente." : `Vas bien. Faltan ${n.missing} puentes.`;
 }
 
-export function PuentesGame({ puzzle, mode, alreadyPlayed = false }: { puzzle: PuentesPuzzle; mode: GameMode; alreadyPlayed?: boolean }) {
+export function PuentesGame({ puzzle, mode, alreadyPlayed = false }: { puzzle: PuentesPuzzle; mode: GameMode | TutorialMode; alreadyPlayed?: boolean }) {
   const start = usePuentes((s) => s.start);
   const review = usePuentes((s) => s.review);
   const current = usePuentes((s) => s.puzzle);
@@ -55,7 +56,7 @@ export function PuentesGame({ puzzle, mode, alreadyPlayed = false }: { puzzle: P
 
   // Guardar el resultado una sola vez.
   useEffect(() => {
-    if (status !== "won" || recorded.current || current !== puzzle) return;
+    if (status !== "won" || recorded.current || current !== puzzle || mode.kind === "tutorial") return;
     recorded.current = true;
     const s = usePuentes.getState();
     const result = { won: true, attempts: attemptsOf(s.mistakes), timeMs: (s.finishedAt ?? Date.now()) - s.startedAt, at: Date.now() };
@@ -66,8 +67,8 @@ export function PuentesGame({ puzzle, mode, alreadyPlayed = false }: { puzzle: P
     return () => clearTimeout(t);
   }, [status, current, puzzle, mode]);
 
-  const title = mode.kind === "daily" ? `Puentes del día #${mode.number}` : `Nivel ${mode.level}`;
-  const subtitle = mode.kind === "daily" ? "Mismo tablero para todos" : `Mundo ${mode.world}`;
+  const title = mode.kind === "tutorial" ? "Tutorial" : mode.kind === "daily" ? `Puentes del día #${mode.number}` : `Nivel ${mode.level}`;
+  const subtitle = mode.kind === "tutorial" ? "Puentes" : mode.kind === "daily" ? "Mismo tablero para todos" : `Mundo ${mode.world}`;
   const message = noticeText(notice, status);
 
   return (
@@ -127,7 +128,7 @@ export function PuentesGame({ puzzle, mode, alreadyPlayed = false }: { puzzle: P
         </p>
       )}
 
-      <ResultDialog open={resultOpen} onOpenChange={setResultOpen} mode={mode} />
+      {mode.kind !== "tutorial" && <ResultDialog open={resultOpen} onOpenChange={setResultOpen} mode={mode} />}
     </main>
   );
 }
