@@ -17,6 +17,7 @@ export function WorldMap({
   hydrated,
   initialWorld,
   nextKey,
+  aside,
 }: {
   config: GameHomeConfig;
   progress: GameProgress;
@@ -25,6 +26,8 @@ export function WorldMap({
   initialWorld: number;
   /** Nivel resaltado como el próximo, `w-l`. */
   nextKey: string | null;
+  /** Al lado del título de la sección (el enlace a "Cómo se juega"). */
+  aside?: React.ReactNode;
 }) {
   const { worlds } = config;
   const [picked, setPicked] = useState<number | null>(null);
@@ -52,9 +55,17 @@ export function WorldMap({
 
   return (
     <section aria-labelledby={`${idBase}s`}>
-      <h2 id={`${idBase}s`} className="mb-2 font-display text-xl font-extrabold">Mundos</h2>
+      <div className="mb-1.5 flex items-center justify-between gap-3">
+        <h2 id={`${idBase}s`} className="text-xs font-bold tracking-wider text-muted-foreground uppercase">Niveles</h2>
+        {aside}
+      </div>
 
-      <div role="tablist" aria-label="Mundos" className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${worlds.length}, minmax(0, 1fr))` }}>
+      <div
+        role="tablist"
+        aria-label="Mundos"
+        className="grid gap-1 rounded-xl bg-muted p-1"
+        style={{ gridTemplateColumns: `repeat(${worlds.length}, minmax(0, 1fr))` }}
+      >
         {worlds.map((w, i) => {
           const selected = w.id === world.id;
           const wOpen = hydrated && config.isWorldUnlocked(w.id, done);
@@ -75,48 +86,42 @@ export function WorldMap({
               onClick={() => setPicked(w.id)}
               onKeyDown={(e) => onKeyDown(e, i)}
               className={cn(
-                "flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg border-2 px-1 pt-1.5 pb-2 outline-none transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50",
-                selected ? "border-ink bg-ink text-paper shadow-[0_3px_0_0_var(--shadow-ink)]" : "border-border bg-card hover:border-ink",
+                "flex min-h-11 flex-col items-center justify-center gap-1 rounded-lg px-1 pt-1.5 pb-1.5 outline-none transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                selected ? "bg-card shadow-[0_1px_0_1px_var(--border)] dark:bg-accent" : "text-muted-foreground hover:bg-card/60 hover:text-foreground",
               )}
             >
-              <span className="flex items-center gap-1 font-display text-lg leading-none font-extrabold">
+              <span className="flex items-center gap-1 font-display text-base leading-none font-extrabold">
                 {i + 1}
-                {hydrated && !wOpen && <LockIcon aria-hidden className="size-3.5 opacity-70" />}
+                {hydrated && !wOpen && <LockIcon aria-hidden className="size-3 opacity-70" />}
               </span>
-              <span className={cn("hidden max-w-full truncate text-xs font-semibold sm:block", !selected && "text-muted-foreground")}>{w.name}</span>
-              <span aria-hidden className={cn("h-1 w-4/5 overflow-hidden rounded-full", selected ? "bg-paper/25" : "bg-muted")}>
-                <span className={cn("block h-full rounded-full", selected ? "bg-paper" : "bg-ok")} style={{ width: `${(wWon / w.levels) * 100}%` }} />
+              <span aria-hidden className="h-1 w-3/5 overflow-hidden rounded-full bg-border/70">
+                <span className="block h-full rounded-full bg-ok" style={{ width: `${(wWon / w.levels) * 100}%` }} />
               </span>
             </button>
           );
         })}
       </div>
 
-      <div role="tabpanel" id={`${idBase}-panel`} aria-labelledby={`${idBase}-tab-${world.id}`} className="mt-4">
-        <div className="flex items-baseline justify-between gap-3">
-          <h3 className="font-display text-lg font-extrabold">
-            <span className="mr-1.5 text-margin">{index + 1}</span>
+      <div role="tabpanel" id={`${idBase}-panel`} aria-labelledby={`${idBase}-tab-${world.id}`} className="mt-3">
+        <div className="mb-2.5 flex items-baseline justify-between gap-3">
+          <h3 className="min-w-0 truncate font-display text-lg font-extrabold">
             {world.name}
           </h3>
-          <span className="shrink-0 text-sm font-semibold text-muted-foreground tabular-nums">
-            {hydrated ? won : "–"}/{world.levels}
+          <span className="shrink-0 text-sm text-muted-foreground tabular-nums">
+            <span className="font-semibold text-foreground">{hydrated ? won : "–"}</span>/{world.levels}
           </span>
         </div>
-        <p className="mt-0.5 mb-3 text-sm text-muted-foreground">
-          {!hydrated || open ? (
-            world.description
-          ) : (
-            <span className="inline-flex items-start gap-1.5">
-              <LockIcon aria-hidden className="mt-0.5 size-3.5 shrink-0" />
-              <span>
-                Se abre con {plural(world.unlockAfter, unit.one, unit.many)} de «{previous?.name}».{" "}
-                <span className="font-semibold text-foreground">Te {missing === 1 ? "falta" : "faltan"} {missing}.</span>
-              </span>
+        {hydrated && !open && (
+          <p className="mb-3 flex items-start gap-1.5 rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">
+            <LockIcon aria-hidden className="mt-0.5 size-3.5 shrink-0" />
+            <span>
+              Se abre con {plural(world.unlockAfter, unit.one, unit.many)} de «{previous?.name}».{" "}
+              <span className="font-semibold text-foreground">Te {missing === 1 ? "falta" : "faltan"} {missing}.</span>
             </span>
-          )}
-        </p>
+          </p>
+        )}
 
-        <ol className={cn("grid grid-cols-6 gap-2 sm:grid-cols-10", hydrated && !open && "opacity-60")}>
+        <ol className="grid grid-cols-6 gap-1.5 sm:grid-cols-10 sm:gap-2">
           {Array.from({ length: world.levels }, (_, i) => (
             <LevelCell key={i} config={config} progress={progress} hydrated={hydrated} worldId={world.id} n={i + 1} done={done} next={nextKey === `${world.id}-${i + 1}`} />
           ))}
@@ -153,11 +158,11 @@ function LevelCell({
   const cls = cn(
     "relative grid aspect-square min-h-11 w-full place-items-center rounded-md font-display text-base font-bold tabular-nums outline-none transition-[background-color,transform] focus-visible:ring-[3px] focus-visible:ring-ring/50",
     !hydrated && "bg-muted/60 text-transparent",
-    won && "border-2 border-ink bg-tile shadow-[0_2px_0_0_var(--shadow-ink)] hover:-translate-y-px",
-    next && "bg-ink text-paper shadow-[0_3px_0_0_var(--shadow-ink)] ring-2 ring-ink ring-offset-2 ring-offset-paper hover:-translate-y-px",
+    won && "border-2 border-ink bg-tile hover:-translate-y-px",
+    next && "bg-ink text-paper shadow-[0_3px_0_0_var(--shadow-ink)] hover:-translate-y-px",
     tried && !next && "border-2 border-margin text-margin hover:bg-accent",
-    !won && !tried && !next && unlocked && "border-2 border-dashed border-ink hover:bg-accent",
-    hydrated && !unlocked && "text-pencil/45",
+    !won && !tried && !next && unlocked && "border-2 border-border bg-card hover:border-ink",
+    hydrated && !unlocked && "text-sm font-semibold text-pencil/40",
   );
 
   if (!unlocked) {

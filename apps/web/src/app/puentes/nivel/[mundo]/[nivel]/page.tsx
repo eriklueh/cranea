@@ -26,7 +26,7 @@ export default async function LevelPage({ params }: { params: Params }) {
 
   return (
     <>
-      <SiteHeader />
+      <SiteHeader game={{ name: "Puentes", href: "/puentes" }} />
       <PuentesGame puzzle={puzzle} mode={{ kind: "level", world: w, level: n, nextHref }} />
     </>
   );

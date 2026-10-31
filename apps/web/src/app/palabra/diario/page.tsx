@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Palabra del día" };
 export default function DailyPage() {
   return (
     <>
-      <SiteHeader />
+      <SiteHeader game={{ name: "Palabra", href: "/palabra" }} />
       <DailyGame />
     </>
   );

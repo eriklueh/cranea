@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Palabra" };
 export default function PalabraPage() {
   return (
     <>
-      <SiteHeader />
+      <SiteHeader game={{ name: "Palabra", href: "/palabra", current: true }} />
       <PalabraHome />
     </>
   );

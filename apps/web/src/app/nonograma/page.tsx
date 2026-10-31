@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Nonograma" };
 export default function NonogramaPage() {
   return (
     <>
-      <SiteHeader />
+      <SiteHeader game={{ name: "Nonograma", href: "/nonograma", current: true }} />
       <NonogramaHome />
     </>
   );

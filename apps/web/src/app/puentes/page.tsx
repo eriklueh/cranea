@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Puentes" };
 export default function PuentesPage() {
   return (
     <>
-      <SiteHeader />
+      <SiteHeader game={{ name: "Puentes", href: "/puentes", current: true }} />
       <PuentesHome />
     </>
   );
