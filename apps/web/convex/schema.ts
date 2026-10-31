@@ -5,6 +5,19 @@ export const kind = v.union(v.literal("level"), v.literal("daily"));
 export const result = v.object({ won: v.boolean(), attempts: v.number(), timeMs: v.number(), at: v.number() });
 
 export default defineSchema({
+  /**
+   * Craneá Plus. Lo escribe el webhook de RevenueCat (compras en App Store / Play Store)
+   * o un administrador. `subject` es el id de usuario de Clerk, que la app usa como appUserID.
+   */
+  entitlements: defineTable({
+    subject: v.string(),
+    plus: v.boolean(),
+    /** Vencimiento en ms; sin valor, no vence (por ejemplo, otorgado a mano). */
+    expiresAt: v.optional(v.number()),
+    source: v.string(),
+    productId: v.optional(v.string()),
+    updatedAt: v.number(),
+  }).index("by_subject", ["subject"]),
   progress: defineTable({
     userId: v.string(),
     gameId: v.string(),

@@ -10,6 +10,8 @@
 
 import type * as achievements from "../achievements.js";
 import type * as crons from "../crons.js";
+import type * as entitlements from "../entitlements.js";
+import type * as http from "../http.js";
 import type * as leaderboards from "../leaderboards.js";
 import type * as progress from "../progress.js";
 import type * as push from "../push.js";
@@ -28,6 +30,8 @@ import type {
 declare const fullApi: ApiFromModules<{
   achievements: typeof achievements;
   crons: typeof crons;
+  entitlements: typeof entitlements;
+  http: typeof http;
   leaderboards: typeof leaderboards;
   progress: typeof progress;
   push: typeof push;

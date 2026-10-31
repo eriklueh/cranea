@@ -17,10 +17,18 @@ export function better(a: Result | undefined, b: Result): Result {
   return b.timeMs < a.timeMs ? b : a;
 }
 
-/** El diario se juega una sola vez: vale la primera partida, aunque venga de otro dispositivo. */
+/**
+ * El diario se juega una sola vez: vale la primera partida, aunque venga de otro dispositivo.
+ * Excepción: un intento extra (anuncio con recompensa) puede convertir una derrota en victoria
+ * para la racha; se reconoce porque usa más intentos que la derrota. El ranking no la cuenta.
+ */
 export function first(a: Result | undefined, b: Result): Result {
+  if (a && !a.won && b.won && b.attempts > a.attempts && b.at > a.at) return b;
   return !a || b.at < a.at ? b : a;
 }
+
+/** Intentos de un diario sin ayuda. Más que esto es un intento extra: no cuenta como resuelto en el ranking. */
+export const DAILY_MAX_ATTEMPTS: Record<string, number> = { cifra: 3, palabra: 6, nonograma: 3, torres: 3 };
 
 export const combine = (kind: Kind, a: Result | undefined, b: Result) => (kind === "level" ? better(a, b) : first(a, b));
 

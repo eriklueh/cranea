@@ -3,7 +3,7 @@ import type { Doc } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { clearScores, refreshScores } from "./leaderboards";
 import { userId, valid } from "./progress";
-import { publicName, rankable, type Result } from "./results";
+import { DAILY_MAX_ATTEMPTS, publicName, rankable, type Result } from "./results";
 
 const TOP = 10;
 /** Cuántas partidas del día se leen como máximo para ubicar a cada jugador. */
@@ -53,7 +53,9 @@ export async function finishDaily(ctx: MutationCtx, user: string, gameId: string
 export async function publishDaily(ctx: MutationCtx, user: string, start: Start | null) {
   if (!start || start.finishedAt === undefined || start.won === undefined || start.attempts === undefined) return;
   const timeMs = start.finishedAt - start.startedAt;
-  const official = { won: start.won, attempts: start.attempts, timeMs, at: start.finishedAt };
+  // Resuelto con un intento extra (anuncio): para el ranking cuenta como no resuelto.
+  const assisted = start.attempts > (DAILY_MAX_ATTEMPTS[start.gameId] ?? Infinity);
+  const official = { won: start.won && !assisted, attempts: start.attempts, timeMs, at: start.finishedAt };
   if (!valid(official) || !rankable(start.date, official) || timeMs < (MIN_MS[start.gameId] ?? 8_000)) return;
   const existing = await ctx.db
     .query("dailyResults")
