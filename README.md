@@ -49,6 +49,13 @@ pnpm levels              # regenera packages/core/levels/cifra.json (~1 min)
 
 - **/estadisticas** calcula todo con el progreso del dispositivo (`gameStats` en `stores/progress.ts`), así que funciona sin sesión y sin red. Recorre los juegos `live` del registro.
 - **/ranking?juego=<id>&fecha=YYYY-MM-DD** muestra el diario de cada juego en vivo (`convex/ranking.ts`): primero quienes ganaron, después menos intentos y menos tiempo. Para aparecer hay que iniciar sesión y elegir un apodo (tabla `profiles`). Al sumarse se copian a `dailyResults` los diarios ya guardados; después, `progress.save` copia cada diario nuevo. Solo entran partidas del jugador autenticado, válidas y terminadas durante ese día UTC (`rankable` en `convex/results.ts`). Al dejar de aparecer se borran sus filas.
+- **Semana, mes y General**: `/ranking?periodo=semana|mes&juego=<id>|general&fecha=YYYY-MM-DD`. Sin `juego`, muestra el General (los 5 juegos); el General también tiene tablero del día. Cada diario oficial suma por su resultado (`convex/scoring.ts`): 2 por jugarlo, 8 más por resolverlo, hasta 5 por intentos (todos con el primero, ninguno con el último permitido) y hasta 5 por el tiempo del servidor (todos hasta el tiempo de referencia del juego, ninguno desde cuatro veces ese tiempo). Máximo 20 por diario. Empates: más resueltos, después menos tiempo. Semanas ISO (lunes a domingo) y meses calendario, en UTC.
+  Se puntúa por resultado y no por puesto para que el total no cambie cuando llegan otros jugadores. `periodScores` guarda los totales por jugador, tablero y período: `publishDaily` los recalcula desde `dailyResults` de ese jugador (≤ 5 lecturas por índice), así que consultar no recorre partidas y recalcular es idempotente. Para los diarios publicados antes de esta tabla: `npx convex run leaderboards:rebuild` (se puede repetir).
+
+## Logros
+
+- **Catálogo y evaluación** en `packages/core/src/achievements` (`evaluateAchievements`, pura y con tests): ~20 logros que salen del progreso del dispositivo (`cranea-progress`), así que funcionan sin sesión. Cada uno informa avance (`value`/`goal`) y cuándo se cumplió según las partidas.
+- **Web**: `stores/achievements.ts` guarda los desbloqueados con su fecha (`cranea-logros`). `components/achievements-provider.tsx` (en el layout) evalúa con cada cambio del progreso y muestra un aviso arriba; lo que ya estaba cumplido la primera vez se desbloquea sin aviso, y tres o más juntos se resumen en uno. Con sesión se guardan en la tabla `achievements` de Convex (vale la fecha más antigua). Se ven en `/logros` y desde `/estadisticas`.
 
 ## Cómo funciona Puentes
 

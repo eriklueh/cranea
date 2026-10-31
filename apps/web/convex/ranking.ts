@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
+import { clearScores, refreshScores } from "./leaderboards";
 import { userId, valid } from "./progress";
 import { publicName, rankable, type Result } from "./results";
 
@@ -58,7 +59,9 @@ export async function publishDaily(ctx: MutationCtx, user: string, start: Start 
     .query("dailyResults")
     .withIndex("by_entry", (q) => q.eq("userId", user).eq("gameId", start.gameId).eq("date", start.date))
     .unique();
-  if (!existing) await ctx.db.insert("dailyResults", { userId: user, gameId: start.gameId, date: start.date, ...official });
+  if (existing) return;
+  await ctx.db.insert("dailyResults", { userId: user, gameId: start.gameId, date: start.date, ...official });
+  await refreshScores(ctx, user, start.gameId, start.date);
 }
 
 async function publishAll(ctx: MutationCtx, user: string) {
@@ -107,6 +110,7 @@ export const setRanked = mutation({
     if (!ranked) {
       const published = await ctx.db.query("dailyResults").withIndex("by_user", (q) => q.eq("userId", user)).collect();
       for (const row of published) await ctx.db.delete(row._id);
+      await clearScores(ctx, user);
     } else if (!was) await publishAll(ctx, user);
   },
 });

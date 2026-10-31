@@ -5,6 +5,7 @@ import { PwaProvider } from "@/components/pwa-provider";
 import { AccountProvider } from "@/components/account-provider";
 import { PrefsSync } from "@/components/settings/prefs-sync";
 import { PREFS_SCRIPT } from "@/lib/prefs-script";
+import { Achievements } from "@/components/achievements-provider";
 import "./globals.css";
 
 const display = Bricolage_Grotesque({ subsets: ["latin"], variable: "--font-bricolage", display: "swap" });
@@ -38,7 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="font-sans">
         <PrefsSync />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <AccountProvider><PwaProvider>{children}</PwaProvider></AccountProvider>
+          <AccountProvider><PwaProvider>{children}</PwaProvider><Achievements /></AccountProvider>
         </ThemeProvider>
       </body>
     </html>
