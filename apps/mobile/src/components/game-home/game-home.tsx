@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { PlusBadge, usePlusPaywall } from "@/components/plus";
 import { Button, Card, Icon, Row, Screen, Text, shadow } from "@/components/ui";
-import { isFreeWorld, usePlus, usePlusReady } from "@/entitlements";
+import { FREE_LEVELS, isFreeLevel, isPlusWorld, plusLevelCount, usePlus, usePlusReady } from "@/entitlements";
 import { formatCountdown, formatTime, msToNextDaily } from "@/lib/format";
 import { useClock } from "@/lib/hooks";
 import { dailyStreak, useGameProgress, useProgress, type GameProgress } from "@/stores/progress";
@@ -30,7 +30,7 @@ export function GameHome({ config: base }: { config: GameHomeConfig }) {
 
   const continueCard = !hydrated ? null : next ? (
     <ContinueCard config={config} progress={progress} next={next} highlighted={dailyDone} />
-  ) : !plus && config.worlds.some((w) => !isFreeWorld(config.worlds, w.id)) ? (
+  ) : !plus && plusLevelCount(config.worlds) > 0 ? (
     <FreeDoneCard config={config} />
   ) : (
     <Card style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
@@ -60,24 +60,24 @@ export function GameHome({ config: base }: { config: GameHomeConfig }) {
 }
 
 /**
- * Sin Plus, los mundos después de los gratis no se abren aunque se cumpla la regla de niveles.
- * `planLocked` distingue ese candado del de progreso, para mostrar el mensaje que corresponde.
+ * Sin Plus se juegan solo los primeros `FREE_LEVELS` niveles del primer mundo, aunque se cumpla la regla
+ * de niveles. `planLocked` distingue ese candado del de progreso, para mostrar el mensaje que corresponde.
+ * Así "Seguir jugando" apunta primero a los niveles gratis y, cuando se terminan, aparece `FreeDoneCard`.
  */
 function withPlan(config: GameHomeConfig): GameHomeConfig {
-  const free = (w: number) => isFreeWorld(config.worlds, w);
+  const paidWorld = (w: number) => isPlusWorld(config.worlds, w);
   return {
     ...config,
-    isWorldUnlocked: (w, done) => free(w) && config.isWorldUnlocked(w, done),
-    isLevelUnlocked: (w, l, done) => free(w) && config.isLevelUnlocked(w, l, done),
-    planLocked: (w) => !free(w),
+    isWorldUnlocked: (w, done) => !paidWorld(w) && config.isWorldUnlocked(w, done),
+    isLevelUnlocked: (w, l, done) => isFreeLevel(config.worlds, w, l) && config.isLevelUnlocked(w, l, done),
+    planLocked: (w, l) => (l === undefined ? paidWorld(w) : !isFreeLevel(config.worlds, w, l)),
   };
 }
 
 /** Ya no quedan niveles gratis por jugar. Un aviso, no un muro: el diario sigue arriba. */
 function FreeDoneCard({ config }: { config: GameHomeConfig }) {
   const paywall = usePlusPaywall();
-  const more = config.worlds.filter((w) => !isFreeWorld(config.worlds, w.id));
-  const levels = more.reduce((n, w) => n + w.levels, 0);
+  const levels = plusLevelCount(config.worlds);
   return (
     <Card style={{ gap: 10 }}>
       <Row gap={10}>
@@ -85,7 +85,7 @@ function FreeDoneCard({ config }: { config: GameHomeConfig }) {
         <Text variant="bodyBold" style={{ flex: 1 }}>Completaste los niveles gratis.</Text>
       </Row>
       <Text variant="muted">
-        Con Craneá Plus seguís con {more.length === 1 ? "un mundo más" : `${more.length} mundos más`} ({levels} niveles).
+        Con Craneá Plus tenés {levels} niveles más de {config.name}, en {config.worlds.length === 1 ? "un mundo" : `${config.worlds.length} mundos`}. Los desafíos del día siguen gratis.
       </Text>
       <Button title="Conocer Craneá Plus" icon="star" variant="outline" onPress={() => paywall("mundos")} />
     </Card>
@@ -296,6 +296,15 @@ function WorldMap({ config, progress, hydrated, initialWorld, nextKey }: { confi
           </Pressable>
         </View>
       )}
+      {hydrated && !paid && config.planLocked && (
+        <View style={[styles.locked, { backgroundColor: colors.cluePresentBg, alignItems: "center" }]}>
+          <Icon name="star" size={14} color={colors.cluePresent} />
+          <Text variant="small" style={{ flex: 1, color: colors.cluePresent }}>Los primeros {FREE_LEVELS} niveles son gratis. El resto, con Craneá Plus.</Text>
+          <Pressable accessibilityRole="button" onPress={() => paywall("mundos")} hitSlop={6} style={{ minHeight: 44, justifyContent: "center" }}>
+            <Text variant="small" style={{ fontFamily: fonts.bodyBold, color: colors.cluePresent, textDecorationLine: "underline" }}>Ver Plus</Text>
+          </Pressable>
+        </View>
+      )}
       {hydrated && !open && !paid && (
         <View style={[styles.locked, { backgroundColor: colors.muted }]}>
           <Icon name="lock-closed" size={14} color={colors.mutedForeground} />
@@ -309,14 +318,14 @@ function WorldMap({ config, progress, hydrated, initialWorld, nextKey }: { confi
 
       <View style={styles.grid}>
         {Array.from({ length: world.levels }, (_, i) => (
-          <LevelCell key={`${world.id}-${i}`} config={config} progress={progress} hydrated={hydrated} worldId={world.id} n={i + 1} done={done} next={nextKey === `${world.id}-${i + 1}`} onLocked={paid ? () => paywall("mundos") : undefined} />
+          <LevelCell key={`${world.id}-${i}`} config={config} progress={progress} hydrated={hydrated} worldId={world.id} n={i + 1} done={done} next={nextKey === `${world.id}-${i + 1}`} onLocked={config.planLocked?.(world.id, i + 1) ? () => paywall("mundos") : undefined} badge={!paid && Boolean(config.planLocked?.(world.id, i + 1))} />
         ))}
       </View>
     </View>
   );
 }
 
-function LevelCell({ config, progress, hydrated, worldId, n, done, next, onLocked }: { config: GameHomeConfig; progress: GameProgress; hydrated: boolean; worldId: number; n: number; done: (w: number, l: number) => boolean; next: boolean; /** Mundo de Plus: tocar un nivel abre Plus. */ onLocked?: () => void }) {
+function LevelCell({ config, progress, hydrated, worldId, n, done, next, onLocked, badge }: { config: GameHomeConfig; progress: GameProgress; hydrated: boolean; worldId: number; n: number; done: (w: number, l: number) => boolean; next: boolean; /** Nivel de Plus: tocarlo abre Plus. */ onLocked?: () => void; /** Estrellita de Plus en la esquina (en el mundo con niveles gratis). */ badge?: boolean }) {
   const { colors } = useTheme();
   const router = useRouter();
   const result = hydrated ? progress.levels[config.levelKey(worldId, n)] : undefined;
@@ -350,6 +359,11 @@ function LevelCell({ config, progress, hydrated, worldId, n, done, next, onLocke
         style={({ pressed }) => [...cell, pressed && { transform: [{ scale: 0.95 }] }]}
       >
         {thumb ?? <Text style={{ fontFamily: fonts.display, fontSize: unlocked ? 16 : 14, color }}>{n}</Text>}
+        {hydrated && badge && !unlocked && (
+          <View style={[styles.plusDot, { backgroundColor: colors.cluePresentBg }]}>
+            <Icon name="star" size={8} color={colors.cluePresent} />
+          </View>
+        )}
         {won && (
           <View style={styles.stars}>
             {[0, 1, 2].map((k) => (
@@ -381,4 +395,5 @@ const styles = StyleSheet.create({
   cell: { aspectRatio: 1, minHeight: 44, borderRadius: radius.md, borderWidth: 2, alignItems: "center", justifyContent: "center" },
   stars: { position: "absolute", bottom: 3, flexDirection: "row", gap: 2 },
   star: { width: 5, height: 5, borderRadius: 3 },
+  plusDot: { position: "absolute", top: 2, right: 2, width: 14, height: 14, borderRadius: 7, alignItems: "center", justifyContent: "center" },
 });

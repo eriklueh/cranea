@@ -4,8 +4,9 @@ import { ArchiveIcon, ChevronRightIcon, CircleHelpIcon, PartyPopperIcon, Sparkle
 import { todayKey } from "@cranea/core";
 import { openPaywall } from "@/components/plus/paywall";
 import { useHydrated } from "@/hooks/use-hydrated";
-import { PLUS_PRICE, usePlus } from "@/lib/plus";
+import { isFreeLevel, PLUS_PRICE, plusLevelCount, usePlus } from "@/lib/plus";
 import { cn } from "@/lib/utils";
+import { useMemo } from "react";
 import { useGameProgress } from "@/stores/progress";
 import { DailyCard } from "./daily-card";
 import { nextLevel } from "./progress";
@@ -22,14 +23,16 @@ export function GameHome({ config }: { config: GameHomeConfig }) {
   const hydrated = useHydrated();
   const now = useClock();
   const progress = useGameProgress(config.id);
-  const next = hydrated ? nextLevel(config, progress) : null;
+  const { plus, ready } = usePlus();
+  // Sin Plus, "Seguir jugando" apunta solo a los niveles gratis; terminados, aparece la tarjeta de Plus.
+  const playable = useMemo(() => (plus ? config : freeOnly(config)), [config, plus]);
+  const next = hydrated && ready ? nextLevel(playable, progress) : null;
   const today = now === null ? null : todayKey(new Date(now));
   const dailyDone = Boolean(today && progress.daily[today]);
   const worldIndex = next ? config.worlds.indexOf(next.world) : -1;
   const fresh = Object.keys(progress.levels).length === 0;
-  const { plus, ready } = usePlus();
   const unit = config.unit ?? { one: "nivel", many: "niveles" };
-  const totalLevels = config.worlds.reduce((sum, w) => sum + w.levels, 0);
+  const plusLevels = plusLevelCount(config.worlds);
 
   const upsell = (
     <button
@@ -42,9 +45,9 @@ export function GameHome({ config }: { config: GameHomeConfig }) {
         <SparklesIcon className="size-5" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block font-bold">Más {unit.many} con Plus</span>
+        <span className="block font-bold">Completaste los {unit.many} gratis</span>
         <span className="block text-sm text-muted-foreground">
-          {totalLevels} en {config.worlds.length} mundos, <span className="whitespace-nowrap">{PLUS_PRICE}</span>
+          {plusLevels} más con Plus, <span className="whitespace-nowrap">{PLUS_PRICE}</span>
         </span>
       </span>
       <ChevronRightIcon aria-hidden className="size-5 shrink-0 text-pencil transition-transform group-hover:translate-x-0.5" />
@@ -53,8 +56,6 @@ export function GameHome({ config }: { config: GameHomeConfig }) {
 
   const continueCard = !hydrated || !ready ? (
     <div aria-hidden className="h-[68px] rounded-xl border-2 border-border bg-card motion-safe:animate-pulse" />
-  ) : !plus ? (
-    upsell
   ) : next ? (
     <Link
       href={config.levelHref(next.world.id, next.level)}
@@ -82,6 +83,8 @@ export function GameHome({ config }: { config: GameHomeConfig }) {
       </span>
       <ChevronRightIcon aria-hidden className="size-5 shrink-0 text-pencil transition-transform group-hover:translate-x-0.5" />
     </Link>
+  ) : !plus ? (
+    upsell
   ) : (
     <p className="flex items-center gap-2 rounded-xl bg-clue-exact-bg/60 px-4 py-3 font-semibold">
       <PartyPopperIcon aria-hidden className="size-5 text-ok" />
@@ -93,9 +96,9 @@ export function GameHome({ config }: { config: GameHomeConfig }) {
     <main className="mx-auto w-full max-w-3xl px-5 pt-1 pb-16 sm:pr-6 sm:pl-16">
       <h1 className="sr-only">{config.name}</h1>
 
-      {/* Lo pendiente va primero: el diario sin jugar, o seguir con los niveles si ya está hecho. Sin Plus, el diario siempre arriba. */}
+      {/* Lo pendiente va primero: el diario sin jugar, o seguir con los niveles si ya está hecho. Si no quedan niveles para jugar, el diario siempre arriba. */}
       <div className="grid gap-3">
-        {dailyDone && plus ? (
+        {dailyDone && next ? (
           <>
             {continueCard}
             <DailyCard config={config} progress={progress} now={now} />
@@ -123,8 +126,8 @@ export function GameHome({ config }: { config: GameHomeConfig }) {
           progress={progress}
           hydrated={hydrated}
           initialWorld={next?.world.id ?? config.worlds[0].id}
-          nextKey={next && plus ? `${next.world.id}-${next.level}` : null}
-          needsPlus={!plus}
+          nextKey={next ? `${next.world.id}-${next.level}` : null}
+          needsPlus={ready && !plus}
           aside={
             <Link
               href={`/${config.id}/como-jugar`}
@@ -138,4 +141,13 @@ export function GameHome({ config }: { config: GameHomeConfig }) {
       </div>
     </main>
   );
+}
+
+/** Sin Plus: solo los niveles gratis cuentan como abiertos (para "Seguir jugando"). */
+function freeOnly(config: GameHomeConfig): GameHomeConfig {
+  return {
+    ...config,
+    isWorldUnlocked: (w, done) => isFreeLevel(config.worlds, w, 1) && config.isWorldUnlocked(w, done),
+    isLevelUnlocked: (w, l, done) => isFreeLevel(config.worlds, w, l) && config.isLevelUnlocked(w, l, done),
+  };
 }

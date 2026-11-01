@@ -6,7 +6,7 @@ import { Dialog as DialogPrimitive } from "radix-ui";
 import { useEffect, useState, type ReactNode } from "react";
 import { create } from "zustand";
 import { Button } from "@/components/ui/button";
-import { APP_STORE_URL, PLAY_STORE_URL, PLUS_BENEFITS, PLUS_PRICE, usePlus } from "@/lib/plus";
+import { APP_STORE_URL, FREE_LEVELS, PLAY_STORE_URL, PLUS_BENEFITS, PLUS_PRICE, usePlus } from "@/lib/plus";
 import { cn } from "@/lib/utils";
 
 /** Igual que `accountsEnabled`, sin importar el proveedor (que importa este módulo). */
@@ -16,7 +16,7 @@ const accounts = Boolean(process.env.NEXT_PUBLIC_CONVEX_URL);
 export type PaywallReason = "levels" | "archive" | "hints" | "general";
 
 const REASON: Record<PaywallReason, string> = {
-  levels: "Los niveles son parte de Plus. Los desafíos del día siguen gratis.",
+  levels: `Los primeros ${FREE_LEVELS} niveles de cada juego son gratis; el resto es parte de Plus. Los desafíos del día siguen gratis.`,
   archive: "Los diarios anteriores son parte de Plus. Los de hoy siguen gratis.",
   hints: "Ya usaste la pista gratis de este tablero.",
   general: "Más para jugar, a tu ritmo. Los desafíos del día siguen gratis.",
@@ -216,8 +216,16 @@ export function PaywallSheet() {
  * Lo que es de Plus (un nivel, un diario anterior): sin Plus muestra la propuesta en su lugar.
  * Hasta saberlo no monta el contenido, para no empezar (ni guardar) una partida.
  */
-export function PlusGate({ reason, daily, children }: { reason: PaywallReason; /** El diario de hoy del juego, que es gratis. */ daily?: string; children: ReactNode }) {
+export function PlusGate({ reason, daily, free = false, children }: {
+  reason: PaywallReason;
+  /** El diario de hoy del juego, que es gratis. */
+  daily?: string;
+  /** Uno de los niveles gratis (`isFreeLevel`): se juega sin Plus. */
+  free?: boolean;
+  children: ReactNode;
+}) {
   const { plus, ready } = usePlus();
+  if (free) return children;
   if (!ready) return <div className="min-h-[70svh]" aria-busy />;
   if (plus) return children;
   return (

@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useAccountReady } from "@/account/progress-sync";
+import { PlusNudge } from "@/components/plus-nudge";
 import { Button, Card, Icon, Loading, Row, Screen, Text } from "@/components/ui";
 import { api, accountsEnabled } from "@/lib/convex";
 import { formatTime } from "@/lib/format";
@@ -177,6 +178,7 @@ function DailyDone({ gameId, game, home, date, title, result, reveal, onPractice
         {!tomorrow && <Button title="Jugar de nuevo (práctica)" variant="outline" size="lg" icon="refresh" onPress={onPractice} />}
         <Button title={`Volver a ${game}`} variant="ghost" size="lg" onPress={() => router.navigate(home)} />
       </View>
+      <PlusNudge gameId={gameId} mode={{ kind: "daily", date }} won />
     </Screen>
   );
 }

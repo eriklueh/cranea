@@ -73,6 +73,64 @@ export async function getPackages(): Promise<PurchasesPackage[]> {
   return offerings.current?.availablePackages ?? [];
 }
 
+/** Prueba gratis de un plan: "2 días". La configuran las tiendas (oferta introductoria), nunca el código. */
+export interface FreeTrial {
+  count: number;
+  unit: string; // DAY | WEEK | MONTH | YEAR
+}
+
+/**
+ * La prueba gratis que la tienda le ofrece a esta persona en este plan, o null. En Google Play viene en la
+ * opción por defecto del plan (Play ya la filtra por elegibilidad); en iOS, en `introPrice` con precio 0.
+ */
+export function freeTrialOf(pkg: PurchasesPackage): FreeTrial | null {
+  const phase = pkg.product.defaultOption?.freePhase;
+  if (phase && phase.billingPeriod.value > 0) return { count: phase.billingPeriod.value * Math.max(1, phase.billingCycleCount ?? 1), unit: phase.billingPeriod.unit };
+  const intro = pkg.product.introPrice;
+  if (intro && intro.price === 0 && intro.periodNumberOfUnits > 0) return { count: intro.periodNumberOfUnits * Math.max(1, intro.cycles), unit: intro.periodUnit };
+  return null;
+}
+
+/** "2 días", "1 semana" */
+export function trialText({ count, unit }: FreeTrial) {
+  const names: Record<string, [string, string]> = { DAY: ["día", "días"], WEEK: ["semana", "semanas"], MONTH: ["mes", "meses"], YEAR: ["año", "años"] };
+  const [one, many] = names[unit] ?? ["", ""];
+  return `${count} ${count === 1 ? one : many}`.trim();
+}
+
+/**
+ * En iOS, quien ya usó una prueba del grupo de suscripciones no la vuelve a tener: se pregunta antes de
+ * mostrarla. Devuelve los ids de producto que NO tienen prueba para esta persona (en Android, ninguno).
+ */
+export async function trialIneligible(packages: PurchasesPackage[]): Promise<Set<string>> {
+  if (Platform.OS !== "ios" || !packages.length) return new Set();
+  try {
+    const ids = packages.map((p) => p.product.identifier);
+    const map = await Purchases().checkTrialOrIntroductoryPriceEligibility(ids);
+    // 1 = INTRO_ELIGIBILITY_STATUS_INELIGIBLE (sin importar el enum: el módulo nativo puede no estar).
+    return new Set(ids.filter((id) => map[id]?.status === 1));
+  } catch {
+    return new Set();
+  }
+}
+
+/** La prueba gratis para mostrar fuera de la pantalla de Plus (el plan anual primero), o null. */
+export async function bestFreeTrial(): Promise<FreeTrial | null> {
+  if (!purchasesAvailable()) return null;
+  try {
+    const list = await getPackages();
+    const sorted = [...list].sort((a, b) => (a.packageType === "ANNUAL" ? -1 : b.packageType === "ANNUAL" ? 1 : 0));
+    const ineligible = await trialIneligible(sorted);
+    for (const p of sorted) {
+      const trial = !ineligible.has(p.product.identifier) && freeTrialOf(p);
+      if (trial) return trial;
+    }
+  } catch {
+    /* sin conexión: sin la línea de la prueba */
+  }
+  return null;
+}
+
 export type PurchaseOutcome = { ok: true } | { ok: false; cancelled: boolean; message: string };
 
 const errorText = (e: unknown) => {

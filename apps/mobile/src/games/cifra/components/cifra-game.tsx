@@ -8,6 +8,7 @@ import { FinishSlot, ResultLink } from "@/components/finish-slot";
 import { GameHeader, gameTitle } from "@/components/game-header";
 import { ResultSheet } from "@/components/result-sheet";
 import { attemptMarks, ResultShareButton, resultLabel, type ResultCard } from "@/components/share-card";
+import { PlusNudge } from "@/components/plus-nudge";
 import { ExtraAttemptOffer, HintOffer, useExtraAttemptOffer } from "@/components/rewards";
 import { Button, Icon, Row, Screen, Text } from "@/components/ui";
 import { SHARE_URL } from "@/config";
@@ -335,6 +336,7 @@ function CifraResult({ open, onClose, mode, onRetry, onExtra }: { open: boolean;
         )}
         <ResultShareButton text={shareMessage} card={card} />
       </View>
+      <PlusNudge gameId={GAME_ID} mode={mode} won={won} onLeave={onClose} />
     </ResultSheet>
   );
 }

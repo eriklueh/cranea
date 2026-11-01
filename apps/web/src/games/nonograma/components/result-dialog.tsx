@@ -3,6 +3,9 @@ import Link from "next/link";
 import { attemptMarks, ResultShareButton, resultLabel, SHARE_FOOTER } from "@/components/share/result-share";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { WORLDS } from "@cranea/core/nonograma";
+import { PlusNudge } from "@/components/plus/plus-nudge";
+import { plusLevelCount } from "@/lib/free-levels";
 import { formatTime } from "@/lib/utils";
 import { attemptsOf, MAX_ATTEMPTS, useNonograma } from "../store";
 import { PixelArt, solutionRows } from "./pixel-art";
@@ -72,6 +75,7 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry }: {
             </Button>
           )}
         </DialogFooter>
+        <PlusNudge gameId="nonograma" levels={plusLevelCount(WORLDS)} mode={mode} won={won} onLeave={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>
   );

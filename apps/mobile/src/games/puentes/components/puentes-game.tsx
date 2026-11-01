@@ -10,6 +10,7 @@ import { FinishSlot, ResultLink } from "@/components/finish-slot";
 import { GameHeader, gameTitle } from "@/components/game-header";
 import { ResultSheet } from "@/components/result-sheet";
 import { ResultShareButton, resultLabel, type ResultCard } from "@/components/share-card";
+import { PlusNudge } from "@/components/plus-nudge";
 import { Button, Row, Text } from "@/components/ui";
 import { SHARE_URL } from "@/config";
 import { formatTime } from "@/lib/format";
@@ -183,6 +184,7 @@ function PuentesResult({ open, onClose, mode }: { open: boolean; onClose: () => 
         )}
         <ResultShareButton text={shareMessage} card={card} />
       </View>
+      <PlusNudge gameId={GAME_ID} mode={mode} onLeave={onClose} />
     </ResultSheet>
   );
 }

@@ -14,6 +14,14 @@ export const PLUS_PRICE = "desde USD 1,99/mes";
 export const APP_STORE_URL = process.env.NEXT_PUBLIC_APP_STORE_URL ?? "";
 export const PLAY_STORE_URL = process.env.NEXT_PUBLIC_PLAY_STORE_URL ?? "";
 
+export { FREE_LEVELS, isFreeLevel, plusLevelCount } from "./free-levels";
+
+/**
+ * La prueba gratis de la app, para la tarjeta "¿Querés seguir?". La web no puede leer la oferta de la
+ * tienda: tiene que coincidir con las ofertas de las tiendas (3 días: ninguna permite menos; ver docs/mobile.md). Vacío no se muestra.
+ */
+export const PLUS_TRIAL = "Probá gratis 3 días en la app";
+
 /** Lo que suma Plus, para la hoja y /plus. */
 export const PLUS_BENEFITS = [
   "Todos los niveles y mundos de los cinco juegos",

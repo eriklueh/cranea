@@ -4,6 +4,9 @@ import { useState, type CSSProperties } from "react";
 import { attemptMarks, ResultShareButton, resultLabel, SHARE_FOOTER } from "@/components/share/result-share";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { WORLDS } from "@cranea/core/cifra";
+import { PlusNudge } from "@/components/plus/plus-nudge";
+import { plusLevelCount } from "@/lib/free-levels";
 import { formatTime } from "@/lib/utils";
 import { MAX_ATTEMPTS, useCifra } from "../store";
 import { traceFor } from "../hints";
@@ -93,6 +96,7 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry, celebration }:
             </Button>
           )}
         </DialogFooter>
+        <PlusNudge gameId="cifra" levels={plusLevelCount(WORLDS)} mode={mode} won={won} onLeave={() => change(false)} />
         </>}
       </DialogContent>
     </Dialog>

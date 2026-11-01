@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { LockIcon } from "lucide-react";
 import { PlusBadge, openPaywall } from "@/components/plus/paywall";
+import { FREE_LEVELS, isFreeLevel } from "@/lib/free-levels";
 import { cn } from "@/lib/utils";
 import type { GameProgress } from "@/stores/progress";
 import { doneFor, wonIn } from "./progress";
@@ -30,7 +31,7 @@ export function WorldMap({
   nextKey: string | null;
   /** Al lado del título de la sección (el enlace a "Cómo se juega"). */
   aside?: React.ReactNode;
-  /** Sin Craneá Plus: los niveles abren la hoja de Plus en vez de jugarse. */
+  /** Sin Craneá Plus: los niveles que no son gratis abren la hoja de Plus en vez de jugarse. */
   needsPlus?: boolean;
 }) {
   const { worlds } = config;
@@ -56,6 +57,8 @@ export function WorldMap({
   const won = wonIn(world, done);
   const previous = worlds[index - 1];
   const missing = previous ? Math.max(0, world.unlockAfter - wonIn(previous, done)) : 0;
+  // Sin Plus, un mundo sin niveles gratis se explica con Plus, no con la regla de niveles.
+  const paidWorld = needsPlus && !isFreeLevel(worlds, world.id, 1);
 
   return (
     <section aria-labelledby={`${idBase}s`}>
@@ -118,7 +121,15 @@ export function WorldMap({
             <span className="font-semibold text-foreground">{hydrated ? won : "–"}</span>/{world.levels}
           </span>
         </div>
-        {hydrated && !open && (
+        {hydrated && needsPlus && (
+          <p className="mb-3 flex items-center gap-1.5 rounded-lg bg-clue-present-bg px-3 py-1 text-sm text-clue-present">
+            <span className="min-w-0 flex-1 py-1">{paidWorld ? "Este mundo es parte de Craneá Plus." : `Los primeros ${FREE_LEVELS} ${unit.many} son gratis. El resto, con Plus.`}</span>
+            <button type="button" onClick={() => openPaywall("levels")} aria-haspopup="dialog" className="-mr-1 inline-flex min-h-11 shrink-0 items-center rounded-md px-1 font-semibold underline decoration-2 underline-offset-4 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
+              Ver Plus
+            </button>
+          </p>
+        )}
+        {hydrated && !open && !paidWorld && (
           <p className="mb-3 flex items-start gap-1.5 rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">
             <LockIcon aria-hidden className="mt-0.5 size-3.5 shrink-0" />
             <span>
@@ -163,6 +174,7 @@ function LevelCell({
   const unlocked = hydrated && config.isLevelUnlocked(worldId, n, done);
   const thumb = won ? config.thumbnail?.(worldId, n) : null;
   const stars = won ? config.stars(result!) : 0;
+  const paid = needsPlus && !isFreeLevel(config.worlds, worldId, n);
 
   const cls = cn(
     "relative grid aspect-square min-h-11 w-full place-items-center rounded-md font-display text-base font-bold tabular-nums outline-none transition-[background-color,transform] focus-visible:ring-[3px] focus-visible:ring-ring/50",
@@ -174,7 +186,7 @@ function LevelCell({
     hydrated && !unlocked && "text-sm font-semibold text-pencil/40",
   );
 
-  if (!unlocked) {
+  if (!unlocked && !(paid && hydrated)) {
     return (
       <li>
         <span className={cls} aria-label={hydrated ? `Nivel ${n}, bloqueado` : `Nivel ${n}`}>
@@ -198,7 +210,7 @@ function LevelCell({
       )}
     </>
   );
-  if (needsPlus) {
+  if (paid) {
     return (
       <li>
         <button type="button" onClick={() => openPaywall("levels")} className={cls} aria-label={`${label}. Con Craneá Plus`} aria-haspopup="dialog">

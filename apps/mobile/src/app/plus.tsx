@@ -11,7 +11,7 @@ import { usePlus } from "@/entitlements";
 import { accountsEnabled } from "@/lib/convex";
 import { haptic } from "@/lib/haptics";
 import { isExpoGo } from "@/monetization/native";
-import { getPackages, openManageSubscription, purchase, purchasesAvailable, restore } from "@/monetization/purchases";
+import { freeTrialOf, getPackages, openManageSubscription, purchase, purchasesAvailable, restore, trialIneligible, trialText, type FreeTrial } from "@/monetization/purchases";
 import { useTheme } from "@/theme/theme";
 import { fonts, radius } from "@/theme/tokens";
 
@@ -122,6 +122,7 @@ function Plans() {
   const [picked, setPicked] = useState<string | null>(null);
   const [busy, setBusy] = useState<null | "buy" | "restore">(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [noTrial, setNoTrial] = useState<Set<string>>(new Set());
 
   const load = () => {
     setFailed(false);
@@ -132,12 +133,15 @@ function Plans() {
         const sorted = [...list].sort((a, b) => order(a) - order(b));
         setPackages(sorted);
         setPicked((p) => p ?? sorted[0]?.identifier ?? null);
+        trialIneligible(sorted).then(setNoTrial);
       })
       .catch(() => setFailed(true));
   };
   useEffect(load, []);
 
   const selected = packages?.find((p) => p.identifier === picked) ?? null;
+  const trialOf = (p: PurchasesPackage) => (noTrial.has(p.product.identifier) ? null : freeTrialOf(p));
+  const selectedTrial = selected ? trialOf(selected) : null;
 
   const buy = async () => {
     if (!selected) return;
@@ -176,7 +180,8 @@ function Plans() {
           const on = p.identifier === picked;
           const period = periodOf(p);
           const perMonth = p.packageType === "ANNUAL" && p.product.pricePerMonthString ? `Equivale a ${p.product.pricePerMonthString} por mes` : null;
-          const trial = p.product.introPrice?.price === 0 ? `Probalo gratis: ${trialText(p.product.introPrice.periodNumberOfUnits, p.product.introPrice.periodUnit)}` : null;
+          const free = trialOf(p);
+          const trial = free ? trialTerms(free, p.product.priceString, period.per) : null;
           return (
             <Pressable
               key={p.identifier}
@@ -200,7 +205,7 @@ function Plans() {
           );
         })}
       </View>
-      <Button title="Suscribirme" icon="star" size="lg" loading={busy === "buy"} disabled={!selected || busy !== null} onPress={buy} />
+      <Button title={selectedTrial ? `Empezar ${trialText(selectedTrial)} gratis` : "Suscribirme"} icon="star" size="lg" loading={busy === "buy"} disabled={!selected || busy !== null} onPress={buy} />
       {message && <Text style={{ color: colors.margin, textAlign: "center" }} accessibilityLiveRegion="polite">{message}</Text>}
       <Button title="Restaurar compras" variant="ghost" loading={busy === "restore"} disabled={busy !== null} onPress={restoreNow} />
     </View>
@@ -216,10 +221,9 @@ function periodOf(p: PurchasesPackage) {
   return { name: p.product.title, per: "" };
 }
 
-function trialText(n: number, unit: string) {
-  const names: Record<string, [string, string]> = { DAY: ["día", "días"], WEEK: ["semana", "semanas"], MONTH: ["mes", "meses"], YEAR: ["año", "años"] };
-  const [one, many] = names[unit] ?? ["", ""];
-  return `${n} ${n === 1 ? one : many}`;
+/** "2 días gratis, después USD 19,99 por año": lo que las tiendas piden que quede claro. */
+function trialTerms(trial: FreeTrial, price: string, per: string) {
+  return `${trialText(trial)} gratis, después ${price}${per ? ` ${per}` : ""}`;
 }
 
 /** Lo que Apple y Google piden mostrar junto a una suscripción. */
