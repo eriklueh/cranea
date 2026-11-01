@@ -68,6 +68,20 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     "expo-font",
     "expo-apple-authentication",
     [
+      "expo-build-properties",
+      {
+        android: {
+          // R8 borraba las clases que Room genera para WorkManager (lo usan AdMob y RevenueCat) y la app
+          // se cerraba al abrir: "Failed to create an instance of androidx.work.impl.WorkDatabase".
+          extraProguardRules: [
+            "-keep class * extends androidx.room.RoomDatabase { <init>(); }",
+            "-keep class androidx.work.impl.WorkDatabase_Impl { *; }",
+            "-keep class androidx.work.impl.** { *; }",
+          ].join("\n"),
+        },
+      },
+    ],
+    [
       "react-native-google-mobile-ads",
       {
         androidAppId: ADMOB_ANDROID_APP_ID,
