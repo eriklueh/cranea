@@ -13,6 +13,7 @@ import { CifraGame } from "@/games/cifra/components/cifra-game";
 import { PalabraGame } from "@/games/palabra/components/palabra-game";
 import { getDictionary } from "@/games/palabra/data";
 import { TorresGame } from "@/games/torres/components/torres-game";
+import { PuentesArchive } from "@/games/puentes/archive";
 
 /** Un diario de otro día, como práctica (Craneá Plus): no se guarda ni cuenta para el ranking. */
 export default function ArchiveDaily() {
@@ -24,6 +25,7 @@ export default function ArchiveDaily() {
   if (!ready) return <Loading label="Preparando el tablero…" />;
   if (!plus) return <PlusGate title="Diarios anteriores" message="Con Craneá Plus podés jugar los desafíos de días anteriores para practicar." reason="archivo" />;
   if (game === "torres") return <Torres date={fecha} />;
+  if (game === "puentes") return <PuentesArchive date={fecha} />;
   return game === "cifra" ? <Cifra date={fecha} /> : <Palabra date={fecha} />;
 }
 
