@@ -5,6 +5,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { Icon, Row, Screen, Text, shadow } from "@/components/ui";
 import { DigitTile, Indicator } from "@/games/cifra/components/tiles";
 import { LetterTile } from "@/games/palabra/components/palabra-game";
+import { TorresPreview } from "@/games/torres/components/preview";
 import { GAMES, type MobileGame } from "@/games/registry";
 import { useClock } from "@/lib/hooks";
 import { dailyStreak, useProgress } from "@/stores/progress";
@@ -89,6 +90,7 @@ function GameCard({ game }: { game: MobileGame }) {
       <Text variant="muted">{game.tagline}</Text>
       {game.id === "cifra" && <CifraPreview />}
       {game.id === "palabra" && <PalabraPreview />}
+      {game.id === "torres" && <View style={styles.preview}><TorresPreview /></View>}
     </Pressable>
   );
 }

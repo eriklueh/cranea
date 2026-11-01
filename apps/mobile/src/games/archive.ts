@@ -1,10 +1,12 @@
 import { CIFRA_HOME, LAUNCH_DATE as CIFRA_LAUNCH } from "@/games/cifra/data";
 import { LAUNCH_DATE as PALABRA_LAUNCH, PALABRA_HOME } from "@/games/palabra/data";
+import { LAUNCH_DATE as TORRES_LAUNCH, TORRES_HOME } from "@/games/torres/data";
 
 /** Juegos con archivo de diarios en la app (los que ya se juegan acá) y desde qué día. */
 export const ARCHIVE: Record<string, { name: string; launch: string; number: (date: string) => number }> = {
   cifra: { name: "Cifra", launch: CIFRA_LAUNCH, number: CIFRA_HOME.daily.number },
   palabra: { name: "Palabra", launch: PALABRA_LAUNCH, number: PALABRA_HOME.daily.number },
+  torres: { name: "Torres", launch: TORRES_LAUNCH, number: TORRES_HOME.daily.number },
 };
 
 const DAY_MS = 86_400_000;

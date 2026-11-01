@@ -17,7 +17,7 @@ export const GAMES: MobileGame[] = [
   { id: "puentes", name: "Puentes", tagline: "Uní todas las islas con puentes, sin cruzarlos.", href: { pathname: "/pronto/[game]", params: { game: "puentes" } }, mobile: "soon" },
   { id: "nonograma", name: "Nonograma", tagline: "Pintá casillas siguiendo los números hasta que aparezca el dibujo.", href: { pathname: "/pronto/[game]", params: { game: "nonograma" } }, mobile: "soon" },
   { id: "palabra", name: "Palabra", tagline: "Adiviná la palabra de cinco letras con la ayuda de los colores.", href: "/palabra", mobile: "live" },
-  { id: "torres", name: "Torres", tagline: "Levantá la ciudad: cada borde dice cuántas torres se ven.", href: { pathname: "/pronto/[game]", params: { game: "torres" } }, mobile: "soon" },
+  { id: "torres", name: "Torres", tagline: "Levantá la ciudad: cada borde dice cuántas torres se ven.", href: "/torres", mobile: "live" },
 ];
 
 export const gameById = (id: string) => GAMES.find((g) => g.id === id) ?? null;
