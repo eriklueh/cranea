@@ -104,59 +104,14 @@ function drawIcon(ctx: CanvasRenderingContext2D, state: ShareRowState, cx: numbe
 }
 
 export async function renderShareCard(card: ShareCard): Promise<Blob> {
-  const display = fontFamily("--font-bricolage", "system-ui, sans-serif");
-  const body = fontFamily("--font-atkinson", "system-ui, sans-serif");
-  // Sin esperar, el canvas puede dibujar con la fuente de reserva.
-  await Promise.all([
-    document.fonts?.load(`800 64px ${display}`),
-    document.fonts?.load(`700 36px ${body}`),
-    document.fonts?.load(`400 36px ${body}`),
-  ]).catch(() => undefined);
+  const { display, body } = await loadFonts();
 
   const cardH = HEAD_H + card.rows.length * ROW_H + PAD;
   const cardY = 108;
   const H = Math.ceil((cardY + cardH + (card.note ? 200 : 150)) / CELL) * CELL;
 
-  const canvas = document.createElement("canvas");
-  canvas.width = W;
-  canvas.height = H;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Sin canvas");
-
-  // Hoja cuadriculada con margen.
-  ctx.fillStyle = C.paper;
-  ctx.fillRect(0, 0, W, H);
-  ctx.strokeStyle = C.grid;
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  for (let x = CELL; x < W; x += CELL) {
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, H);
-  }
-  for (let y = CELL; y < H; y += CELL) {
-    ctx.moveTo(0, y);
-    ctx.lineTo(W, y);
-  }
-  ctx.stroke();
-  ctx.strokeStyle = C.margin;
-  ctx.globalAlpha = 0.55;
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(84, 0);
-  ctx.lineTo(84, H);
-  ctx.stroke();
-  ctx.globalAlpha = 1;
-
-  // Ficha con sombra de tinta.
-  roundRect(ctx, CARD_X, cardY + 10, CARD_W, cardH, 28);
-  ctx.fillStyle = C.ink;
-  ctx.fill();
-  roundRect(ctx, CARD_X, cardY, CARD_W, cardH, 28);
-  ctx.fillStyle = C.card;
-  ctx.fill();
-  ctx.strokeStyle = C.ink;
-  ctx.lineWidth = 5;
-  ctx.stroke();
+  const { canvas, ctx } = sheet(H);
+  paintCard(ctx, cardY, cardH);
 
   const left = CARD_X + PAD;
   const right = CARD_X + CARD_W - PAD;
@@ -211,7 +166,257 @@ export async function renderShareCard(card: ShareCard): Promise<Blob> {
   ctx.font = `700 34px ${body}`;
   ctx.fillText(card.footer, cx, y);
 
-  return await new Promise<Blob>((resolve, reject) =>
+  return toPng(canvas);
+}
+
+async function loadFonts() {
+  const display = fontFamily("--font-bricolage", "system-ui, sans-serif");
+  const body = fontFamily("--font-atkinson", "system-ui, sans-serif");
+  // Sin esperar, el canvas puede dibujar con la fuente de reserva.
+  await Promise.all([
+    document.fonts?.load(`800 64px ${display}`),
+    document.fonts?.load(`700 36px ${body}`),
+    document.fonts?.load(`400 36px ${body}`),
+  ]).catch(() => undefined);
+  return { display, body };
+}
+
+/** Hoja cuadriculada con el margen rojo. */
+function sheet(H: number) {
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Sin canvas");
+  ctx.fillStyle = C.paper;
+  ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = C.grid;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let x = CELL; x < W; x += CELL) {
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, H);
+  }
+  for (let y = CELL; y < H; y += CELL) {
+    ctx.moveTo(0, y);
+    ctx.lineTo(W, y);
+  }
+  ctx.stroke();
+  ctx.strokeStyle = C.margin;
+  ctx.globalAlpha = 0.55;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(84, 0);
+  ctx.lineTo(84, H);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  return { canvas, ctx };
+}
+
+/** Ficha blanca con borde y sombra de tinta. */
+function paintCard(ctx: CanvasRenderingContext2D, y: number, h: number) {
+  roundRect(ctx, CARD_X, y + 10, CARD_W, h, 28);
+  ctx.fillStyle = C.ink;
+  ctx.fill();
+  roundRect(ctx, CARD_X, y, CARD_W, h, 28);
+  ctx.fillStyle = C.card;
+  ctx.fill();
+  ctx.strokeStyle = C.ink;
+  ctx.lineWidth = 5;
+  ctx.stroke();
+}
+
+function toPng(canvas: HTMLCanvasElement) {
+  return new Promise<Blob>((resolve, reject) =>
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("No se pudo crear la imagen"))), "image/png"),
   );
+}
+
+/* ───────────── Un solo resultado (después de un diario o un nivel) ───────────── */
+
+/** Marca de un intento: fallado, el que salió o sin usar. */
+export type AttemptMark = "miss" | "win" | "empty";
+
+/** Algo que se vea de la partida sin revelar la solución. */
+export type ResultVisual =
+  /** Palabra: los colores de cada intento, sin letras (como Wordle). 2 = en su lugar, 1 = está, 0 = no está. */
+  | { kind: "colors"; rows: (0 | 1 | 2)[][] }
+  /** Silueta del tablero: solo la cuadrícula y, si hay, las islas (sin números ni puentes). `blocks`: línea gruesa cada tantas. */
+  | { kind: "board"; width: number; height: number; dots?: { r: number; c: number }[]; blocks?: number };
+
+export interface ResultCard {
+  /** "Palabra" */
+  game: string;
+  /** "Diario #12", "Nivel 2-3" */
+  label: string;
+  won: boolean;
+  /** "3/6", "Sin errores", "No salió" */
+  headline: string;
+  /** "3 intentos · 1:23" */
+  detail: string;
+  visual?: ResultVisual;
+  marks?: AttemptMark[];
+  /** "cranea.app" */
+  footer: string;
+}
+
+const PRESENT = "#e3b505";
+const ABSENT = "#c5d2e3";
+const OK_BG = "#e4f3e9";
+
+function drawMarks(ctx: CanvasRenderingContext2D, marks: AttemptMark[], cx: number, top: number, size: number) {
+  const gap = Math.round(size * 0.22);
+  const total = marks.length * size + (marks.length - 1) * gap;
+  marks.forEach((m, i) => {
+    const x = cx - total / 2 + i * (size + gap);
+    roundRect(ctx, x, top, size, size, size * 0.18);
+    if (m === "empty") {
+      ctx.save();
+      ctx.strokeStyle = C.border;
+      ctx.lineWidth = 4;
+      ctx.setLineDash([10, 8]);
+      ctx.stroke();
+      ctx.restore();
+      return;
+    }
+    ctx.fillStyle = m === "win" ? C.ok : C.margin;
+    ctx.fill();
+    ctx.save();
+    ctx.strokeStyle = C.card;
+    ctx.lineWidth = size * 0.1;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    const mx = x + size / 2;
+    const my = top + size / 2;
+    const k = size * 0.2;
+    ctx.beginPath();
+    if (m === "win") {
+      ctx.moveTo(mx - k, my + k * 0.05);
+      ctx.lineTo(mx - k * 0.25, my + k * 0.8);
+      ctx.lineTo(mx + k * 1.05, my - k * 0.7);
+    } else {
+      ctx.moveTo(mx - k * 0.8, my - k * 0.8);
+      ctx.lineTo(mx + k * 0.8, my + k * 0.8);
+      ctx.moveTo(mx + k * 0.8, my - k * 0.8);
+      ctx.lineTo(mx - k * 0.8, my + k * 0.8);
+    }
+    ctx.stroke();
+    ctx.restore();
+  });
+}
+
+function drawVisual(ctx: CanvasRenderingContext2D, v: ResultVisual, won: boolean, cx: number, top: number, maxW: number, maxH: number) {
+  if (v.kind === "colors") {
+    const cols = Math.max(1, ...v.rows.map((r) => r.length));
+    const n = Math.max(1, v.rows.length);
+    const s = Math.floor(Math.min(84, maxW / (cols + (cols - 1) * 0.14), maxH / (n + (n - 1) * 0.14)));
+    const gap = Math.round(s * 0.14);
+    const w = cols * s + (cols - 1) * gap;
+    const h = n * s + (n - 1) * gap;
+    const y0 = top + (maxH - h) / 2;
+    v.rows.forEach((row, r) =>
+      row.forEach((x, c) => {
+        roundRect(ctx, cx - w / 2 + c * (s + gap), y0 + r * (s + gap), s, s, s * 0.14);
+        ctx.fillStyle = x === 2 ? C.ok : x === 1 ? PRESENT : ABSENT;
+        ctx.fill();
+      }),
+    );
+    return;
+  }
+  const { width: cw, height: ch } = v;
+  const s = Math.min(64, maxW / cw, maxH / ch);
+  const w = cw * s;
+  const h = ch * s;
+  const x0 = cx - w / 2;
+  const y0 = top + (maxH - h) / 2;
+  roundRect(ctx, x0, y0, w, h, 12);
+  ctx.fillStyle = won ? OK_BG : C.card;
+  ctx.fill();
+  ctx.save();
+  ctx.clip();
+  ctx.strokeStyle = C.ink;
+  for (let i = 1; i < Math.max(cw, ch); i++) {
+    for (const vertical of [true, false]) {
+      if (vertical ? i >= cw : i >= ch) continue;
+      const thick = Boolean(v.blocks && i % v.blocks === 0);
+      ctx.globalAlpha = thick ? 0.5 : 0.16;
+      ctx.lineWidth = thick ? 4 : 2;
+      ctx.beginPath();
+      if (vertical) {
+        ctx.moveTo(x0 + i * s, y0);
+        ctx.lineTo(x0 + i * s, y0 + h);
+      } else {
+        ctx.moveTo(x0, y0 + i * s);
+        ctx.lineTo(x0 + w, y0 + i * s);
+      }
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+  ctx.globalAlpha = 1;
+  for (const d of v.dots ?? []) {
+    ctx.beginPath();
+    ctx.arc(x0 + (d.c + 0.5) * s, y0 + (d.r + 0.5) * s, s * 0.36, 0, Math.PI * 2);
+    ctx.fillStyle = C.card;
+    ctx.fill();
+    ctx.strokeStyle = won ? C.ok : C.ink;
+    ctx.lineWidth = Math.max(3, s * 0.08);
+    ctx.stroke();
+  }
+  roundRect(ctx, x0, y0, w, h, 12);
+  ctx.strokeStyle = C.ink;
+  ctx.lineWidth = 4;
+  ctx.stroke();
+}
+
+/** PNG cuadrado (1080 × 1080) con el resultado de una partida. Nunca muestra la solución. */
+export async function renderResultCard(card: ResultCard): Promise<Blob> {
+  const { display, body } = await loadFonts();
+  const { canvas, ctx } = sheet(W);
+  const cardY = 96;
+  const cardH = 840;
+  paintCard(ctx, cardY, cardH);
+
+  const left = CARD_X + PAD;
+  const right = CARD_X + CARD_W - PAD;
+  const cx = CARD_X + CARD_W / 2;
+  ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = C.ink;
+  ctx.font = `800 76px ${display}`;
+  ctx.fillText(fitText(ctx, card.game, right - left - 90), left, cardY + PAD + 66);
+  ctx.fillStyle = C.pencil;
+  ctx.font = `700 36px ${body}`;
+  ctx.fillText(fitText(ctx, card.label, right - left - 90), left, cardY + PAD + 116);
+  drawIcon(ctx, card.won ? "won" : "lost", right - 30, cardY + PAD + 46);
+
+  // Lo visual va entre el encabezado y el resultado.
+  const top = cardY + 236;
+  const bottom = cardY + cardH - 190;
+  const marksH = card.marks?.length ? (card.visual ? 72 : 150) : 0;
+  const gap = card.visual && marksH ? 28 : 0;
+  if (card.visual) drawVisual(ctx, card.visual, card.won, cx, top, right - left, bottom - top - marksH - gap);
+  if (card.marks?.length) drawMarks(ctx, card.marks, cx, card.visual ? bottom - marksH : top + (bottom - top - marksH) / 2, marksH);
+
+  ctx.save();
+  ctx.strokeStyle = C.border;
+  ctx.lineWidth = 2;
+  ctx.setLineDash([10, 8]);
+  ctx.beginPath();
+  ctx.moveTo(left, bottom + 36);
+  ctx.lineTo(right, bottom + 36);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.textAlign = "center";
+  ctx.fillStyle = card.won ? C.ok : C.margin;
+  ctx.font = `800 64px ${display}`;
+  ctx.fillText(fitText(ctx, card.headline, right - left), cx, bottom + 112);
+  ctx.fillStyle = C.ink;
+  ctx.font = `700 36px ${body}`;
+  ctx.fillText(fitText(ctx, card.detail, right - left), cx, bottom + 162);
+
+  ctx.fillStyle = C.pencil;
+  ctx.font = `700 34px ${body}`;
+  ctx.fillText(card.footer, cx, cardY + cardH + 10 + 64);
+  return toPng(canvas);
 }

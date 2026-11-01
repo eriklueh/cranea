@@ -62,7 +62,8 @@ export function HintPanel() {
   const status = useCifra((s) => s.status);
   const showHint = useCifra((s) => s.showHint);
   const closeHint = useCifra((s) => s.closeHint);
-  if (!hint || !puzzle || status !== "playing") return null;
+  // Al terminar, la pista abierta se queda (sin acciones): si desapareciera, todo lo de abajo saltaría.
+  if (!hint || !puzzle) return null;
   const step = hint.step >= 0 ? traceFor(puzzle).steps[hint.step] : null;
 
   return (

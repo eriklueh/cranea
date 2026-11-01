@@ -1,16 +1,21 @@
 import type { ReactNode } from "react";
-import { View } from "react-native";
 import { Row, Text } from "@/components/ui";
 
-/** Título del tablero ("Nivel 3", "Cifra del día #10") con vidas y reloj a la derecha. */
-export function GameHeader({ title, subtitle, right }: { title: string; subtitle: string; right?: ReactNode }) {
+/**
+ * Debajo de la barra de navegación, que ya lleva el título ("Puentes del día #2", "Cifra · Nivel 1-3"):
+ * el contexto chico ("Mismo tablero para todos", "7×7") con vidas y reloj a la derecha.
+ * Antes el título se repetía en grande dentro de la pantalla.
+ */
+export function GameHeader({ context, right }: { context: string; right?: ReactNode }) {
   return (
-    <Row style={{ justifyContent: "space-between", alignItems: "flex-end" }} gap={12}>
-      <View style={{ flex: 1 }}>
-        <Text variant="small">{subtitle}</Text>
-        <Text variant="display" accessibilityRole="header" numberOfLines={1} adjustsFontSizeToFit>{title}</Text>
-      </View>
-      {right && <Row gap={14} style={{ paddingBottom: 4 }}>{right}</Row>}
+    <Row style={{ justifyContent: "space-between", minHeight: 24 }} gap={12}>
+      <Text variant="small" style={{ flex: 1 }} numberOfLines={1}>{context}</Text>
+      {right && <Row gap={14}>{right}</Row>}
     </Row>
   );
+}
+
+/** Título de la barra para un diario o un nivel, igual en los cinco juegos. */
+export function gameTitle(game: string, mode: { kind: "daily"; number: number } | { kind: "level"; world: number; level: number }) {
+  return mode.kind === "daily" ? `${game} del día #${mode.number}` : `${game} · Nivel ${mode.world}-${mode.level}`;
 }

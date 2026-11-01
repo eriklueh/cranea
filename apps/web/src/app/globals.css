@@ -284,14 +284,18 @@ html[data-text="large"] body {
   animation: tile-flip 0.34s ease-in-out both;
   animation-delay: calc(var(--i, 0) * 90ms);
 }
+/*
+ * Festejos al ganar: cortos y sin rebotes que se queden. Todo entra en ~0,8 s, que es
+ * cuando aparece el resultado (WIN_RESULT_MS en lib/motion.ts).
+ */
 /* Fila ganadora: se da vuelta y después salta, ficha por ficha. */
 @utility anim-flip-win {
-  animation: tile-flip 0.34s ease-in-out both, bounce-up 0.4s var(--ease-out);
-  animation-delay: calc(var(--i, 0) * 90ms), calc(720ms + var(--i, 0) * 70ms);
+  animation: tile-flip 0.3s ease-in-out both, bounce-up 0.28s var(--ease-out);
+  animation-delay: calc(var(--i, 0) * 60ms), calc(480ms + var(--i, 0) * 40ms);
 }
 @utility anim-hop {
-  animation: bounce-up 0.4s var(--ease-out);
-  animation-delay: calc(var(--base, 0ms) + var(--i, 0) * 70ms);
+  animation: bounce-up 0.3s var(--ease-out);
+  animation-delay: calc(var(--base, 0ms) + var(--i, 0) * 50ms);
 }
 @utility anim-rise {
   animation: rise 0.36s var(--ease-spring) both;
@@ -316,9 +320,10 @@ html[data-text="large"] body {
 @utility anim-nudge {
   animation: nudge 0.22s ease-in-out 2;
 }
+/* `--step` lo pone el tablero para que la ola dure lo mismo en 5×5 que en 11×11. */
 @utility anim-ripple {
-  animation: bump 0.36s var(--ease-out);
-  animation-delay: calc(var(--i, 0) * 55ms);
+  animation: bump 0.3s var(--ease-out);
+  animation-delay: calc(var(--i, 0) * var(--step, 55ms));
 }
 @utility anim-grow-x {
   animation: grow-x 0.2s var(--ease-out) both;
@@ -347,11 +352,11 @@ html[data-text="large"] body {
   animation: sweep-y 0.5s var(--ease-out) both;
 }
 @utility anim-wave {
-  animation: wave 0.42s ease-in-out;
+  animation: wave 0.34s ease-in-out;
   animation-delay: calc(var(--i, 0) * var(--step, 30ms));
 }
 @utility anim-speck {
-  animation: speck 0.75s var(--ease-out) both;
+  animation: speck 0.6s var(--ease-out) both;
   animation-delay: var(--delay, 0ms);
 }
 

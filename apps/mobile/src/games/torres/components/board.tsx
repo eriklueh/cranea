@@ -1,9 +1,10 @@
 import { clueState, duplicateCells, type ClueState, type Side, type TorresClues } from "@cranea/core/torres";
 import { memo, useEffect, useMemo } from "react";
 import { Pressable, StyleSheet, View, useWindowDimensions, type StyleProp, type ViewStyle } from "react-native";
-import Animated, { Keyframe, useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming } from "react-native-reanimated";
+import Animated, { Keyframe, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from "react-native-reanimated";
 import { shadow, Text } from "@/components/ui";
 import { useOnChange, useReducedMotion } from "@/lib/hooks";
+import { hop as hopTo, waveStep } from "@/lib/motion";
 import { useTheme } from "@/theme/theme";
 import { alpha, fonts, radius } from "@/theme/tokens";
 
@@ -211,7 +212,7 @@ const Cell = memo(function Cell({ index, row, col, size, cell, value, given, not
   const content = (
     <>
       {value ? (
-        <Tower key={value} value={value} color={fg} cell={cell} rise={rise && !given} wave={wave} delay={(row + col) * WAVE_STEP} />
+        <Tower key={value} value={value} color={fg} cell={cell} rise={rise && !given} wave={wave} delay={(row + col) * waveStep(2 * size - 2, 320, WAVE_STEP)} />
       ) : notes ? (
         <Notes mask={notes} size={size} cell={cell} />
       ) : null}
@@ -239,7 +240,7 @@ function Tower({ value, color, cell, rise, wave, delay }: { value: number; color
   const y = useSharedValue(0);
   useEffect(() => {
     if (!wave) return;
-    y.value = withDelay(delay, withSequence(withTiming(-cell * 0.22, { duration: 150 }), withSpring(0, { damping: 8, stiffness: 220 })));
+    y.value = hopTo(delay, -cell * 0.22);
   }, [wave, delay, cell, y]);
   const hop = useAnimatedStyle(() => ({ transform: [{ translateY: y.value }] }));
   const entering = useMemo(

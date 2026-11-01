@@ -2,10 +2,10 @@ import { bridgeCounts, type Island, type PuentesPuzzle } from "@cranea/core/puen
 import { memo, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { StyleSheet, Text as RNText, View, type AccessibilityActionEvent } from "react-native";
 import { GestureDetector, useCompetingGestures, usePanGesture, useTapGesture, type PanGesture } from "react-native-gesture-handler";
-import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring, withTiming } from "react-native-reanimated";
+import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from "react-native-reanimated";
 import { haptic } from "@/lib/haptics";
 import { useOnChange } from "@/lib/hooks";
-import { useShake } from "@/lib/motion";
+import { pulse, useShake, waveStep } from "@/lib/motion";
 import { useTheme } from "@/theme/theme";
 import { alpha, fonts } from "@/theme/tokens";
 import { usePuentes } from "../store";
@@ -208,6 +208,7 @@ export function PuentesBoard({ puzzle, width, board }: { puzzle: PuentesPuzzle; 
                   selectable={selectable.has(i)}
                   live={live}
                   won={won}
+                  step={waveStep(W + H - 2)}
                   reduced={reduced}
                   playing={playing}
                   actions={playing ? [{ name: "activate", label: selected === null ? "Elegir" : "Unir" }, ...actions] : []}
@@ -248,8 +249,10 @@ const GridDots = memo(function GridDots({ width, height, cell, color }: { width:
   );
 });
 
-function IslandView({ island, cell, have, selected, selectable, live, won, reduced, playing, actions, onAction }: {
+function IslandView({ island, cell, have, selected, selectable, live, won, step, reduced, playing, actions, onAction }: {
   island: Island;
+  /** Paso de la ola al ganar: la ola entera dura lo mismo en 5×5 que en 11×11. */
+  step: number;
   cell: number;
   have: number;
   selected: boolean;
@@ -277,7 +280,7 @@ function IslandView({ island, cell, have, selected, selectable, live, won, reduc
   });
   useOnChange(won, (w) => {
     if (!w || reduced) return;
-    scale.value = withDelay((island.r + island.c) * 45 + 120, withSequence(withTiming(1.2, { duration: 140 }), withSpring(1, { damping: 8, stiffness: 220 })));
+    scale.value = pulse((island.r + island.c) * step, 1.18);
   });
   useEffect(() => {
     if (!selected) scale.value = withTiming(1, { duration: 120 });

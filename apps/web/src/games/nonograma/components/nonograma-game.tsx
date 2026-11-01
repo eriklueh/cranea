@@ -3,7 +3,9 @@ import Link from "next/link";
 import { ChevronLeftIcon, EraserIcon, PaintBucketIcon, SearchCheckIcon, Undo2Icon, XIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { NonogramaPuzzle } from "@cranea/core/nonograma";
+import { FinishSlot } from "@/components/finish-slot";
 import { Button } from "@/components/ui/button";
+import { LOSS_RESULT_MS, WIN_RESULT_MS } from "@/lib/motion";
 import { cn, formatTime } from "@/lib/utils";
 import { useProgress } from "@/stores/progress";
 import { GAME_ID, levelKey } from "../data";
@@ -48,7 +50,7 @@ export function NonogramaGame({ puzzle, mode }: { puzzle: NonogramaPuzzle; mode:
     const p = useProgress.getState();
     if (mode.kind === "level") p.recordLevel(GAME_ID, levelKey(mode.world, mode.level), result);
     else if (!mode.practice) p.recordDaily(GAME_ID, mode.date, result);
-    const t = setTimeout(() => setResultOpen(true), status === "won" ? 900 : 400);
+    const t = setTimeout(() => setResultOpen(true), status === "won" ? WIN_RESULT_MS : LOSS_RESULT_MS + 100);
     return () => clearTimeout(t);
   }, [status, current, puzzle, mode]);
 
@@ -73,15 +75,17 @@ export function NonogramaGame({ puzzle, mode }: { puzzle: NonogramaPuzzle; mode:
       <Board puzzle={puzzle} />
       <Reveal mode={mode.kind === "daily" ? "daily" : "level"} />
 
-      {status === "playing" ? (
-        <Controls />
-      ) : (
-        <div className="mt-6 flex justify-center">
-          <button className="min-h-11 text-sm font-semibold underline decoration-margin decoration-2 underline-offset-4" onClick={() => setResultOpen(true)}>
+      {/* Al terminar, "Ver resultado" ocupa el lugar de los controles sin cambiar el alto de la página. */}
+      <FinishSlot
+        finished={status !== "playing"}
+        done={
+          <button className="mt-4 min-h-11 text-sm font-semibold underline decoration-margin decoration-2 underline-offset-4" onClick={() => setResultOpen(true)}>
             Ver resultado
           </button>
-        </div>
-      )}
+        }
+      >
+        <Controls />
+      </FinishSlot>
 
       {mode.kind !== "tutorial" && <ResultDialog
         open={resultOpen}
@@ -106,7 +110,8 @@ function Reveal({ mode }: { mode: GameMode["kind"] }) {
   else if (status === "lost") text = mode === "daily" ? "Esta era la solución." : `Era: ${title}.`;
   else if (lastCheck !== null) text = lastCheck === 0 ? "Todo bien hasta acá." : `${lastCheck} ${lastCheck === 1 ? "casilla no va" : "casillas no van"} así. Están marcadas en rojo.`;
   return (
-    <p aria-live="polite" className={cn("mt-3 min-h-6 text-center font-semibold", status === "won" ? "font-display text-xl text-ok" : lastCheck ? "text-margin" : "text-muted-foreground")}>
+    // Alto fijo (el del texto grande): al ganar el texto crece sin empujar lo de abajo.
+    <p aria-live="polite" className={cn("mt-3 min-h-7 text-center leading-7 font-semibold", status === "won" ? "font-display text-xl text-ok" : lastCheck ? "text-margin" : "text-muted-foreground")}>
       {text}
     </p>
   );

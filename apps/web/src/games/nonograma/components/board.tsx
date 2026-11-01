@@ -2,7 +2,7 @@
 import { useMemo, useRef, type CSSProperties, type KeyboardEvent, type PointerEvent } from "react";
 import { colCells, emptyBoard, lineDone, rowCells, EMPTY, FILLED, type Cell, type NonogramaPuzzle } from "@cranea/core/nonograma";
 import { cn } from "@/lib/utils";
-import { haptic, play, useOnChange } from "@/lib/motion";
+import { haptic, play, useOnChange, waveStep } from "@/lib/motion";
 import { sound } from "@/lib/sound";
 import { WinBurst } from "@/components/win-burst";
 import { useNonograma } from "../store";
@@ -51,8 +51,8 @@ export function Board({ puzzle }: { puzzle: NonogramaPuzzle }) {
   const playing = status === "playing";
   const cursorRow = cursor === null ? -1 : Math.floor(cursor / W);
   const cursorCol = cursor === null ? -1 : cursor % W;
-  // Al terminar, el dibujo aparece (o late, si ganaste) en diagonal; el paso se ajusta para no pasar de ~0.7 s.
-  const step = `${Math.min(40, Math.round(700 / (W + H - 2)))}ms`;
+  // Al terminar, el dibujo aparece (o late, si ganaste) en diagonal; el paso se ajusta para no pasar de ~0,4 s.
+  const step = waveStep(W + H - 2, 400, 40);
 
   const indexAt = (x: number, y: number) => {
     const rect = cellsRef.current!.getBoundingClientRect();
@@ -217,7 +217,7 @@ export function Board({ puzzle }: { puzzle: NonogramaPuzzle }) {
             ) : null,
           )}
       </div>
-      {status === "won" && <WinBurst delay={300} />}
+      {status === "won" && <WinBurst delay={150} />}
     </div>
   );
 }

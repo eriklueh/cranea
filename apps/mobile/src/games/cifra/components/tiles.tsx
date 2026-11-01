@@ -2,9 +2,10 @@ import type { Clue, Marks, TileMark } from "@cranea/core/cifra";
 import { tileMarkState } from "@cranea/core/cifra";
 import { useEffect } from "react";
 import { Pressable, StyleSheet, View, useWindowDimensions, type StyleProp, type ViewStyle } from "react-native";
-import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming, ZoomIn } from "react-native-reanimated";
+import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming, ZoomIn } from "react-native-reanimated";
 import { Text, shadow } from "@/components/ui";
 import { haptic } from "@/lib/haptics";
+import { hop as hopTo } from "@/lib/motion";
 import { useTheme } from "@/theme/theme";
 import { fonts, radius } from "@/theme/tokens";
 
@@ -46,7 +47,7 @@ export function DigitTile({
     if (mark === "here") bump.value = withSequence(withTiming(1.12, { duration: 90 }), withSpring(1, { damping: 8 }));
   }, [mark, bump]);
   useEffect(() => {
-    if (hop !== undefined) lift.value = withDelay(hop * 80, withSequence(withTiming(-10, { duration: 140 }), withSpring(0, { damping: 6 })));
+    if (hop !== undefined) lift.value = hopTo(hop * 50, -10);
   }, [hop, lift]);
 
   const animated = useAnimatedStyle(() => ({ transform: [{ scale: bump.value }, { translateY: lift.value }] }));

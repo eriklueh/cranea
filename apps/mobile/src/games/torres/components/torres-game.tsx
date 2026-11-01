@@ -1,20 +1,21 @@
 import type { TorresPuzzle } from "@cranea/core/torres";
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AppState, Pressable, View } from "react-native";
+import { AppState, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { DailyNotice } from "@/components/daily-gate";
-import { GameHeader } from "@/components/game-header";
-import { ResultSheet, shareText } from "@/components/result-sheet";
+import { FinishSlot, ResultLink } from "@/components/finish-slot";
+import { GameHeader, gameTitle } from "@/components/game-header";
+import { ResultSheet } from "@/components/result-sheet";
+import { attemptMarks, ResultShareButton, resultLabel, type ResultCard } from "@/components/share-card";
 import { ExtraAttemptOffer, useExtraAttemptOffer } from "@/components/rewards";
-import { Button, Screen, Text } from "@/components/ui";
+import { Button, Screen } from "@/components/ui";
 import { SHARE_URL } from "@/config";
 import { formatTime } from "@/lib/format";
 import { haptic } from "@/lib/haptics";
 import { useOnChange, useSettled } from "@/lib/hooks";
-import { useShake } from "@/lib/motion";
+import { LOSS_RESULT_MS, useShake, WIN_RESULT_MS } from "@/lib/motion";
 import { useProgress } from "@/stores/progress";
-import { useTheme } from "@/theme/theme";
 import { GAME_ID, MAX_ATTEMPTS, levelKey } from "../data";
 import { clearSession, loadSession, saveSession } from "../session";
 import { attemptsOf, playedMs, useTorres } from "../store";
@@ -25,11 +26,7 @@ export type GameMode =
   | { kind: "level"; world: number; level: number; next: number | null }
   | { kind: "daily"; date: string; number: number; /** Repetición: no se guarda ni cuenta para el ranking. */ practice: boolean };
 
-/** La ola de la victoria termina antes de que suba la hoja de resultado. */
-const WIN_SETTLE_MS = 700;
-
 export function TorresGame({ puzzle, mode }: { puzzle: TorresPuzzle; mode: GameMode }) {
-  const { colors } = useTheme();
   const start = useTorres((s) => s.start);
   const current = useTorres((s) => s.puzzle);
   const status = useTorres((s) => s.status);
@@ -101,19 +98,18 @@ export function TorresGame({ puzzle, mode }: { puzzle: TorresPuzzle; mode: GameM
     // Con el intento extra: si sale, reemplaza a la derrota (4 intentos > 3, `first`); si no, queda la derrota.
     else if (!mode.practice && (result.won || !s.extraAttempt)) p.recordDaily(GAME_ID, mode.date, result);
     clearSession(puzzle.id);
-    const t = setTimeout(() => setResultOpen(true), status === "won" ? WIN_SETTLE_MS : 350);
+    const t = setTimeout(() => setResultOpen(true), status === "won" ? WIN_RESULT_MS : LOSS_RESULT_MS);
     return () => clearTimeout(t);
   }, [status, current, puzzle, mode, loaded]);
 
-  const title = mode.kind === "daily" ? `Torres del día #${mode.number}` : `Nivel ${mode.level}`;
-  const subtitle = mode.kind === "daily" ? "Mismo tablero para todos" : `Mundo ${mode.world}`;
+  const context = mode.kind === "daily" ? "Mismo tablero para todos" : `Ciudad de ${puzzle.size}×${puzzle.size}`;
   const ready = loaded && current === puzzle;
 
   return (
     <>
-      <Stack.Screen options={{ title: mode.kind === "daily" ? "Torres del día" : `Torres · ${mode.world}-${mode.level}` }} />
+      <Stack.Screen options={{ title: gameTitle("Torres", mode) }} />
       <Screen contentStyle={{ flexGrow: 1, gap: 10 }}>
-        <GameHeader title={title} subtitle={subtitle} right={ready ? <><Lives /><Timer /></> : null} />
+        <GameHeader context={context} right={ready ? <><Lives /><Timer /></> : null} />
         {mode.kind === "daily" && <DailyNotice practice={mode.practice} />}
         {ready && (
           <>
@@ -123,16 +119,13 @@ export function TorresGame({ puzzle, mode }: { puzzle: TorresPuzzle; mode: GameM
             <CheckMessage />
             {/* En pantallas altas, el teclado queda abajo, al alcance del pulgar. */}
             <View style={{ flexGrow: 1 }} />
-            {status === "playing" ? (
+            {/* Al terminar, "Ver resultado" ocupa el lugar de los controles: la pantalla no cambia de alto. */}
+            <FinishSlot finished={status !== "playing"} done={<ResultLink onPress={() => setResultOpen(true)} />}>
               <View style={{ gap: 8 }}>
                 <NumberPad />
                 <Toolbar />
               </View>
-            ) : (
-              <Pressable onPress={() => setResultOpen(true)} accessibilityRole="button" style={{ minHeight: 48, alignSelf: "center", justifyContent: "center" }}>
-                <Text variant="bodyBold" style={{ textDecorationLine: "underline", textDecorationColor: colors.margin }}>Ver resultado</Text>
-              </Pressable>
-            )}
+            </FinishSlot>
           </>
         )}
       </Screen>
@@ -211,10 +204,18 @@ function TorresResult({ open, onClose, mode, onRetry, onExtra }: { open: boolean
   const title = mode.kind === "daily" ? `Torres del día #${mode.number}` : `Torres ${mode.world}-${mode.level}`;
   // Diario perdido con el intento extra a mano: la solución queda tapada hasta que se elige.
   const offering = official && !won && !extraAttempt && offer.available && !revealed;
-  const share = () => {
-    const marks = Array.from({ length: MAX_ATTEMPTS + (extraAttempt ? 1 : 0) }, (_, i) => (i < mistakes ? "🟥" : won && i === mistakes ? "🟩" : "⬜")).join("");
-    const score = won ? (extraAttempt ? "con un intento extra" : `${attempts}/${MAX_ATTEMPTS}`) : "X";
-    void shareText(`Craneá · ${title}\n${marks} ${score} en ${time}\n${SHARE_URL}/torres`);
+  const marks = Array.from({ length: MAX_ATTEMPTS + (extraAttempt ? 1 : 0) }, (_, i) => (i < mistakes ? "🟥" : won && i === mistakes ? "🟩" : "⬜")).join("");
+  const score = won ? (extraAttempt ? "con un intento extra" : `${attempts}/${MAX_ATTEMPTS}`) : "X";
+  const shareMessage = `Craneá · ${title}\n${marks} ${score} en ${time}\n${SHARE_URL}/torres`;
+  // La cuadrícula vacía de la ciudad: ni pistas ni alturas.
+  const card: ResultCard = {
+    game: "Torres",
+    label: resultLabel(mode),
+    won,
+    headline: won ? (extraAttempt ? "Con intento extra" : `${attempts}/${MAX_ATTEMPTS}`) : "No salió",
+    detail: won ? `${puzzle.size}×${puzzle.size} · ${mistakes === 0 ? "sin errores" : mistakes === 1 ? "1 error" : `${mistakes} errores`} · ${time}` : `Sin resolver · ${time}`,
+    visual: { kind: "board", width: puzzle.size, height: puzzle.size },
+    marks: attemptMarks(MAX_ATTEMPTS + (extraAttempt ? 1 : 0), mistakes, won),
   };
 
   return (
@@ -254,7 +255,7 @@ function TorresResult({ open, onClose, mode, onRetry, onExtra }: { open: boolean
         {mode.kind === "daily" && (
           <Button title="Ver ranking" variant="outline" icon="trophy-outline" onPress={() => { onClose(); router.push({ pathname: "/ranking", params: { juego: GAME_ID, fecha: mode.date } }); }} />
         )}
-        <Button title="Compartir resultado" variant="outline" icon="share-outline" onPress={share} />
+        <ResultShareButton text={shareMessage} card={card} />
       </View>
     </ResultSheet>
   );

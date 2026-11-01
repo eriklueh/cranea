@@ -2,10 +2,12 @@ import { keyboardStates, WORD_LENGTH, type KeyState, type LetterScore, type Pala
 import { Stack, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
-import Animated, { FlipInXUp, ZoomIn, useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming } from "react-native-reanimated";
+import Animated, { FlipInXUp, ZoomIn, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 import { DailyNotice } from "@/components/daily-gate";
-import { GameHeader } from "@/components/game-header";
-import { ResultSheet, shareText } from "@/components/result-sheet";
+import { FinishSlot, ResultLink } from "@/components/finish-slot";
+import { GameHeader, gameTitle } from "@/components/game-header";
+import { ResultSheet } from "@/components/result-sheet";
+import { ResultShareButton, resultLabel, type ResultCard } from "@/components/share-card";
 import { ExtraAttemptOffer, useExtraAttemptOffer } from "@/components/rewards";
 import { Button, Icon, Row, Screen, Text, shadow } from "@/components/ui";
 import { SHARE_URL } from "@/config";
@@ -15,7 +17,7 @@ import { useOnChange, useSettled } from "@/lib/hooks";
 import { useProgress } from "@/stores/progress";
 import { useTheme } from "@/theme/theme";
 import { fonts, radius } from "@/theme/tokens";
-import { useShake } from "@/lib/motion";
+import { hop as hopTo, useShake, WIN_RESULT_MS } from "@/lib/motion";
 import { GAME_ID, getDictionary, levelKey } from "../data";
 import { attemptLimit, usePalabra } from "../store";
 
@@ -24,8 +26,11 @@ export type GameMode =
   | { kind: "daily"; date: string; number: number; practice: boolean };
 
 const FLIP_STEP = 120;
+/** La fila ganadora se da vuelta más rápido y salta enseguida: el festejo entero entra en ~0,8 s. */
+const WIN_FLIP_STEP = 60;
+const WIN_FLIP_MS = 280;
 /** Lo que tarda en darse vuelta una fila (y en saltar, si ganaste): el resultado espera a que termine. */
-const REVEAL_MS = { won: 1300, lost: 900 } as const;
+const REVEAL_MS = { won: WIN_RESULT_MS, lost: 900 } as const;
 const SCORE_LABEL: Record<LetterScore, string> = { 2: "en su lugar", 1: "está en otro lugar", 0: "no está" };
 
 export function PalabraGame({ puzzle, mode }: { puzzle: PalabraPuzzle; mode: GameMode }) {
@@ -56,26 +61,23 @@ export function PalabraGame({ puzzle, mode }: { puzzle: PalabraPuzzle; mode: Gam
     setResultOpen(true);
   }, [status, current, puzzle, mode]);
 
-  const title = mode.kind === "daily" ? `Palabra del día #${mode.number}` : `Nivel ${mode.level}`;
-  const subtitle = mode.kind === "daily" ? "Misma palabra para todos" : `Mundo ${mode.world}`;
+  const context = mode.kind === "daily" ? "Misma palabra para todos" : `${WORD_LENGTH} letras · ${puzzle.attempts} intentos`;
   const ready = current === puzzle;
 
   return (
     <>
-      <Stack.Screen options={{ title: mode.kind === "daily" ? "Palabra del día" : `Palabra · ${mode.world}-${mode.level}` }} />
+      <Stack.Screen options={{ title: gameTitle("Palabra", mode) }} />
       <Screen>
-        <GameHeader title={title} subtitle={subtitle} right={ready ? <><Lives /><Timer /></> : null} />
+        <GameHeader context={context} right={ready ? <><Lives /><Timer /></> : null} />
         {mode.kind === "daily" && <DailyNotice practice={mode.practice} />}
         {ready && (
           <>
             <Board />
             {puzzle.hard && <Text variant="small" style={{ textAlign: "center" }}>Modo difícil: usá todo lo que ya descubriste.</Text>}
-            {status !== "playing" && revealed && (
-              <Pressable onPress={() => setResultOpen(true)} accessibilityRole="button" style={{ minHeight: 44, alignSelf: "center", justifyContent: "center" }}>
-                <Text variant="bodyBold" style={{ textDecorationLine: "underline", textDecorationColor: colors.margin }}>Ver resultado</Text>
-              </Pressable>
-            )}
-            <Keyboard onSubmit={() => usePalabra.getState().submit(allowed)} />
+            {/* Al terminar, "Ver resultado" ocupa el lugar del teclado: nada se corre de lugar. */}
+            <FinishSlot finished={status !== "playing"} done={revealed ? <ResultLink onPress={() => setResultOpen(true)} /> : null}>
+              <Keyboard onSubmit={() => usePalabra.getState().submit(allowed)} />
+            </FinishSlot>
           </>
         )}
       </Screen>
@@ -115,7 +117,7 @@ function Board() {
   const tile = useTile();
   const shake = useShake(shakeKey);
   useOnChange(shakeKey, (key) => key > 0 && haptic("invalid"));
-  useOnChange(status, (s) => s === "won" && setTimeout(() => haptic("win"), FLIP_STEP * WORD_LENGTH));
+  useOnChange(status, (s) => s === "won" && setTimeout(() => haptic("win"), WIN_FLIP_STEP * WORD_LENGTH));
   if (!puzzle) return null;
   const won = status === "won";
   const rows = won ? [...misses, { word: puzzle.answer, scores: Array(WORD_LENGTH).fill(2) as LetterScore[] }] : misses;
@@ -128,7 +130,15 @@ function Board() {
           return (
             <View key={i} style={styles.row} accessible accessibilityLabel={`Intento ${i + 1}: ${row.word.toUpperCase()}. ${[...row.word].map((l, j) => `${l.toUpperCase()} ${SCORE_LABEL[row.scores[j]]}`).join(", ")}.`}>
               {[...row.word].map((letter, j) => (
-                <LetterTile key={j} letter={letter} tone={toneFor(row.scores[j])} size={tile} flipDelay={j * FLIP_STEP} hop={won && i === misses.length ? j : undefined} />
+                <LetterTile
+                  key={j}
+                  letter={letter}
+                  tone={toneFor(row.scores[j])}
+                  size={tile}
+                  flipDelay={j * (won && i === misses.length ? WIN_FLIP_STEP : FLIP_STEP)}
+                  flipMs={won && i === misses.length ? WIN_FLIP_MS : undefined}
+                  hop={won && i === misses.length ? j : undefined}
+                />
               ))}
             </View>
           );
@@ -156,11 +166,11 @@ function Board() {
 type Tone = "exact" | "present" | "absent" | "input" | "empty" | "solution";
 const toneFor = (score: LetterScore): Tone => (score === 2 ? "exact" : score === 1 ? "present" : "absent");
 
-export function LetterTile({ letter, tone = "absent", size = 48, flipDelay, hop }: { letter?: string; tone?: Tone; size?: number; flipDelay?: number; hop?: number }) {
+export function LetterTile({ letter, tone = "absent", size = 48, flipDelay, flipMs = 320, hop }: { letter?: string; tone?: Tone; size?: number; flipDelay?: number; flipMs?: number; hop?: number }) {
   const { colors } = useTheme();
   const lift = useSharedValue(0);
   useEffect(() => {
-    if (hop !== undefined) lift.value = withDelay(FLIP_STEP * WORD_LENGTH + hop * 90, withSequence(withTiming(-12, { duration: 150 }), withSpring(0, { damping: 6 })));
+    if (hop !== undefined) lift.value = hopTo(WIN_FLIP_STEP * (WORD_LENGTH - 1) + WIN_FLIP_MS - 60 + hop * 40, -12);
   }, [hop, lift]);
   const hopStyle = useAnimatedStyle(() => ({ transform: [{ translateY: lift.value }] }));
 
@@ -177,7 +187,7 @@ export function LetterTile({ letter, tone = "absent", size = 48, flipDelay, hop 
               ? { borderColor: colors.ok, backgroundColor: colors.tile, color: colors.ok, ...shadow(colors.ok, 2) }
               : { borderColor: colors.pencil, backgroundColor: "transparent", color: colors.ink, borderStyle: "dashed" as const };
   const { color, ...box } = look;
-  const entering = flipDelay !== undefined ? FlipInXUp.delay(flipDelay).duration(320) : tone === "input" ? ZoomIn.duration(120) : undefined;
+  const entering = flipDelay !== undefined ? FlipInXUp.delay(flipDelay).duration(flipMs) : tone === "input" ? ZoomIn.duration(120) : undefined;
   const score = tone === "exact" ? 2 : tone === "present" ? 1 : 0;
 
   return (
@@ -319,12 +329,18 @@ function PalabraResult({ open, onClose, mode, onRetry, onExtra }: { open: boolea
   const title = mode.kind === "daily" ? `Palabra del día #${mode.number}` : `Nivel ${mode.world}-${mode.level}`;
   // Diario perdido con el intento extra a mano: la palabra queda tapada hasta que se elige.
   const offering = official && !won && !extraAttempt && offer.available && !revealed;
-  const share = () => {
-    const grid = [...misses.map((m) => m.scores), ...(won ? [Array(WORD_LENGTH).fill(2)] : [])]
-      .map((row) => row.map((s: number) => (s === 2 ? "🟩" : s === 1 ? "🟨" : "⬜")).join(""))
-      .join("\n");
-    const score = won ? (extraAttempt ? "con un intento extra" : `${attempts}/${puzzle.attempts}`) : `X/${puzzle.attempts}`;
-    void shareText(`Craneá · ${title}\n${score} en ${time}\n${grid}\n${SHARE_URL}/palabra`);
+  // Como Wordle: los colores de cada intento, sin las letras.
+  const rows: LetterScore[][] = [...misses.map((m) => m.scores), ...(won ? [Array(WORD_LENGTH).fill(2) as LetterScore[]] : [])];
+  const grid = rows.map((row) => row.map((s) => (s === 2 ? "🟩" : s === 1 ? "🟨" : "⬜")).join("")).join("\n");
+  const score = won ? (extraAttempt ? "con un intento extra" : `${attempts}/${puzzle.attempts}`) : `X/${puzzle.attempts}`;
+  const shareMessage = `Craneá · ${title}\n${score} en ${time}\n${grid}\n${SHARE_URL}/palabra`;
+  const card: ResultCard = {
+    game: "Palabra",
+    label: resultLabel(mode),
+    won,
+    headline: won ? (extraAttempt ? "Con intento extra" : `${attempts}/${puzzle.attempts}`) : "No salió",
+    detail: won ? `${attempts} ${attempts === 1 ? "intento" : "intentos"} · ${time}` : `X/${puzzle.attempts} · ${time}`,
+    visual: { kind: "colors", rows },
   };
   return (
     <ResultSheet
@@ -367,7 +383,7 @@ function PalabraResult({ open, onClose, mode, onRetry, onExtra }: { open: boolea
         {mode.kind === "daily" && (
           <Button title="Ver ranking" variant="outline" icon="trophy-outline" onPress={() => { onClose(); router.push({ pathname: "/ranking", params: { juego: GAME_ID, fecha: mode.date } }); }} />
         )}
-        <Button title="Compartir resultado" variant="outline" icon="share-outline" onPress={share} />
+        <ResultShareButton text={shareMessage} card={card} />
       </View>
     </ResultSheet>
   );

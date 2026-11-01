@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { attemptMarks, ResultShareButton, resultLabel, SHARE_FOOTER } from "@/components/share/result-share";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatTime } from "@/lib/utils";
@@ -18,7 +18,6 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry }: {
   onRetry: () => void;
 }) {
   const { puzzle, status, mistakes, startedAt, finishedAt } = useTorres();
-  const [copied, setCopied] = useState(false);
   if (!puzzle || status === "playing") return null;
 
   const won = status === "won";
@@ -26,18 +25,18 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry }: {
   const time = formatTime((finishedAt ?? Date.now()) - startedAt);
   const title = mode.kind === "daily" ? `Torres del día #${mode.number}` : `Torres ${mode.world}-${mode.level}`;
 
-  const share = async () => {
-    const marks = Array.from({ length: MAX_ATTEMPTS }, (_, i) => (i < mistakes ? "🟥" : won && i === mistakes ? "🟩" : "⬜")).join("");
-    const text = `Craneá · ${title}\n${marks} ${won ? `${attempts}/${MAX_ATTEMPTS}` : "X"} en ${time}\n${location.origin}/torres`;
-    try {
-      if (navigator.share) await navigator.share({ text });
-      else {
-        await navigator.clipboard.writeText(text);
-        setCopied(true);
-      }
-    } catch {
-      /* el usuario canceló */
-    }
+  const marks = Array.from({ length: MAX_ATTEMPTS }, (_, i) => (i < mistakes ? "🟥" : won && i === mistakes ? "🟩" : "⬜")).join("");
+  const shareText = `Craneá · ${title}\n${marks} ${won ? `${attempts}/${MAX_ATTEMPTS}` : "X"} en ${time}\n${location.origin}/torres`;
+  // La cuadrícula vacía de la ciudad: ni pistas ni alturas.
+  const card = {
+    game: "Torres",
+    label: resultLabel(mode),
+    won,
+    headline: won ? `${attempts}/${MAX_ATTEMPTS}` : "No salió",
+    detail: won ? `${puzzle.size}×${puzzle.size} · ${mistakes === 0 ? "sin errores" : mistakes === 1 ? "1 error" : `${mistakes} errores`} · ${time}` : `Sin resolver · ${time}`,
+    visual: { kind: "board" as const, width: puzzle.size, height: puzzle.size },
+    marks: attemptMarks(MAX_ATTEMPTS, mistakes, won),
+    footer: SHARE_FOOTER,
   };
 
   return (
@@ -60,9 +59,7 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry }: {
           className="max-w-64"
         />
         <DialogFooter>
-          <Button variant="outline" onClick={share}>
-            {copied ? "Copiado" : "Compartir resultado"}
-          </Button>
+          <ResultShareButton text={shareText} card={card} filename={`cranea-torres-${mode.kind === "daily" ? mode.date : `${mode.world}-${mode.level}`}.png`} />
           {mode.kind === "level" && !won && (
             <Button variant="outline" onClick={onRetry}>
               Reintentar

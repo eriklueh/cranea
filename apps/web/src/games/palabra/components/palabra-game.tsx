@@ -18,11 +18,12 @@ import { cn } from "@/lib/utils";
 import { haptic, useOnChange, useSettled } from "@/lib/motion";
 import { sound } from "@/lib/sound";
 import { WinBurst } from "@/components/win-burst";
+import { FinishSlot } from "@/components/finish-slot";
 import { WORD_LENGTH } from "@cranea/core/palabra";
 import type { TutorialMode } from "@/components/tutorial/mode";
 
 /** Lo que tarda en darse vuelta una fila (y en saltar, si ganaste): el resultado espera a que termine. */
-const REVEAL_MS = { won: 1250, lost: 800 } as const;
+const REVEAL_MS = { won: 850, lost: 700 } as const;
 
 export function PalabraGame({ puzzle, mode }: { puzzle: PalabraPuzzle; mode: GameMode | TutorialMode }) {
   const start = usePalabra((s) => s.start);
@@ -107,20 +108,23 @@ export function PalabraGame({ puzzle, mode }: { puzzle: PalabraPuzzle; mode: Gam
       </section>
 
       <section aria-label="Teclado" className="space-y-3">
-        {status !== "playing" && (
-          <div className="flex justify-center">
-            <button className="text-sm font-semibold underline decoration-margin decoration-2 underline-offset-4" onClick={() => setResultOpen(true)}>
-              Ver resultado
-            </button>
-          </div>
-        )}
         {failed && (
           <div className="flex flex-col items-center gap-2 text-center text-sm text-muted-foreground" role="alert">
             No se pudo cargar la lista de palabras.
             <Button size="sm" variant="outline" onClick={retry}>Reintentar</Button>
           </div>
         )}
-        <Keyboard ready={Boolean(dict)} onSubmit={submit} />
+        {/* Al terminar, "Ver resultado" ocupa el lugar del teclado: nada se corre de lugar. */}
+        <FinishSlot
+          finished={status !== "playing"}
+          done={
+            <button className="min-h-11 text-sm font-semibold underline decoration-margin decoration-2 underline-offset-4" onClick={() => setResultOpen(true)}>
+              Ver resultado
+            </button>
+          }
+        >
+          <Keyboard ready={Boolean(dict)} onSubmit={submit} />
+        </FinishSlot>
       </section>
 
       {mode.kind !== "tutorial" && <ResultDialog
@@ -192,7 +196,7 @@ function Board() {
             );
           })}
         </ol>
-        {won && <WinBurst delay={900} />}
+        {won && <WinBurst delay={500} />}
       </div>
       <p role="status" aria-live="polite" className="min-h-5 text-center text-sm text-muted-foreground">{message}</p>
     </>
