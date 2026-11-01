@@ -7,6 +7,7 @@ import { DigitTile, Indicator } from "@/games/cifra/components/tiles";
 import { LetterTile } from "@/games/palabra/components/palabra-game";
 import { TorresPreview } from "@/games/torres/components/preview";
 import { PuentesPreview } from "@/games/puentes/components/preview";
+import { NonogramaPreview } from "@/games/nonograma/components/examples";
 import { GAMES, type MobileGame } from "@/games/registry";
 import { useClock } from "@/lib/hooks";
 import { dailyStreak, useProgress } from "@/stores/progress";
@@ -93,6 +94,7 @@ function GameCard({ game }: { game: MobileGame }) {
       {game.id === "palabra" && <PalabraPreview />}
       {game.id === "torres" && <View style={styles.preview}><TorresPreview /></View>}
       {game.id === "puentes" && <PuentesPreview />}
+      {game.id === "nonograma" && <View style={styles.preview}><NonogramaPreview cell={18} /></View>}
     </Pressable>
   );
 }
