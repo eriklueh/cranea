@@ -1,4 +1,5 @@
 import type { Href } from "expo-router";
+import type { ReactNode } from "react";
 import { plural } from "@/lib/format";
 import type { GameProgress, Result } from "@/stores/progress";
 
@@ -40,6 +41,10 @@ export interface GameHomeConfig {
   stars: (r: Result) => number;
   resultText: (r: Result) => string;
   resultStat: (r: Result) => { label: string; value: string };
+  /** Miniatura de un nivel ganado en la grilla (el dibujo de Nonograma), en lugar del número. */
+  thumbnail?: (world: number, level: number) => ReactNode;
+  /** Nombre de un nivel ganado, para el lector de pantalla. */
+  levelTitle?: (world: number, level: number) => string;
 }
 
 /** "en 2 intentos" */

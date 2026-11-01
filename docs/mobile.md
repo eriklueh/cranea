@@ -10,7 +10,8 @@ App nativa con **Expo SDK 58** + **expo-router**, para Google Play y App Store. 
 | --- | --- |
 | Cifra | ✅ Niveles (4 mundos) + diario, marcas, pistas, partida en curso guardada |
 | Palabra | ✅ Niveles (4 mundos, incluido modo difícil) + diario |
-| Puentes, Nonograma, Torres | ⏳ Pantalla «Muy pronto» con enlace a la web |
+| Nonograma | ✅ Niveles (3 mundos, miniaturas de los dibujos) + diario; zoom con dos dedos en 15×15 |
+| Puentes, Torres | ⏳ Pantalla «Muy pronto» con enlace a la web |
 
 También: inicio con los diarios de hoy, pantalla de cada juego (diario, «Seguir jugando», mundos y niveles),
 ranking del día, estadísticas, cuenta (Apple / Google / código por mail), tema cuaderno/pizarrón, vibraciones,

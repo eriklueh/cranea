@@ -1,10 +1,12 @@
 import { CIFRA_HOME, LAUNCH_DATE as CIFRA_LAUNCH } from "@/games/cifra/data";
 import { LAUNCH_DATE as PALABRA_LAUNCH, PALABRA_HOME } from "@/games/palabra/data";
+import { LAUNCH_DATE as NONOGRAMA_LAUNCH, NONOGRAMA_HOME } from "@/games/nonograma/data";
 
 /** Juegos con archivo de diarios en la app (los que ya se juegan acá) y desde qué día. */
 export const ARCHIVE: Record<string, { name: string; launch: string; number: (date: string) => number }> = {
   cifra: { name: "Cifra", launch: CIFRA_LAUNCH, number: CIFRA_HOME.daily.number },
   palabra: { name: "Palabra", launch: PALABRA_LAUNCH, number: PALABRA_HOME.daily.number },
+  nonograma: { name: "Nonograma", launch: NONOGRAMA_LAUNCH, number: NONOGRAMA_HOME.daily.number },
 };
 
 const DAY_MS = 86_400_000;

@@ -324,6 +324,8 @@ function LevelCell({ config, progress, hydrated, worldId, n, done, next, onLocke
   const tried = Boolean(result && !result.won);
   const unlocked = hydrated && config.isLevelUnlocked(worldId, n, done);
   const stars = won ? config.stars(result!) : 0;
+  const thumb = won ? config.thumbnail?.(worldId, n) : null;
+  const title = won ? config.levelTitle?.(worldId, n) : "";
 
   const cell = [
     styles.cell,
@@ -335,7 +337,7 @@ function LevelCell({ config, progress, hydrated, worldId, n, done, next, onLocke
     hydrated && !unlocked && { borderColor: "transparent" },
   ];
   const color = next ? colors.paper : tried ? colors.margin : !unlocked ? alpha(colors.pencil, 0.4) : colors.ink;
-  const label = `Nivel ${n}${won ? `, resuelto ${config.resultText(result!)}` : tried ? ", sin resolver" : ""}${next ? ", el próximo" : ""}${!unlocked ? (onLocked ? ", con Craneá Plus" : ", bloqueado") : ""}`;
+  const label = `Nivel ${n}${title ? `, ${title}` : ""}${won ? `, resuelto ${config.resultText(result!)}` : tried ? ", sin resolver" : ""}${next ? ", el próximo" : ""}${!unlocked ? (onLocked ? ", con Craneá Plus" : ", bloqueado") : ""}`;
 
   return (
     <View style={styles.cellWrap}>
@@ -347,7 +349,7 @@ function LevelCell({ config, progress, hydrated, worldId, n, done, next, onLocke
         onPress={() => (unlocked ? router.push(config.levelHref(worldId, n)) : onLocked?.())}
         style={({ pressed }) => [...cell, pressed && { transform: [{ scale: 0.95 }] }]}
       >
-        <Text style={{ fontFamily: fonts.display, fontSize: unlocked ? 16 : 14, color }}>{n}</Text>
+        {thumb ?? <Text style={{ fontFamily: fonts.display, fontSize: unlocked ? 16 : 14, color }}>{n}</Text>}
         {won && (
           <View style={styles.stars}>
             {[0, 1, 2].map((k) => (
