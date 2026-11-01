@@ -66,6 +66,8 @@ function Navigator() {
         <Stack.Screen name="index" options={{ title: "Craneá" }} />
         <Stack.Screen name="cuenta" options={{ title: "Tu cuenta", presentation: "modal" }} />
         <Stack.Screen name="plus" options={{ title: "Craneá Plus", presentation: "modal" }} />
+        <Stack.Screen name="sso-callback" options={{ headerShown: false, animation: "none" }} />
+        <Stack.Screen name="+not-found" options={{ title: "Craneá" }} />
       </Stack>
     </>
   );

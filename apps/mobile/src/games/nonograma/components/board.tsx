@@ -1,7 +1,7 @@
 import { colCells, EMPTY, FILLED, lineDone, rowCells, type Cell, type LineClue, type NonogramaPuzzle } from "@cranea/core/nonograma";
 import * as Haptics from "expo-haptics";
 import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
-import { Platform, StyleSheet, View, useWindowDimensions } from "react-native";
+import { Platform, StyleSheet, View, useWindowDimensions, PixelRatio } from "react-native";
 import { GestureDetector, usePanGesture, usePinchGesture, useSimultaneousGestures } from "react-native-gesture-handler";
 import Animated, {
   Easing,
@@ -63,7 +63,7 @@ export function useBoardLayout(puzzle: NonogramaPuzzle): BoardLayout {
   return useMemo(() => {
     const W = puzzle.width;
     const avail = Math.min(width, 560) - GAME_PAD * 2;
-    const font = W <= 5 ? 18 : W <= 10 ? 13 : 11;
+    const font = W <= 5 ? 22 : W <= 10 ? 14 : 11;
     // Ancho de la pista más larga: ~0,6 em por cifra y ~0,3 em por espacio (Bricolage, cifras tabulares).
     // Si una fuente rara ocupa más, el texto se achica solo (adjustsFontSizeToFit).
     const rowEm = Math.max(1, ...puzzle.rows.map((c) => {
@@ -75,7 +75,7 @@ export function useBoardLayout(puzzle: NonogramaPuzzle): BoardLayout {
     const lineH = Math.round(font * 1.18);
     const clueH = colCount * lineH + 6;
     const maxCell = W <= 5 ? 52 : W <= 10 ? 34 : 30;
-    const cell = Math.max(12, Math.min(maxCell, Math.floor((avail - clueW - BORDER * 2) / W)));
+    const cell = PixelRatio.roundToNearestPixel(Math.max(12, Math.min(maxCell, Math.floor((avail - clueW - BORDER * 2) / W))));
     const zoomable = cell < MIN_CELL;
     const maxScale = zoomable ? Math.min(2.5, Math.max(1.5, 30 / cell)) : 1;
     return { cell, font, clueW, clueH, lineH, zoomable, maxScale };
@@ -336,10 +336,11 @@ const CellView = memo(function CellView({ i, r, c, W, H, size, rowClue, colClue,
         width: size,
         height: size,
         backgroundColor: near ? colors.accent : colors.tile,
-        borderRightWidth: c < W - 1 ? (thickR ? 1.5 : StyleSheet.hairlineWidth) : 0,
-        borderBottomWidth: r < H - 1 ? (thickB ? 1.5 : StyleSheet.hairlineWidth) : 0,
-        borderRightColor: alpha(colors.ink, thickR ? 0.55 : 0.2),
-        borderBottomColor: alpha(colors.ink, thickB ? 0.55 : 0.2),
+        // Líneas de 1 punto (no "hairline": en algunas pantallas caían entre pixeles y desaparecían).
+        borderRightWidth: c < W - 1 ? (thickR ? 2 : 1) : 0,
+        borderBottomWidth: r < H - 1 ? (thickB ? 2 : 1) : 0,
+        borderRightColor: alpha(colors.ink, thickR ? 0.6 : 0.22),
+        borderBottomColor: alpha(colors.ink, thickB ? 0.6 : 0.22),
       }}
     >
       {state === FILLED && <Animated.View entering={stamp} style={[StyleSheet.absoluteFill, { backgroundColor: colors.ink }, pulseStyle]} />}
