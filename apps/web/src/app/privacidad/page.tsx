@@ -57,10 +57,10 @@ export default function Privacy() {
         obligación legal (por ejemplo, registros de compras que llevan las tiendas).
       </p>
 
-      <h2>Tus derechos</h2>
+      <h2 id="borrar-cuenta">Tus derechos y cómo borrar tu cuenta</h2>
       <p>
         Podés pedir acceso, rectificación o eliminación de tus datos, u oponerte a su uso, escribiendo a {mail}. Podés borrar tu
-        cuenta desde la app (Cuenta → Borrar cuenta) o pidiéndolo por email. En {LEGAL.country} rige la Ley 25.326 de Protección de
+        cuenta desde la app (Cuenta → Borrar mi cuenta), desde la web (Ajustes → Borrar mi cuenta) o pidiéndolo por email: se borran la cuenta y todos sus datos en Craneá (progreso guardado, ranking, logros y Plus regalado). En {LEGAL.country} rige la Ley 25.326 de Protección de
         los Datos Personales; la Agencia de Acceso a la Información Pública es el órgano de control y recibe denuncias por
         incumplimientos.
       </p>

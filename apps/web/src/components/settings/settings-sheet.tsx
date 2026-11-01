@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
 import { ChartColumnIcon, SettingsIcon, ShieldIcon, SparklesIcon, XIcon } from "lucide-react";
-import { useConvexAuth, useQuery } from "convex/react";
+import { useAction, useConvexAuth, useQuery } from "convex/react";
+import { useClerk } from "@clerk/nextjs";
 import { api } from "../../../convex/_generated/api";
 import { accountsEnabled } from "@/components/account-provider";
 import { Dialog as DialogPrimitive } from "radix-ui";
@@ -85,6 +86,34 @@ function AdminRow() {
   );
 }
 
+/** Borrar la cuenta y todos sus datos (lo exigen las tiendas también en la web). */
+function DeleteAccountRow() {
+  const { isAuthenticated } = useConvexAuth();
+  const deleteMyAccount = useAction(api.account.deleteMyAccount);
+  const { signOut } = useClerk();
+  const [busy, setBusy] = useState(false);
+  if (!isAuthenticated) return null;
+  const remove = async () => {
+    if (!confirm("¿Borrar tu cuenta? Se borran tu progreso guardado en la cuenta, el ranking, los logros y Craneá Plus regalado. Lo que está en este dispositivo queda. Si pagaste Plus, cancelalo desde la tienda. No se puede deshacer.")) return;
+    setBusy(true);
+    try {
+      await deleteMyAccount({});
+      await signOut();
+    } catch {
+      alert("No se pudo borrar la cuenta. Probá de nuevo más tarde.");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <ActionRow label="Borrar mi cuenta" hint="Elimina la cuenta y sus datos.">
+      <Button variant="ghost" className="min-h-11 text-destructive" disabled={busy} onClick={remove}>
+        {busy ? "Borrando…" : "Borrar"}
+      </Button>
+    </ActionRow>
+  );
+}
+
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="space-y-4">
@@ -157,6 +186,7 @@ function Preferences() {
         <div className="-mx-2 space-y-1">
           <PlusState />
           {accountsEnabled && <AdminRow />}
+          {accountsEnabled && <DeleteAccountRow />}
           <ActionRow label="Estadísticas" hint="Rachas y resultados de cada juego.">
             <DialogPrimitive.Close asChild>
               <Button asChild variant="ghost" size="icon" className="size-11">

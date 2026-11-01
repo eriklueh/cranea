@@ -4,7 +4,7 @@ import * as AppleAuthentication from "expo-apple-authentication";
 import Constants from "expo-constants";
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery, useAction } from "convex/react";
 import { useEffect, useState } from "react";
 import { Alert, Platform, Pressable, StyleSheet, Switch, TextInput, View } from "react-native";
 import { PlusBadge, usePlusPaywall } from "@/components/plus";
@@ -233,18 +233,20 @@ function SignedIn() {
   const { signOut } = useClerk();
   const profile = useQuery(api.ranking.profile);
   const setRanked = useMutation(api.ranking.setRanked);
+  const deleteMyAccount = useAction(api.account.deleteMyAccount);
   const [saving, setSaving] = useState(false);
 
   const remove = () =>
-    Alert.alert("Borrar tu cuenta", "Se borra tu cuenta y dejás de aparecer en el ranking. El progreso de este dispositivo queda acá. No se puede deshacer.", [
+    Alert.alert("Borrar tu cuenta", "Se borran tu cuenta y todos sus datos: progreso guardado en la cuenta, ranking, logros y Craneá Plus regalado. El progreso de este dispositivo queda acá. Si pagaste Plus, cancelalo desde la tienda. No se puede deshacer.", [
       { text: "Cancelar", style: "cancel" },
       {
         text: "Borrar",
         style: "destructive",
         onPress: async () => {
           try {
-            await setRanked({ ranked: false }).catch(() => {});
-            await user?.delete();
+            // Convex borra los datos y la cuenta de Clerk; después se cierra la sesión acá.
+            await deleteMyAccount({});
+            await signOut();
           } catch {
             Alert.alert("No se pudo borrar la cuenta", "Probá de nuevo más tarde.");
           }
