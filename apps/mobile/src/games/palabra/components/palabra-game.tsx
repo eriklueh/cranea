@@ -6,6 +6,7 @@ import Animated, { FlipInXUp, ZoomIn, useAnimatedStyle, useSharedValue, withDela
 import { DailyNotice } from "@/components/daily-gate";
 import { GameHeader } from "@/components/game-header";
 import { ResultSheet, shareText } from "@/components/result-sheet";
+import { PlusNudge } from "@/components/plus-nudge";
 import { ExtraAttemptOffer, useExtraAttemptOffer } from "@/components/rewards";
 import { Button, Icon, Row, Screen, Text, shadow } from "@/components/ui";
 import { SHARE_URL } from "@/config";
@@ -369,6 +370,7 @@ function PalabraResult({ open, onClose, mode, onRetry, onExtra }: { open: boolea
         )}
         <Button title="Compartir resultado" variant="outline" icon="share-outline" onPress={share} />
       </View>
+      <PlusNudge gameId={GAME_ID} mode={mode} won={won} onLeave={onClose} />
     </ResultSheet>
   );
 }

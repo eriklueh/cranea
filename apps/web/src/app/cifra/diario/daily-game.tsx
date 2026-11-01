@@ -1,7 +1,8 @@
 "use client";
 import { useMemo } from "react";
-import { generateDaily } from "@cranea/core/cifra";
+import { generateDaily, WORLDS } from "@cranea/core/cifra";
 import { DailyGate } from "@/components/daily-gate";
+import { plusLevelCount } from "@/lib/free-levels";
 import { CifraGame } from "@/games/cifra/components/cifra-game";
 import { DigitTile } from "@/games/cifra/components/digit-tile";
 import { dailyNumber, LAUNCH_DATE } from "@/games/cifra/data";
@@ -9,7 +10,7 @@ import { dailyNumber, LAUNCH_DATE } from "@/games/cifra/data";
 /** El diario se genera en el cliente con la fecha UTC como semilla: todos ven el mismo tablero. Cuenta la primera partida. */
 export function DailyGame() {
   return (
-    <DailyGate
+    <DailyGate plusLevels={plusLevelCount(WORLDS)}
       gameId="cifra"
       game="Cifra"
       home="/cifra"

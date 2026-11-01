@@ -55,7 +55,7 @@ pnpm levels              # regenera packages/core/levels/cifra.json (~1 min)
 
 ## Craneá Plus (web)
 
-- **Gratis**: los cinco diarios de hoy (también repetirlos como práctica), tutoriales, ranking, estadísticas y logros. **Plus**: todos los niveles, el archivo de diarios anteriores, pistas sin límite y la app sin publicidad. Se compra en la app (RevenueCat); la misma cuenta de Clerk lo activa en la web.
+- **Gratis**: los cinco diarios de hoy (también repetirlos como práctica), tutoriales, ranking, estadísticas, logros y los primeros 3 niveles de cada juego (`FREE_LEVELS`). **Plus**: el resto de los niveles, el archivo de diarios anteriores, pistas sin límite y la app sin publicidad. Se compra en la app (RevenueCat); la misma cuenta de Clerk lo activa en la web.
 - `lib/plus.ts`: `usePlus()` → `{ plus, ready }`. `components/plus/plus-sync.tsx` lee `api.entitlements.mine` y guarda el último valor en `cranea-plus`: quien ya tenía Plus no ve candados al abrir, ni sin conexión; un dispositivo nuevo arranca sin Plus. Solo al cerrar sesión se olvida. En `next dev`, `localStorage["cranea-plus-dev"] = "1"` (o `"0"`) lo fuerza.
 - `components/plus/paywall.tsx`: `openPaywall(motivo)` abre la hoja (montada en `AccountProvider`); `<PlusGate>` muestra la propuesta en lugar de un nivel o un diario anterior, sin montar el tablero. Las páginas siguen siendo estáticas: se decide en el cliente.
 - Pistas de Cifra: sin Plus, una por tablero (`cranea-pistas:<id>`, los pasos ya vistos se pueden volver a ver).

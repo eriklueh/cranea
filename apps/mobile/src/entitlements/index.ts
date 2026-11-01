@@ -6,8 +6,9 @@ import { createJSONStorage, persist } from "zustand/middleware";
  * Punto único para saber si la persona tiene Craneá Plus. Las pantallas preguntan `usePlus()` o
  * `can(...)`, nunca a la tienda directamente.
  *
- * Gratis: los desafíos del día, cómo se juega, ranking, estadísticas y el primer mundo de cada juego.
- * Plus (entitlement "plus" de RevenueCat): todos los mundos, archivo de diarios, pistas sin límite y
+ * Gratis: los desafíos del día, cómo se juega, ranking, estadísticas y los primeros `FREE_LEVELS`
+ * niveles del primer mundo de cada juego (igual que la web, `lib/plus.ts`).
+ * Plus (entitlement "plus" de RevenueCat): todos los niveles, archivo de diarios, pistas sin límite y
  * sin anuncios. Hay Plus si lo dice RevenueCat en el dispositivo **o** Convex (`entitlements.mine`,
  * escrito por el webhook o a mano): así vale también lo comprado en otro dispositivo o regalado.
  * Lo último que se supo queda guardado para jugar sin conexión.
@@ -15,8 +16,8 @@ import { createJSONStorage, persist } from "zustand/middleware";
 
 export type Feature = "all-worlds" | "archive" | "unlimited-hints" | "no-ads";
 
-/** Mundos gratis de cada juego (los primeros del mapa). Gratis son solo los diarios, como en la web. */
-export const FREE_WORLDS = 0;
+/** Niveles gratis de cada juego: los primeros del primer mundo. El mismo número que la web (`lib/plus.ts`). */
+export const FREE_LEVELS = 3;
 /** Pistas gratis por tablero (diario o nivel). Con un anuncio se gana una más. */
 export const FREE_HINTS = 1;
 
@@ -88,8 +89,14 @@ export function can(feature: Feature, plus = isPlus(usePlusState.getState())) {
   return plus || !PLUS_ONLY.has(feature);
 }
 
-/** Si un mundo se juega gratis: los primeros `FREE_WORLDS` del mapa de cada juego. */
-export function isFreeWorld(worlds: readonly { id: number }[], worldId: number) {
-  const index = worlds.findIndex((w) => w.id === worldId);
-  return index >= 0 && index < FREE_WORLDS;
+/** Si un nivel se juega gratis: los primeros `FREE_LEVELS` del primer mundo del mapa. */
+export function isFreeLevel(worlds: readonly { id: number }[], worldId: number, level: number) {
+  return worlds.length > 0 && worlds[0].id === worldId && level >= 1 && level <= FREE_LEVELS;
 }
+
+/** Si el mundo entero es de Plus (no tiene ningún nivel gratis). */
+export const isPlusWorld = (worlds: readonly { id: number }[], worldId: number) => !isFreeLevel(worlds, worldId, 1);
+
+/** Cuántos niveles de un juego se abren con Plus (todos menos los gratis). */
+export const plusLevelCount = (worlds: readonly { levels: number }[]) =>
+  Math.max(0, worlds.reduce((n, w) => n + w.levels, 0) - Math.min(FREE_LEVELS, worlds[0]?.levels ?? 0));

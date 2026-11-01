@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DailyNotice } from "@/components/daily-gate";
 import { GameHeader } from "@/components/game-header";
 import { ResultSheet, shareText } from "@/components/result-sheet";
+import { PlusNudge } from "@/components/plus-nudge";
 import { Button, Row, Text } from "@/components/ui";
 import { SHARE_URL } from "@/config";
 import { formatTime } from "@/lib/format";
@@ -179,6 +180,7 @@ function PuentesResult({ open, onClose, mode }: { open: boolean; onClose: () => 
         )}
         <Button title="Compartir resultado" variant="outline" icon="share-outline" onPress={share} />
       </View>
+      <PlusNudge gameId={GAME_ID} mode={mode} onLeave={onClose} />
     </ResultSheet>
   );
 }

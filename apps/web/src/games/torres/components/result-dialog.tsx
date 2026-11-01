@@ -3,6 +3,9 @@ import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { WORLDS } from "@cranea/core/torres";
+import { PlusNudge } from "@/components/plus/plus-nudge";
+import { plusLevelCount } from "@/lib/free-levels";
 import { formatTime } from "@/lib/utils";
 import { attemptsOf, MAX_ATTEMPTS, useTorres } from "../store";
 import { Board } from "./board";
@@ -78,6 +81,7 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry }: {
             </Button>
           )}
         </DialogFooter>
+        <PlusNudge gameId="torres" levels={plusLevelCount(WORLDS)} mode={mode} won={won} onLeave={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>
   );

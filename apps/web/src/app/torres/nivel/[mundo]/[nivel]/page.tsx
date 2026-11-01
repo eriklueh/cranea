@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
 import { WORLDS } from "@cranea/core/torres";
 import { PlusGate } from "@/components/plus/paywall";
+import { isFreeLevel } from "@/lib/free-levels";
 import { TutorialGate } from "@/components/tutorial/gate";
 import { TorresTutorial } from "@/games/torres/tutorial";
 import { TorresGame } from "@/games/torres/components/torres-game";
@@ -34,12 +35,12 @@ export default async function LevelPage({ params }: { params: Params }) {
       {w === WORLDS[0].id && n === 1 ? (
         // La primera vez, el nivel 1 empieza con el tutorial.
         <TutorialGate game="torres" levelKey={`w${w}-l${n}`} tutorial={<TorresTutorial />}>
-          <PlusGate reason="levels" daily="/torres/diario">
+          <PlusGate reason="levels" daily="/torres/diario" free={isFreeLevel(WORLDS, w, n)}>
             <TorresGame puzzle={puzzle} mode={{ kind: "level", world: w, level: n, nextHref }} />
           </PlusGate>
         </TutorialGate>
       ) : (
-        <PlusGate reason="levels" daily="/torres/diario">
+        <PlusGate reason="levels" daily="/torres/diario" free={isFreeLevel(WORLDS, w, n)}>
           <TorresGame puzzle={puzzle} mode={{ kind: "level", world: w, level: n, nextHref }} />
         </PlusGate>
       )}

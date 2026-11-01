@@ -3,6 +3,9 @@ import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { WORLDS } from "@cranea/core/puentes";
+import { PlusNudge } from "@/components/plus/plus-nudge";
+import { plusLevelCount } from "@/lib/free-levels";
 import { formatTime } from "@/lib/utils";
 import { usePuentes } from "../store";
 
@@ -58,6 +61,7 @@ export function ResultDialog({ open, onOpenChange, mode }: {
             </Button>
           )}
         </DialogFooter>
+        <PlusNudge gameId="puentes" levels={plusLevelCount(WORLDS)} mode={mode} onLeave={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>
   );

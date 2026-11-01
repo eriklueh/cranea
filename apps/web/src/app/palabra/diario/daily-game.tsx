@@ -1,7 +1,8 @@
 "use client";
 import { useMemo } from "react";
-import { generatePalabraDaily } from "@cranea/core/palabra";
+import { generatePalabraDaily, PALABRA_WORLDS } from "@cranea/core/palabra";
 import { DailyGate } from "@/components/daily-gate";
+import { plusLevelCount } from "@/lib/free-levels";
 import { Button } from "@/components/ui/button";
 import { PalabraGame } from "@/games/palabra/components/palabra-game";
 import { LetterTile } from "@/games/palabra/components/letter-tile";
@@ -11,7 +12,7 @@ import { useDictionary } from "@/games/palabra/dictionary";
 /** El diario se genera en el cliente con la fecha UTC como semilla: todos ven el mismo tablero. Cuenta la primera partida. */
 export function DailyGame() {
   return (
-    <DailyGate
+    <DailyGate plusLevels={plusLevelCount(PALABRA_WORLDS)}
       gameId={GAME_ID}
       game="Palabra"
       home="/palabra"

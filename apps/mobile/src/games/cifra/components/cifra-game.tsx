@@ -6,6 +6,7 @@ import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { DailyNotice } from "@/components/daily-gate";
 import { GameHeader } from "@/components/game-header";
 import { ResultSheet, shareText } from "@/components/result-sheet";
+import { PlusNudge } from "@/components/plus-nudge";
 import { ExtraAttemptOffer, HintOffer, useExtraAttemptOffer } from "@/components/rewards";
 import { Button, Icon, Row, Screen, Text } from "@/components/ui";
 import { SHARE_URL } from "@/config";
@@ -321,6 +322,7 @@ function CifraResult({ open, onClose, mode, onRetry, onExtra }: { open: boolean;
         )}
         <Button title="Compartir resultado" variant="outline" icon="share-outline" onPress={share} />
       </View>
+      <PlusNudge gameId={GAME_ID} mode={mode} won={won} onLeave={onClose} />
     </ResultSheet>
   );
 }

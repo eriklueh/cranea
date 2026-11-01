@@ -11,6 +11,7 @@ import { accountsEnabled } from "@/components/account-provider";
 import { archiveDate, dailiesFor, shortDate } from "@/components/daily-hub/dailies";
 import { useAccountReady } from "@/components/progress-sync";
 import { PlusGate } from "@/components/plus/paywall";
+import { PlusNudge } from "@/components/plus/plus-nudge";
 import { Button } from "@/components/ui/button";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { cn, formatTime } from "@/lib/utils";
@@ -29,6 +30,8 @@ interface Props {
   title: (date: string) => string;
   /** La solución de hoy, para mostrar cuando ya se jugó. */
   reveal?: (date: string) => ReactNode;
+  /** Niveles de Plus del juego (`plusLevelCount`), para ofrecer Plus al terminar. */
+  plusLevels?: number;
   /** `practice`: repetición de un diario ya jugado, que no se guarda ni cuenta para el ranking. */
   children: (date: string, practice: boolean) => ReactNode;
 }
@@ -41,7 +44,7 @@ interface Props {
  * Con `?fecha=AAAA-MM-DD` (del archivo) se juega ese día como práctica; una fecha
  * inválida, futura o de hoy cae en el diario de hoy. Usa useSearchParams: va dentro de Suspense.
  */
-export function DailyGate({ gameId, game, home, launch, title, reveal, children }: Props) {
+export function DailyGate({ gameId, game, home, launch, title, reveal, plusLevels = 0, children }: Props) {
   const requested = useSearchParams().get("fecha");
   const hydrated = useHydrated();
   const accountReady = useAccountReady((s) => s.ready);
@@ -110,7 +113,7 @@ export function DailyGate({ gameId, game, home, launch, title, reveal, children 
       </>
     );
   }
-  return <DailyDone gameId={gameId} game={game} home={home} date={entry.date} title={title(entry.date)} result={entry.played} reveal={reveal?.(entry.date)} onPractice={() => setPractice(true)} />;
+  return <DailyDone gameId={gameId} game={game} home={home} date={entry.date} title={title(entry.date)} result={entry.played} reveal={reveal?.(entry.date)} plusLevels={plusLevels} onPractice={() => setPractice(true)} />;
 }
 
 /**
@@ -142,8 +145,8 @@ function untilTomorrow(now: number) {
   return h ? `${h} h ${min % 60} min` : `${min} min`;
 }
 
-function DailyDone({ gameId, game, home, date, title, result, reveal, onPractice }: {
-  gameId: string; game: string; home: string; date: string; title: string; result: Result; reveal?: ReactNode; onPractice: () => void;
+function DailyDone({ gameId, game, home, date, title, result, reveal, plusLevels, onPractice }: {
+  gameId: string; game: string; home: string; date: string; title: string; result: Result; reveal?: ReactNode; plusLevels: number; onPractice: () => void;
 }) {
   const streak = useProgress((s) => dailyStreak(s.games[gameId]?.daily ?? {}, date));
   const [now, setNow] = useState(() => Date.now());
@@ -224,6 +227,7 @@ function DailyDone({ gameId, game, home, date, title, result, reveal, onPractice
             <RotateCcwIcon /> Jugar de nuevo (práctica)
           </Button>
         )}
+        <PlusNudge gameId={gameId} levels={plusLevels} mode={{ kind: "daily", date }} />
         <div className="mt-1 flex items-center justify-between gap-2 text-sm font-semibold text-muted-foreground">
           <Link href={home} className="-ml-2 inline-flex min-h-11 items-center gap-0.5 rounded-md px-2 hover:text-foreground">
             <ChevronLeftIcon aria-hidden className="size-4" /> Volver a {game}

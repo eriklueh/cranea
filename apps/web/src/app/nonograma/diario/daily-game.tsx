@@ -1,7 +1,8 @@
 "use client";
 import { useMemo } from "react";
-import { generateDaily } from "@cranea/core/nonograma";
+import { generateDaily, WORLDS } from "@cranea/core/nonograma";
 import { DailyGate } from "@/components/daily-gate";
+import { plusLevelCount } from "@/lib/free-levels";
 import { NonogramaGame } from "@/games/nonograma/components/nonograma-game";
 import { PixelArt, solutionRows } from "@/games/nonograma/components/pixel-art";
 import { dailyNumber, GAME_ID, LAUNCH_DATE } from "@/games/nonograma/data";
@@ -9,7 +10,7 @@ import { dailyNumber, GAME_ID, LAUNCH_DATE } from "@/games/nonograma/data";
 /** El diario se genera en el cliente con la fecha UTC como semilla: todos ven el mismo tablero. Cuenta la primera partida. */
 export function DailyGame() {
   return (
-    <DailyGate
+    <DailyGate plusLevels={plusLevelCount(WORLDS)}
       gameId={GAME_ID}
       game="Nonograma"
       home="/nonograma"

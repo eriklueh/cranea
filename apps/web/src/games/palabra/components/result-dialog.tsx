@@ -3,6 +3,9 @@ import Link from "next/link";
 import { useState, type CSSProperties } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { PALABRA_WORLDS } from "@cranea/core/palabra";
+import { PlusNudge } from "@/components/plus/plus-nudge";
+import { plusLevelCount } from "@/lib/free-levels";
 import { formatTime } from "@/lib/utils";
 import { usePalabra } from "../store";
 import { LetterTile } from "./letter-tile";
@@ -80,6 +83,7 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry }: {
             </Button>
           )}
         </DialogFooter>
+        <PlusNudge gameId="palabra" levels={plusLevelCount(PALABRA_WORLDS)} mode={mode} won={won} onLeave={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>
   );

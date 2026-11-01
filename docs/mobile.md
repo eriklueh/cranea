@@ -161,7 +161,7 @@ Decisión del dueño (final):
 
 | Gratis | Craneá Plus (suscripción) |
 | --- | --- |
-| Los 5 desafíos de hoy, cómo se juega, ranking, estadísticas, el primer mundo de cada juego | Todos los mundos y niveles, archivo de diarios anteriores (práctica), pistas sin límite, sin anuncios |
+| Los 5 desafíos de hoy, cómo se juega, ranking, estadísticas, **los primeros 3 niveles del primer mundo** de cada juego | El resto de los niveles y mundos, archivo de diarios anteriores (práctica), pistas sin límite, sin anuncios |
 
 - **Pistas sin Plus**: 1 por tablero (diario o nivel). Volver a ver una pista ya pedida no gasta. Sin pistas,
   «Ver un anuncio para una pista».
@@ -170,7 +170,19 @@ Decisión del dueño (final):
   hasta que la persona elige (o toca «Ver la solución», que renuncia al intento). Se ofrece solo en esa hoja:
   si salís del diario sin elegir, el diario queda perdido.
 - **Nunca** banners ni intersticiales, y nunca anuncios con Plus.
-- Lo que es gratis vive en `src/entitlements/index.ts` (`FREE_WORLDS`, `FREE_HINTS`). Las pantallas preguntan
+- **Niveles gratis**: `FREE_LEVELS = 3` en `src/entitlements/index.ts` (app) y en `apps/web/src/lib/free-levels.ts`
+  (web, solo cuenta con `NEXT_PUBLIC_PLUS_ENABLED=1`). Sin Plus, «Seguir jugando» y «Siguiente nivel» apuntan a
+  los niveles gratis; terminados, el inicio del juego muestra «Completaste los niveles gratis» con Plus, y los
+  niveles 4+ tienen candado (tocarlos abre Plus).
+- **«¿Querés seguir?»** (`components/plus-nudge.tsx` en la app, `components/plus/plus-nudge.tsx` en la web):
+  tarjeta chica al ganar el diario (hoja de resultado y pantalla de «ya jugado») o un nivel gratis: «Tenés N
+  niveles más de <Juego> con Craneá Plus» (N = todos los niveles del juego menos los gratis). El botón dice
+  «Probá gratis 3 días» si la tienda tiene una prueba para esa persona (la app la lee del paquete de RevenueCat:
+  `defaultOption.freePhase` en Android, `introPrice` con precio 0 en iOS más el chequeo de elegibilidad); si no,
+  «Ver Craneá Plus». En la web el texto es fijo (`PLUS_TRIAL` en `lib/plus.ts`; vacío no se muestra). Nunca con
+  Plus ni en prácticas, va debajo de las acciones, y aparece a lo sumo una vez por día y por juego (el mismo
+  momento puede reaparecer; cerrarla con la X la saca por el resto del día). Se guarda en `cranea-plus-nudge`.
+- Lo que es gratis vive en `src/entitlements/index.ts` (`FREE_LEVELS`, `FREE_HINTS`). Las pantallas preguntan
   `usePlus()` / `can(...)`, nunca a la tienda.
 
 ### Cómo se sabe si hay Plus
@@ -205,7 +217,43 @@ más. Las prácticas (repetir el de hoy, el archivo) nunca se guardan.
 - **Play Console** → *Monetize → Products → Subscriptions*: `plus_monthly` y `plus_yearly`, cada una con un
   *base plan* (mensual / anual, auto-renovable). Hace falta un perfil de pagos y haber subido un AAB con la
   librería de facturación (cualquier build de producción o de prueba interna sirve).
-- Opcional: prueba gratis (*introductory offer* / *free trial*); la pantalla de Plus la muestra sola.
+- Prueba gratis: ver [Prueba gratis](#prueba-gratis-3-días) abajo. No es código: se configura en cada tienda.
+
+#### Prueba gratis (3 días)
+
+El dueño pidió 2 días, pero **ninguna tienda lo permite**: Google Play acepta pruebas de 3 días a 3 años
+(«Free trial phases can range from 3 days to 3 years», ayuda de Play Console sobre ofertas) y Apple ofrece solo
+3 días, 1 o 2 semanas, 1, 2, 3 o 6 meses o 1 año. Lo más corto posible, y lo recomendado, es **3 días en las
+dos tiendas**. La app no tiene la duración escrita: la lee de la tienda y muestra «3 días gratis, después
+USD 14,99 por año» en el plan y «Empezar 3 días gratis» en el botón. Solo `PLUS_TRIAL` de la web es fijo:
+si cambia la duración, cambialo ahí.
+
+**Google Play Console** (después de crear `plus_yearly` con su base plan):
+
+1. *Monetize with Play → Products → Subscriptions* → `plus_yearly`.
+2. En el base plan anual (activo), *Add offer*.
+3. *Offer ID*: `free-trial-3d` (no se puede cambiar después).
+4. *Eligibility*: **New customer acquisition** → «Never had this subscription» (o «Never had any subscription»
+   si también ofrecés prueba en `plus_monthly` y querés una sola prueba por persona).
+5. *Phases → Add phase* → **Free trial**, duración **3 days**.
+6. *Regional availability*: todas las regiones del base plan.
+7. *Save* y *Activate*. Opcional: lo mismo en `plus_monthly` (si las dos tienen prueba, la de «Never had any
+   subscription» evita que alguien encadene dos pruebas).
+8. RevenueCat la toma sola (`defaultOption` = la oferta más conveniente para la persona). Probalo con una
+   cuenta de *License testers*: en pruebas, 3 días duran unos minutos.
+
+**App Store Connect**:
+
+1. *Apps* → Craneá → *Subscriptions* → grupo «Craneá Plus» → `plus_yearly`.
+2. *Subscription Prices* → *View all Subscription pricing* → **Set up Introductory Offer**.
+3. Países: todos. Fecha de inicio: hoy; sin fecha de fin.
+4. Tipo **Free**, duración **3 Days** → *Confirm*. (No se edita: para cambiarla se borra y se crea otra.)
+5. Cada persona puede usar una sola oferta introductoria por grupo de suscripciones: si también la ponés en
+   `plus_monthly`, igual es una prueba por persona.
+6. En Sandbox, 3 días duran 3 minutos.
+
+En las dos tiendas, quien ya tuvo una prueba no ve otra: la app pregunta la elegibilidad en iOS y en Android
+Play solo devuelve las ofertas que le corresponden, así que el texto de la prueba no aparece de más.
 
 #### 2. RevenueCat (https://app.revenuecat.com)
 
