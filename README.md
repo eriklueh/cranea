@@ -146,7 +146,14 @@ La campana del encabezado activa un aviso Web Push a la hora local elegida (10:0
 - `convex/push.ts` + `convex/crons.ts`: cada 15 minutos envía los vencidos con `web-push` y borra las suscripciones que responden 404/410.
 - Variables: `NEXT_PUBLIC_VAPID_PUBLIC_KEY` en Vercel; `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` y `VAPID_SUBJECT` (`mailto:` o URL) en Convex. Para generar un par: `npx web-push generate-vapid-keys`.
 
-El original del ícono y su prompt están en `assets/brand`. Para regenerar sus tamaños: `node assets/brand/build-icons.cjs` después de instalar dependencias.
+### Marca e íconos
+
+Todo sale de `assets/brand/brand.mjs` (la «C» de 7 fichas sobre la hoja cuadriculada, con la ficha amarilla de pista en el centro). Después de `pnpm install`:
+
+- `node assets/brand/build-icons.mjs`: SVG maestros en `assets/brand/` y PNG de la app (`apps/mobile/assets`: ícono, adaptable con fondo y monocromo, splash claro/oscuro) y de la web (`apps/web/public`: favicon, apple-touch, PWA y maskable). `assets/brand/preview-sizes.png` muestra el ícono de 16 a 192 px.
+- `node assets/brand/build-store.mjs`: gráficos de Google Play en `docs/store/play` a partir de capturas reales (`docs/store/play/raw`). Textos de la ficha en `docs/store/play/listing.md`.
+
+Usan `@resvg/resvg-js` (se instala solo en una carpeta temporal, sin tocar el lockfile) y las fuentes de `apps/mobile/node_modules`.
 
 ## App nativa (Expo)
 

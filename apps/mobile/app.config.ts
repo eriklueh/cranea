@@ -21,8 +21,12 @@ export const EAS_PROJECT_ID: string = "904e6fd2-3330-4eaa-8d76-c0ce8badf207";
 const ADMOB_ANDROID_APP_ID = process.env.EXPO_PUBLIC_ADMOB_ANDROID_APP_ID || "ca-app-pub-3940256099942544~3347511713";
 const ADMOB_IOS_APP_ID = process.env.EXPO_PUBLIC_ADMOB_IOS_APP_ID || "ca-app-pub-3940256099942544~1458002511";
 
-/** Colores del ícono y del splash: el verde pizarrón del ícono y el papel claro/oscuro de la app. */
-const BRAND_GREEN = "#1a4034";
+/**
+ * Colores del ícono y del splash: el papel del cuaderno (claro) y el pizarrón (oscuro), los mismos de la app.
+ * Los PNG salen de assets/brand (node assets/brand/build-icons.mjs).
+ */
+const PAPER = "#f6f8fb";
+const BOARD = "#202124";
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
@@ -51,7 +55,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   android: {
     package: ANDROID_PACKAGE,
-    adaptiveIcon: { foregroundImage: "./assets/adaptive-icon.png", backgroundColor: BRAND_GREEN },
+    adaptiveIcon: {
+      foregroundImage: "./assets/adaptive-icon.png",
+      backgroundImage: "./assets/adaptive-icon-background.png",
+      monochromeImage: "./assets/adaptive-icon-monochrome.png",
+      backgroundColor: PAPER,
+    },
     // Sin permisos peligrosos: ni ubicación, ni cámara, ni contactos.
     blockedPermissions: [
       "android.permission.READ_EXTERNAL_STORAGE",
@@ -96,11 +105,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       "expo-splash-screen",
       {
+        // Marca + nombre, adentro del círculo que deja ver el splash de Android 12+.
         image: "./assets/splash-icon.png",
-        imageWidth: 180,
+        imageWidth: 220,
         resizeMode: "contain",
-        backgroundColor: "#f6f8fb",
-        dark: { image: "./assets/splash-icon.png", backgroundColor: "#202124" },
+        backgroundColor: PAPER,
+        dark: { image: "./assets/splash-icon-dark.png", backgroundColor: BOARD },
       },
     ],
   ],
