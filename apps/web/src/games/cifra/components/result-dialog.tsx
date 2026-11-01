@@ -13,6 +13,7 @@ import { traceFor } from "../hints";
 import { CelebrationBanner, type Celebration } from "./celebration";
 import { DigitTile } from "./digit-tile";
 import { Walkthrough } from "./walkthrough";
+import { displayWorld } from "../data";
 
 export type GameMode =
   | { kind: "level"; world: number; level: number; nextHref: string | null }
@@ -36,13 +37,13 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry, celebration }:
     if (!o) setExplaining(false);
     onOpenChange(o);
   };
-  const title = mode.kind === "daily" ? `Cifra del día #${mode.number}` : `Nivel ${mode.world}-${mode.level}`;
+  const title = mode.kind === "daily" ? `Cifra del día #${mode.number}` : `Nivel ${displayWorld(mode.world)}-${mode.level}`;
 
   const marks = Array.from({ length: MAX_ATTEMPTS }, (_, i) => (i < misses.length ? "🟥" : won && i === misses.length ? "🟩" : "⬜")).join("");
   const shareText = `Craneá · ${title}\n${marks} ${won ? `${attempts}/${MAX_ATTEMPTS}` : "X"} en ${time}\n${location.origin}/cifra`;
   const card = {
     game: "Cifra",
-    label: resultLabel(mode),
+    label: resultLabel(mode.kind === "level" ? { ...mode, world: displayWorld(mode.world) } : mode),
     won,
     headline: won ? `${attempts}/${MAX_ATTEMPTS}` : "No salió",
     detail: won ? `${attempts === 1 ? "Al primer intento" : `${attempts} intentos`} · ${time}` : `Sin resolver · ${time}`,

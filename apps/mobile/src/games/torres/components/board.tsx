@@ -205,8 +205,8 @@ const Cell = memo(function Cell({ index, row, col, size, cell, value, given, not
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: bg,
-    borderRightWidth: col < size - 1 ? StyleSheet.hairlineWidth * 2 : 0,
-    borderBottomWidth: row < size - 1 ? StyleSheet.hairlineWidth * 2 : 0,
+    borderRightWidth: col < size - 1 ? 1 : 0, // 1 punto: "hairline" desaparecía en algunas pantallas
+    borderBottomWidth: row < size - 1 ? 1 : 0,
     borderColor: line,
   };
   const content = (

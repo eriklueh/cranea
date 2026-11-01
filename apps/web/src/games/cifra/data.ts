@@ -12,6 +12,9 @@ export function getLevel(world: number, level: number) {
 
 export const getWorld = (id: number) => WORLDS.find((w) => w.id === id) ?? null;
 
+/** Número de mundo que ve la gente (1, 2…): los ids internos de Cifra arrancan en 2 por compatibilidad. */
+export const displayWorld = (id: number) => WORLDS.findIndex((w) => w.id === id) + 1 || id;
+
 export const allLevelParams = () => LEVELS.map((l) => ({ mundo: String(l.w), nivel: String(l.n) }));
 
 /** Número del diario: cuenta desde el día de lanzamiento. */

@@ -18,7 +18,7 @@ export function ExampleLine({ clue, cells, label }: { clue: string; cells: strin
             style={{
               width: size,
               height: size,
-              borderRightWidth: i < cells.length - 1 ? StyleSheet.hairlineWidth : 0,
+              borderRightWidth: i < cells.length - 1 ? 1 : 0,
               borderRightColor: alpha(colors.ink, 0.2),
               backgroundColor: ch === "#" ? colors.ink : ch === "s" ? colors.cluePresentBg : "transparent",
             }}

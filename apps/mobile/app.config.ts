@@ -78,7 +78,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     "expo-apple-authentication",
     // Recordatorio del diario: notificaciones locales (sin push). El permiso POST_NOTIFICATIONS
     // (Android 13+) y RECEIVE_BOOT_COMPLETED (reprogramar al reiniciar) los agrega el módulo.
-    ["expo-notifications", { color: BRAND_GREEN }],
+    ["expo-notifications", { color: "#1c2b4b", icon: "./assets/adaptive-icon-monochrome.png" }],
     [
       "expo-build-properties",
       {

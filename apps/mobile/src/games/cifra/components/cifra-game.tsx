@@ -18,7 +18,7 @@ import { LOSS_RESULT_MS, WIN_RESULT_MS } from "@/lib/motion";
 import { useProgress } from "@/stores/progress";
 import { useTheme } from "@/theme/theme";
 import { fonts, radius } from "@/theme/tokens";
-import { GAME_ID, MAX_ATTEMPTS, levelKey } from "../data";
+import { displayWorld, GAME_ID, MAX_ATTEMPTS, levelKey } from "../data";
 import { hintNudge, nextHintStep, traceFor } from "../hints";
 import { clearSession, loadSession, saveSession } from "../session";
 import { attemptLimit, playedMs, useCifra } from "../store";
@@ -108,7 +108,7 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
 
   return (
     <>
-      <Stack.Screen options={{ title: gameTitle("Cifra", mode) }} />
+      <Stack.Screen options={{ title: gameTitle("Cifra", mode.kind === "level" ? { ...mode, world: displayWorld(mode.world) } : mode) }} />
       <Screen>
         <GameHeader context={context} right={ready ? <><Lives /><Timer /></> : null} />
         {mode.kind === "daily" && <DailyNotice practice={mode.practice} />}
@@ -276,7 +276,7 @@ function CifraResult({ open, onClose, mode, onRetry, onExtra }: { open: boolean;
   const won = status === "won";
   const attempts = won ? misses.length + 1 : MAX_ATTEMPTS;
   const time = formatTime(elapsed);
-  const title = mode.kind === "daily" ? `Cifra del día #${mode.number}` : `Nivel ${mode.world}-${mode.level}`;
+  const title = mode.kind === "daily" ? `Cifra del día #${mode.number}` : `Nivel ${displayWorld(mode.world)}-${mode.level}`;
   // Diario perdido con el intento extra a mano: la solución queda tapada hasta que se elige.
   const offering = official && !won && !extraAttempt && offer.available && !revealed;
   const marks = Array.from({ length: misses.length + (won ? 1 : 0) }, (_, i) => (i < misses.length ? "🟥" : "🟩")).join("") + "⬜".repeat(Math.max(0, MAX_ATTEMPTS - misses.length - (won ? 1 : 0)));
@@ -285,7 +285,7 @@ function CifraResult({ open, onClose, mode, onRetry, onExtra }: { open: boolean;
   // Solo las marcas de los intentos: el código no aparece.
   const card: ResultCard = {
     game: "Cifra",
-    label: resultLabel(mode),
+    label: resultLabel(mode.kind === "level" ? { ...mode, world: displayWorld(mode.world) } : mode),
     won,
     headline: won ? (extraAttempt ? "Con intento extra" : `${attempts}/${MAX_ATTEMPTS}`) : "No salió",
     detail: won ? `${attempts === 1 ? "Al primer intento" : `${attempts} intentos`} · ${time}` : `Sin resolver · ${time}`,

@@ -17,6 +17,9 @@ export function getLevel(world: number, level: number) {
 
 export const getWorld = (id: number) => WORLDS.find((w) => w.id === id) ?? null;
 
+/** Número de mundo que ve la gente (1, 2…): los ids internos de Cifra arrancan en 2 por compatibilidad. */
+export const displayWorld = (id: number) => WORLDS.findIndex((w) => w.id === id) + 1 || id;
+
 /** Número del diario: cuenta desde el día de lanzamiento (el mismo que la web). */
 export const LAUNCH_DATE = "2026-10-22";
 export const dailyNumber = (dateKey: string) => dayNumber(LAUNCH_DATE, dateKey);

@@ -4,7 +4,7 @@ import { ChevronLeftIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { CifraPuzzle } from "@cranea/core/cifra";
 import { dailyStreak, useProgress } from "@/stores/progress";
-import { levelKey } from "../data";
+import { displayWorld, levelKey } from "../data";
 import { clearSession, loadSession, saveSession } from "../session";
 import { MAX_ATTEMPTS, useCifra } from "../store";
 import { ClueRow } from "./clue-row";
@@ -127,7 +127,7 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
   }, [status, current, puzzle, mode]);
 
   const title = mode.kind === "tutorial" ? "Tutorial" : mode.kind === "daily" ? `Cifra del día #${mode.number}` : `Nivel ${mode.level}`;
-  const subtitle = mode.kind === "tutorial" ? "Cifra" : mode.kind === "daily" ? "Mismo tablero para todos" : `Mundo ${mode.world}`;
+  const subtitle = mode.kind === "tutorial" ? "Cifra" : mode.kind === "daily" ? "Mismo tablero para todos" : `Mundo ${displayWorld(mode.world)}`;
 
   return (
     <main className="mx-auto w-full max-w-md px-4 pb-10">
