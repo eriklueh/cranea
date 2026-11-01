@@ -7,7 +7,7 @@ import { useHydrated } from "@/hooks/use-hydrated";
 import { evaluate } from "@/lib/achievements";
 import { cn } from "@/lib/utils";
 import { useAchievements } from "@/stores/achievements";
-import { useProgress } from "@/stores/progress";
+import { protectorsOf, useProgress } from "@/stores/progress";
 
 const formatDate = (ms: number) => {
   const d = new Date(ms);
@@ -18,8 +18,9 @@ const formatDate = (ms: number) => {
 /** Logros con su estado: los desbloqueados con fecha y los que faltan con su avance. */
 export function useAchievementList() {
   const games = useProgress((s) => s.games);
+  const protectors = useProgress((s) => s.protectors);
   const unlocked = useAchievements((s) => s.unlocked);
-  const states = useMemo(() => evaluate(games), [games]);
+  const states = useMemo(() => evaluate(games, protectorsOf({ games, protectors }).covered), [games, protectors]);
   return states.map((a) => {
     const at = unlocked[a.id] ?? a.at;
     return { ...a, unlocked: a.unlocked || unlocked[a.id] !== undefined, at };

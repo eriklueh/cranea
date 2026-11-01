@@ -2,6 +2,8 @@ import { todayKey } from "@cranea/core";
 import { Stack, useRouter } from "expo-router";
 import { Pressable, StyleSheet, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
+import { ProtectorBadge } from "@/components/protectors";
+import { ReminderOffer } from "@/components/reminder";
 import { Icon, Row, Screen, Text, shadow } from "@/components/ui";
 import { DigitTile, Indicator } from "@/games/cifra/components/tiles";
 import { LetterTile } from "@/games/palabra/components/palabra-game";
@@ -32,6 +34,7 @@ export default function Home() {
       />
       <Screen>
         <TodayStrip />
+        <ReminderOffer />
         {GAMES.map((g, i) => (
           <Animated.View key={g.id} entering={FadeInDown.delay(i * 50).duration(260)}>
             <GameCard game={g} />
@@ -66,6 +69,7 @@ function TodayStrip() {
       <Text variant="small" style={{ flex: 1, color: colors.ink }}>
         {done === live.length ? "Jugaste todos los desafíos de hoy." : `Desafíos de hoy: ${done} de ${live.length}.`}
       </Text>
+      <ProtectorBadge />
     </Row>
   );
 }

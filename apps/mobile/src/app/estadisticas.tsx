@@ -3,6 +3,7 @@ import { Stack } from "expo-router";
 import { useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
+import { ProtectorsRow } from "@/components/protectors";
 import { Button, Card, Row, Screen, Text } from "@/components/ui";
 import { GAMES } from "@/games/registry";
 import { formatTime } from "@/lib/format";
@@ -22,6 +23,7 @@ export default function Stats() {
             <Button key={g.id} title={g.name} variant={g.id === gameId ? "primary" : "outline"} onPress={() => setGameId(g.id)} />
           ))}
         </ScrollView>
+        <ProtectorsRow />
         <GameStatsView key={gameId} gameId={gameId} />
       </Screen>
     </>

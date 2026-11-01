@@ -4,6 +4,7 @@ import { ChevronRightIcon } from "lucide-react";
 import { todayKey, type GameMeta } from "@cranea/core";
 import { AchievementIcon } from "@/components/achievement-icon";
 import { useAchievementList } from "@/components/achievements-view";
+import { ProtectorsCard } from "@/components/protectors";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { formatTime } from "@/lib/utils";
 import { gameStats, useGameProgress } from "@/stores/progress";
@@ -14,6 +15,7 @@ export function StatsView({ games }: { games: GameMeta[] }) {
   return (
     <div className="space-y-10">
       {hydrated ? <AchievementsLink /> : <div className="h-[4.75rem]" />}
+      <ProtectorsCard />
       {games.map((g) => (hydrated ? <GameStatsCard key={g.id} game={g} /> : <section key={g.id} className="h-64" />))}
     </div>
   );

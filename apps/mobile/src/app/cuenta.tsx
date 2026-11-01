@@ -8,6 +8,7 @@ import { useMutation, useQuery, useAction } from "convex/react";
 import { useEffect, useState } from "react";
 import { Alert, Platform, Pressable, StyleSheet, Switch, TextInput, View } from "react-native";
 import { PlusBadge, usePlusPaywall } from "@/components/plus";
+import { ReminderSettings } from "@/components/reminder";
 import { Button, Card, Icon, Row, Screen, Text } from "@/components/ui";
 import { PRIVACY_URL } from "@/config";
 import { usePlus } from "@/entitlements";
@@ -26,6 +27,7 @@ export default function AccountScreen() {
     <Screen contentStyle={{ gap: 18 }}>
       {accountsEnabled ? <Account /> : <Card><Text variant="muted">Las cuentas no están configuradas en esta versión. Tu progreso se guarda en este dispositivo.</Text></Card>}
       <PlusCard />
+      <ReminderSettings />
       <ThemePicker />
       <About />
     </Screen>

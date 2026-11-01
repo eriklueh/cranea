@@ -4,7 +4,7 @@ import { WORLDS as NONOGRAMA } from "@cranea/core/nonograma";
 import { PALABRA_WORLDS as PALABRA } from "@cranea/core/palabra";
 import { WORLDS as PUENTES } from "@cranea/core/puentes";
 import { WORLDS as TORRES } from "@cranea/core/torres";
-import type { GameProgress } from "@/stores/progress";
+import { coveredDays, type GameProgress } from "@/stores/progress";
 
 const sizes = (worlds: WorldSize[]) => worlds.map(({ id, levels }) => ({ id, levels }));
 
@@ -17,5 +17,6 @@ export const WORLD_SIZES: Record<string, WorldSize[]> = {
   torres: sizes(TORRES),
 };
 
-/** Estado de cada logro con el progreso del dispositivo. */
-export const evaluate = (games: Record<string, GameProgress>) => evaluateAchievements({ games, worlds: WORLD_SIZES });
+/** Estado de cada logro con el progreso del dispositivo (las rachas cuentan los días cubiertos por un protector). */
+export const evaluate = (games: Record<string, GameProgress>, covered: Iterable<string> = coveredDays()) =>
+  evaluateAchievements({ games, worlds: WORLD_SIZES, covered });

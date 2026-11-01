@@ -99,6 +99,16 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_entry", ["userId", "achievementId"]),
+  /**
+   * Protector de racha (`@cranea/core/protectors`): solo lo mínimo, el stock se deriva del historial.
+   * Entre dispositivos: `since` el más antiguo, el primer día de Plus de cada mes y la unión de avisos.
+   */
+  protectors: defineTable({
+    userId: v.string(),
+    since: v.string(),
+    plus: v.array(v.string()),
+    seen: v.array(v.string()),
+  }).index("by_user", ["userId"]),
   /** Suscripciones Web Push al recordatorio del diario. Sin sesión, se identifican solo por el endpoint. */
   reminders: defineTable({
     endpoint: v.string(),

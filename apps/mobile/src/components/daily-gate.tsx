@@ -6,6 +6,8 @@ import { View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useAccountReady } from "@/account/progress-sync";
 import { PlusNudge } from "@/components/plus-nudge";
+import { ProtectorBadge } from "@/components/protectors";
+import { ReminderOffer } from "@/components/reminder";
 import { Button, Card, Icon, Loading, Row, Screen, Text } from "@/components/ui";
 import { api, accountsEnabled } from "@/lib/convex";
 import { formatTime } from "@/lib/format";
@@ -160,6 +162,7 @@ function DailyDone({ gameId, game, home, date, title, result, reveal, onPractice
               <Row gap={4}>
                 <Icon name="flame" size={16} color={colors.margin} />
                 <Text variant="title" style={{ fontSize: 18 }}>{streak} {streak === 1 ? "día" : "días"}</Text>
+                <ProtectorBadge />
               </Row>
             </View>
             <View style={{ flex: 1 }}>
@@ -169,6 +172,7 @@ function DailyDone({ gameId, game, home, date, title, result, reveal, onPractice
           </Row>
         </Card>
       </Animated.View>
+      <ReminderOffer />
       <View style={{ gap: 8 }}>
         {tomorrow ? (
           <Button title="Jugar el de hoy" size="lg" onPress={onNewDay} />
