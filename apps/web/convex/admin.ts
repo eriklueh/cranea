@@ -5,7 +5,7 @@ import { setPlus } from "./entitlements";
 
 /** Emails con acceso a /admin, separados por coma (variable ADMIN_EMAILS de Convex). */
 function admins(): string[] {
-  return (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
+  return (process.env.ADMIN_EMAILS ?? "").split(",").map((e: string) => e.trim().toLowerCase()).filter(Boolean);
 }
 
 async function adminEmail(ctx: QueryCtx | ActionCtx): Promise<string | null> {
