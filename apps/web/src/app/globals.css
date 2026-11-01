@@ -66,7 +66,7 @@
   --clue-present: #f2d66c;
   --clue-present-bg: #413a24;
   --tile: #2b2d31;
-  --shadow-ink: #111214;
+  --shadow-ink: #5a5e69; /* gris tiza: el borde inferior se ve sobre el pizarrón */
 
   --background: var(--paper);
   --foreground: var(--ink);

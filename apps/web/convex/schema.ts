@@ -16,8 +16,14 @@ export default defineSchema({
     expiresAt: v.optional(v.number()),
     source: v.string(),
     productId: v.optional(v.string()),
+    /** Email de la cuenta, solo en los regalos hechos desde /admin. */
+    email: v.optional(v.string()),
+    /** Quién lo regaló (email del administrador). */
+    grantedBy: v.optional(v.string()),
     updatedAt: v.number(),
-  }).index("by_subject", ["subject"]),
+  })
+    .index("by_subject", ["subject"])
+    .index("by_source", ["source"]),
   progress: defineTable({
     userId: v.string(),
     gameId: v.string(),

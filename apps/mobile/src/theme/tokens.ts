@@ -62,7 +62,7 @@ export const dark: Palette = {
   cluePresent: "#f2d66c",
   cluePresentBg: "#413a24",
   tile: "#2b2d31",
-  shadowInk: "#111214",
+  shadowInk: "#5a5e69", // gris tiza: el borde inferior se ve sobre el pizarrón
   card: "#27292d",
   primary: "#eceef2",
   primaryForeground: "#202124",

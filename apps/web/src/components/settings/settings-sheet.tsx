@@ -1,6 +1,9 @@
 "use client";
 import Link from "next/link";
-import { ChartColumnIcon, SettingsIcon, SparklesIcon, XIcon } from "lucide-react";
+import { ChartColumnIcon, SettingsIcon, ShieldIcon, SparklesIcon, XIcon } from "lucide-react";
+import { useConvexAuth, useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
+import { accountsEnabled } from "@/components/account-provider";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { useEffect, useState, type ReactNode } from "react";
 import { DailyReminder } from "@/components/daily-reminder";
@@ -60,6 +63,22 @@ function PlusState({ badge = false }: { badge?: boolean }) {
       <DialogPrimitive.Close asChild>
         <Button asChild variant="ghost" size="icon" className="size-11">
           <Link href="/plus" aria-label="Craneá Plus"><SparklesIcon /></Link>
+        </Button>
+      </DialogPrimitive.Close>
+    </ActionRow>
+  );
+}
+
+/** Solo para cuentas de administración: regalar Plus desde /admin. */
+function AdminRow() {
+  const { isAuthenticated } = useConvexAuth();
+  const isAdmin = useQuery(api.admin.isAdmin, isAuthenticated ? {} : "skip");
+  if (!isAdmin) return null;
+  return (
+    <ActionRow label="Administración" hint="Regalar Craneá Plus por email.">
+      <DialogPrimitive.Close asChild>
+        <Button asChild variant="ghost" size="icon" className="size-11">
+          <Link href="/admin" aria-label="Administración"><ShieldIcon /></Link>
         </Button>
       </DialogPrimitive.Close>
     </ActionRow>
@@ -137,6 +156,7 @@ function Preferences() {
       <Section title="Más">
         <div className="-mx-2 space-y-1">
           <PlusState />
+          {accountsEnabled && <AdminRow />}
           <ActionRow label="Estadísticas" hint="Rachas y resultados de cada juego.">
             <DialogPrimitive.Close asChild>
               <Button asChild variant="ghost" size="icon" className="size-11">

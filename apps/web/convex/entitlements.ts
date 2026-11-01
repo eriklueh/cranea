@@ -17,7 +17,7 @@ export const mine = query({
   },
 });
 
-export async function setPlus(ctx: MutationCtx, subject: string, data: { plus: boolean; expiresAt?: number; source: string; productId?: string }) {
+export async function setPlus(ctx: MutationCtx, subject: string, data: { plus: boolean; expiresAt?: number; source: string; productId?: string; email?: string; grantedBy?: string }) {
   const existing = await ctx.db.query("entitlements").withIndex("by_subject", (q) => q.eq("subject", subject)).unique();
   const row = { subject, ...data, updatedAt: Date.now() };
   if (existing) await ctx.db.replace(existing._id, row);
