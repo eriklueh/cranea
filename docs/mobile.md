@@ -144,11 +144,23 @@ En el dashboard de Clerk (misma aplicación que la web):
    con un webhook de Clerk `user.deleted` → acción HTTP de Convex. Hoy se lo saca del ranking antes de borrar.
 6. La plantilla JWT `convex` ya existe y es la misma para web y app.
 
-### 6. Avisos (después)
+### 6. Recordatorio del diario
 
-El recordatorio diario de la web usa Web Push. En la app habría que usar `expo-notifications` (FCM en Android,
-APNs en iOS, que EAS configura) y guardar el token en una tabla de Convex en lugar de la suscripción web.
-No está implementado para no pedir permisos todavía.
+Notificaciones **locales** con `expo-notifications` (`src/notifications/reminder.ts`, UI en
+`src/components/reminder.tsx`): no hay servidor ni token de push, así que no hace falta configurar FCM/APNs.
+
+- Se prende desde **Tu cuenta → Recordatorio** o con la tarjeta «¿Te aviso mañana?», que aparece una sola vez
+  en el inicio y en el diario ya jugado, después del primer diario. Hora por defecto 10:00 (pasos de 15 min).
+- Se programan los próximos 7 días uno por uno (`identifier` `cranea-diario-<n>`) y se reprograman al abrir,
+  al volver al frente, al guardar un diario y al cambiar la hora. Un día en el que ya jugaste algún diario
+  (del día UTC de la hora del aviso) no se avisa.
+- Texto: «Tu racha de 5 días te espera 🔥» si hay racha viva para ese día; si no, «Ya están los desafíos de hoy».
+- Android: canal `diario`; el permiso `POST_NOTIFICATIONS` (Android 13+) y `RECEIVE_BOOT_COMPLETED` los trae el
+  módulo. Plugin en `app.config.ts`: `["expo-notifications", { color }]`. Falta un ícono monocromo propio para la
+  barra (`icon` del plugin); sin él Android usa el de la app.
+- Al tocar el aviso la app abre en el inicio (los diarios de hoy). Con la app abierta no se muestra el cartel.
+- **Expo Go**: apagado (el módulo se carga con `require` en línea y en Expo Go no se carga); la pantalla de
+  cuenta lo explica. Hace falta un build nuevo (development/preview) porque suma un módulo nativo.
 
 ### 7. Actualizaciones sin pasar por la tienda (opcional)
 

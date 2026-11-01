@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { CheckIcon, FlameIcon, MoonIcon, PlayIcon, TrophyIcon } from "lucide-react";
 import { todayKey } from "@cranea/core";
+import { ProtectorBadge } from "@/components/protectors";
 import { Button } from "@/components/ui/button";
 import { cn, formatTime } from "@/lib/utils";
 import { dailyStreak, type GameProgress } from "@/stores/progress";
@@ -42,7 +43,12 @@ export function DailyCard({ config, progress, now }: { config: GameHomeConfig; p
           <h2 id={headingId} className="font-display text-2xl leading-tight font-extrabold">
             Desafío de hoy <span className="text-base font-bold text-muted-foreground tabular-nums">#{number}</span>
           </h2>
-          {streak > 0 && <Streak days={streak} className="mt-1" />}
+          {streak > 0 && (
+            <span className="mt-1 flex shrink-0 items-center gap-1">
+              <Streak days={streak} />
+              <ProtectorBadge />
+            </span>
+          )}
         </div>
         <p className="mt-0.5 text-muted-foreground">
           {resume ? "Tenés una partida empezada." : streak > 0 ? "Jugalo para no cortar la racha." : daily.blurb}
@@ -92,6 +98,7 @@ export function DailyCard({ config, progress, now }: { config: GameHomeConfig; p
               <>
                 <span aria-hidden>·</span>
                 <Streak days={streak} compact />
+                <ProtectorBadge compact />
               </>
             )}
           </p>

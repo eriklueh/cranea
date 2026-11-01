@@ -3,6 +3,7 @@
  * `cranea-progress`). No sabe de React ni de almacenamiento: la web (y la futura app) guardan qué
  * se desbloqueó y cuándo.
  */
+import { bridged } from "../protectors";
 
 export interface AchievementResult {
   won: boolean;
@@ -30,6 +31,8 @@ export interface AchievementInput {
   worlds: Record<string, WorldSize[]>;
   /** Hora local (0–23) de un instante. Por defecto, la del dispositivo. */
   hour?: (ms: number) => number;
+  /** Días (UTC) cubiertos por un protector de racha: puentean las rachas sin sumar (ver `protectors`). */
+  covered?: Iterable<string>;
 }
 
 /** Ícono simple; cada plataforma lo dibuja a su manera. */
@@ -71,6 +74,7 @@ interface Context {
   worlds: Record<string, WorldSize[]>;
   games: Record<string, AchievementGame>;
   hour: (ms: number) => number;
+  covered: ReadonlySet<string>;
 }
 
 /** 3 puntitos en un nivel: sin errores; en Palabra, en tres intentos o menos. */
@@ -87,9 +91,7 @@ function count(times: number[], goal: number): Progress {
 /** Basta con una partida que cumpla. */
 const any = (entries: Entry[], test: (e: Entry) => boolean) => count(entries.filter(test).map((e) => e.r.at), 1);
 
-const DAY_MS = 86_400_000;
-
-/** Racha de días (UTC) seguidos con al menos un diario ganado, en cualquier juego. */
+/** Racha de días (UTC) seguidos con al menos un diario ganado, en cualquier juego. Los días cubiertos puentean. */
 function streak(c: Context, goal: number): Progress {
   const firstWin = new Map<string, number>();
   for (const { key, r } of c.daily) if (r.won) firstWin.set(key, Math.min(firstWin.get(key) ?? Infinity, r.at));
@@ -98,7 +100,7 @@ function streak(c: Context, goal: number): Progress {
   let run = 0;
   let at: number | null = null;
   days.forEach((day, i) => {
-    run = i > 0 && Date.parse(`${day}T00:00:00Z`) - Date.parse(`${days[i - 1]}T00:00:00Z`) === DAY_MS ? run + 1 : 1;
+    run = i > 0 && bridged(days[i - 1], day, c.covered) ? run + 1 : 1;
     best = Math.max(best, run);
     if (run === goal && at === null) at = firstWin.get(day)!;
   });
@@ -211,8 +213,8 @@ function entries(games: Record<string, AchievementGame>, field: "levels" | "dail
 }
 
 /** Estado de cada logro según el progreso. Pura: mismo progreso, mismo resultado. */
-export function evaluateAchievements({ games, worlds, hour = (ms) => new Date(ms).getHours() }: AchievementInput): AchievementState[] {
-  const c: Context = { daily: entries(games, "daily"), levels: entries(games, "levels"), worlds, games, hour };
+export function evaluateAchievements({ games, worlds, hour = (ms) => new Date(ms).getHours(), covered = [] }: AchievementInput): AchievementState[] {
+  const c: Context = { daily: entries(games, "daily"), levels: entries(games, "levels"), worlds, games, hour, covered: new Set(covered) };
   return DEFINITIONS.map(({ check, ...a }) => {
     const p = check(c);
     return { ...a, ...p, unlocked: p.at !== null };

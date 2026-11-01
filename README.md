@@ -66,6 +66,17 @@ pnpm levels              # regenera packages/core/levels/cifra.json (~1 min)
 - **Catálogo y evaluación** en `packages/core/src/achievements` (`evaluateAchievements`, pura y con tests): ~20 logros que salen del progreso del dispositivo (`cranea-progress`), así que funcionan sin sesión. Cada uno informa avance (`value`/`goal`) y cuándo se cumplió según las partidas.
 - **Web**: `stores/achievements.ts` guarda los desbloqueados con su fecha (`cranea-logros`). `components/achievements-provider.tsx` (en el layout) evalúa con cada cambio del progreso y muestra un aviso arriba; lo que ya estaba cumplido la primera vez se desbloquea sin aviso, y tres o más juntos se resumen en uno. Con sesión se guardan en la tabla `achievements` de Convex (vale la fecha más antigua). Se ven en `/logros` y desde `/estadisticas`.
 
+## Protector de racha
+
+Lógica pura y con tests en `packages/core/src/protectors` (la usan la web, la app y Convex).
+
+- **Qué protege**: un día UTC entero **sin ningún diario jugado**. Ese día puentea todas las rachas: la de cada juego (diarios ganados seguidos, la que se ve en tarjetas, estadísticas y el diario) y la **Racha Craneá** (los cinco jugados). No suma días. Un día en el que jugaste algo no es un día perdido: si perdiste un diario, esa racha se corta igual.
+- **Cómo se gana**: 1 cada 7 días seguidos jugando algún diario (máximo 2 guardados; los días cubiertos no cortan la cuenta pero tampoco suman). Con **Plus**, el primer día de cada mes en que se abre con Plus el stock pasa a 2 (no acumula más). En la web cuenta el Plus real de la cuenta (`usePlusStore`), no el interruptor `PLUS_ENABLED`.
+- **Cuándo se usa**: solo, y solo si salva la racha: hace falta haber jugado (o tener cubierto) el día anterior al hueco y que alcancen para **todo** el hueco hasta ayer. Si faltaste más días de los que tenés, la racha se corta y los protectores quedan. Hoy nunca se cubre.
+- **Estado**: stock y días cubiertos **se derivan** del historial de diarios (que ya se sincroniza); se guarda solo `protectors: { since, plus, seen }` dentro de `cranea-progress` (campo opcional, el formato sigue en versión 1, sin migración). `since`: desde cuándo corren las reglas (no se cubre nada antes); `plus`: el día en que se vio Plus en cada mes; `seen`: días cubiertos ya avisados.
+- **Cuenta**: tabla `protectors` de Convex (`convex/protectors.ts`). Combinar (`mergeProtectors`) toma el `since` más antiguo, el primer día de Plus de cada mes y la unión de `seen`: es conmutativa e idempotente, y como el stock se recalcula del historial, dos dispositivos no pueden gastar ni duplicar el mismo protector.
+- **UI**: 🛡️×N junto a la racha (inicio, tarjeta del diario, diario ya jugado en la app) y en Estadísticas, con una hoja que lo explica; al usarse uno, un aviso «Usaste un protector: tu racha sigue en 12». Los logros de racha (`evaluateAchievements({ covered })`) usan los mismos días cubiertos. `dailyStreak`/`bestStreak`/`craneaStreak` los aplican solos.
+
 ## Cómo funciona Puentes
 
 Hashi: islas con números que se unen con puentes rectos (máximo dos por par), sin cruces y formando un solo grupo. Rutas: `/puentes`, `/puentes/nivel/[mundo]/[nivel]`, `/puentes/diario`, `/puentes/como-jugar`.

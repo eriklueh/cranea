@@ -1,7 +1,8 @@
 import { GAMES } from "@/games/registry";
 import { formatTime } from "@/lib/utils";
 import type { ShareCard } from "@/components/share/share-image";
-import type { GameProgress, Result } from "@/stores/progress";
+import { protectedFullStreak } from "@cranea/core/protectors";
+import { coveredDays, type GameProgress, type Result } from "@/stores/progress";
 
 /**
  * Lo que el inicio necesita saber del diario de cada juego, sin cargar sus niveles.
@@ -50,18 +51,11 @@ export function dailiesFor(games: Record<string, GameProgress | undefined>, date
 
 /**
  * Racha Craneá: días UTC seguidos con todos los diarios jugados (ganados o no),
- * hasta hoy, o hasta ayer si hoy todavía faltan.
+ * hasta hoy, o hasta ayer si hoy todavía faltan. Los días cubiertos por un protector puentean.
  */
-export function craneaStreak(games: Record<string, GameProgress | undefined>, today: string): number {
+export function craneaStreak(games: Record<string, GameProgress | undefined>, today: string, covered: ReadonlySet<string> = coveredDays()): number {
   const ids = GAMES.filter((g) => g.status === "live").map((g) => g.id);
-  const complete = (d: string) => ids.every((id) => games[id]?.daily[d]);
-  let d = complete(today) ? today : addDays(today, -1);
-  let n = 0;
-  while (complete(d)) {
-    n++;
-    d = addDays(d, -1);
-  }
-  return n;
+  return protectedFullStreak((d) => ids.every((id) => games[id]?.daily[d]), today, covered);
 }
 
 /** "2/3 · 1:11", "sin errores · 2:40"; sin datos que adelanten la solución. */

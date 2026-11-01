@@ -67,7 +67,7 @@ function AchievementsWatcher() {
       };
       check();
       unsubscribe = useProgress.subscribe((s, prev) => {
-        if (s.games !== prev.games) check();
+        if (s.games !== prev.games || s.protectors !== prev.protectors) check();
       });
     });
     return () => {

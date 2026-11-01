@@ -1,6 +1,18 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { todayKey } from "@cranea/core";
+import {
+  emptyProtectors,
+  mergeProtectors,
+  playedDays,
+  protectedBestStreak,
+  protectedStreak,
+  protectorStatus,
+  sameProtectors,
+  type ProtectorState,
+  type ProtectorStatus,
+} from "@cranea/core/protectors";
 import { better, combine, type Kind, type Result } from "../../../web/convex/results";
 
 /**
@@ -9,7 +21,7 @@ import { better, combine, type Kind, type Result } from "../../../web/convex/res
  * Las reglas de combinación vienen del backend (convex/results.ts), compartidas con el servidor.
  */
 
-export type { Kind, Result };
+export type { Kind, ProtectorState, ProtectorStatus, Result };
 
 export interface GameProgress {
   levels: Record<string, Result>;
@@ -18,12 +30,16 @@ export interface GameProgress {
 
 interface ProgressState {
   games: Record<string, GameProgress>;
+  /** Protector de racha (`@cranea/core/protectors`). Opcional: el formato sigue siendo la versión 1. */
+  protectors?: ProtectorState;
   /** true cuando ya se leyó lo guardado en el dispositivo. No se persiste. */
   hydrated: boolean;
   recordLevel: (gameId: string, key: string, r: Result) => void;
   recordDaily: (gameId: string, date: string, r: Result) => void;
   /** Combina partidas de la cuenta con las del dispositivo. */
   mergeEntries: (entries: { gameId: string; kind: Kind; key: string; result: Result }[]) => void;
+  /** Combina (o crea, con `today`) el estado de los protectores. */
+  mergeProtectors: (p: ProtectorState | undefined, today?: string) => void;
   reset: () => void;
 }
 
@@ -59,14 +75,19 @@ export const useProgress = create<ProgressState>()(
           }
           return games === s.games ? s : { games };
         }),
-      reset: () => set({ games: {} }),
+      mergeProtectors: (p, today) =>
+        set((s) => {
+          const next = mergeProtectors(s.protectors, p) ?? (today ? emptyProtectors(today) : undefined);
+          return sameProtectors(next, s.protectors) ? s : { protectors: next };
+        }),
+      reset: () => set({ games: {}, protectors: undefined }),
     }),
     {
       name: "cranea-progress",
       version: 1,
       storage: createJSONStorage(() => AsyncStorage),
-      // Solo se guarda `games`, igual que en la web: `{ state: { games }, version: 1 }`.
-      partialize: (s) => ({ games: s.games }),
+      // Se guarda lo mismo que en la web: `{ state: { games, protectors? }, version: 1 }`.
+      partialize: (s) => ({ games: s.games, protectors: s.protectors }),
       onRehydrateStorage: () => () => useProgress.setState({ hydrated: true }),
     },
   ),
@@ -75,28 +96,29 @@ export const useProgress = create<ProgressState>()(
 const EMPTY: GameProgress = empty();
 export const useGameProgress = (gameId: string) => useProgress((s) => s.games[gameId]) ?? EMPTY;
 
-/** Racha de diarios ganados seguidos, contando hasta hoy (o ayer si hoy todavía no jugaste). */
-export function dailyStreak(daily: Record<string, Result>, today: string): number {
-  const d = new Date(`${today}T00:00:00Z`);
-  if (!daily[today]?.won) d.setUTCDate(d.getUTCDate() - 1);
-  let n = 0;
-  while (daily[d.toISOString().slice(0, 10)]?.won) {
-    n++;
-    d.setUTCDate(d.getUTCDate() - 1);
-  }
-  return n;
+/** Stock y días cubiertos por protectores, calculados desde el progreso (con caché por referencia). */
+let cache: { games: unknown; protectors: unknown; today: string; status: ProtectorStatus; covered: Set<string> } | null = null;
+export function protectorsOf(s: Pick<ProgressState, "games" | "protectors">, today = todayKey()) {
+  if (cache && cache.games === s.games && cache.protectors === s.protectors && cache.today === today) return cache;
+  const status = protectorStatus(s.protectors, playedDays(s.games), today);
+  cache = { games: s.games, protectors: s.protectors, today, status, covered: new Set(status.covered) };
+  return cache;
 }
 
-/** La racha más larga de diarios ganados en días seguidos. */
-export function bestStreak(daily: Record<string, Result>): number {
-  const days = Object.keys(daily).filter((d) => daily[d].won).map((d) => Date.parse(`${d}T00:00:00Z`)).sort((a, b) => a - b);
-  let best = 0;
-  let run = 0;
-  for (let i = 0; i < days.length; i++) {
-    run = i > 0 && days[i] - days[i - 1] === 86_400_000 ? run + 1 : 1;
-    best = Math.max(best, run);
-  }
-  return best;
+/** Días cubiertos por un protector según el progreso del dispositivo. */
+export const coveredDays = (today = todayKey()) => protectorsOf(useProgress.getState(), today).covered;
+
+/**
+ * Racha de diarios ganados seguidos, contando hasta hoy (o ayer si hoy todavía no jugaste).
+ * Los días cubiertos por un protector puentean la racha sin sumar.
+ */
+export function dailyStreak(daily: Record<string, Result>, today: string, covered: ReadonlySet<string> = coveredDays()): number {
+  return protectedStreak(daily, today, covered);
+}
+
+/** La racha más larga de diarios ganados en días seguidos (con los días cubiertos como puente). */
+export function bestStreak(daily: Record<string, Result>, covered: ReadonlySet<string> = coveredDays()): number {
+  return protectedBestStreak(daily, covered);
 }
 
 export interface GameStats {

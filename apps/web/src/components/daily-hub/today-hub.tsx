@@ -4,6 +4,7 @@ import { CheckIcon, ChevronRightIcon, FlameIcon, PartyPopperIcon, XIcon } from "
 import { todayKey } from "@cranea/core";
 import { formatCountdown, msToNextDaily } from "@/components/game-home/progress";
 import { useClock } from "@/components/game-home/use-clock";
+import { ProtectorBadge } from "@/components/protectors";
 import { ShareActions, ShareIconButton } from "@/components/share/share-actions";
 import { cn } from "@/lib/utils";
 import { useProgress } from "@/stores/progress";
@@ -66,6 +67,8 @@ export function TodayHub() {
                 </span>
               </>
             )}
+            <span aria-hidden>·</span>
+            <ProtectorBadge compact />
           </p>
         </div>
         <p className="shrink-0 font-display text-2xl leading-none font-extrabold tabular-nums" aria-label={`${done} de ${total} jugados`}>

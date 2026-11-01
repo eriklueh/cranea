@@ -15,6 +15,7 @@ import type * as entitlements from "../entitlements.js";
 import type * as http from "../http.js";
 import type * as leaderboards from "../leaderboards.js";
 import type * as progress from "../progress.js";
+import type * as protectors from "../protectors.js";
 import type * as push from "../push.js";
 import type * as ranking from "../ranking.js";
 import type * as reminders from "../reminders.js";
@@ -36,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   leaderboards: typeof leaderboards;
   progress: typeof progress;
+  protectors: typeof protectors;
   push: typeof push;
   ranking: typeof ranking;
   reminders: typeof reminders;
