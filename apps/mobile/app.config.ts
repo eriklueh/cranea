@@ -12,7 +12,7 @@ export const ANDROID_PACKAGE = "app.cranea";
 /** Versión que ve la gente. El número de build lo incrementa EAS (`appVersionSource: remote`). */
 export const VERSION = "0.1.0";
 /** ID del proyecto en EAS (`eas init`). No es secreto. */
-export const EAS_PROJECT_ID: string = ""; // ← pegá acá el ID que da `eas init`
+export const EAS_PROJECT_ID: string = "904e6fd2-3330-4eaa-8d76-c0ce8badf207";
 
 /**
  * IDs de app de AdMob (no son secretos). Sin variables se usan los de prueba de Google, que muestran
@@ -28,6 +28,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: APP_NAME,
   slug: SLUG,
+  owner: "eriklueh",
   scheme: SCHEME,
   version: VERSION,
   orientation: "portrait",
