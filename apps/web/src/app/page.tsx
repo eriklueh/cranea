@@ -65,6 +65,11 @@ export default function Home() {
             );
           })}
         </ul>
+        <footer className="mt-10 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+          <Link href="/privacidad" className="underline-offset-4 hover:underline">Privacidad</Link>
+          <Link href="/terminos" className="underline-offset-4 hover:underline">Términos</Link>
+          <a href="mailto:hola@cranea.app" className="underline-offset-4 hover:underline">hola@cranea.app</a>
+        </footer>
       </main>
     </>
   );
