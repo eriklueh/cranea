@@ -4,7 +4,8 @@ import { ChevronLeftIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { TorresPuzzle } from "@cranea/core/torres";
 import { useProgress } from "@/stores/progress";
-import { haptic, play, useOnChange } from "@/lib/motion";
+import { haptic, LOSS_RESULT_MS, play, useOnChange, WIN_RESULT_MS } from "@/lib/motion";
+import { FinishSlot } from "@/components/finish-slot";
 import { sound } from "@/lib/sound";
 import { WinBurst } from "@/components/win-burst";
 import { GAME_ID, levelKey } from "../data";
@@ -92,7 +93,7 @@ export function TorresGame({ puzzle, mode }: { puzzle: TorresPuzzle; mode: GameM
     const p = useProgress.getState();
     if (mode.kind === "level") p.recordLevel(GAME_ID, levelKey(mode.world, mode.level), result);
     else if (!mode.practice) p.recordDaily(GAME_ID, mode.date, result);
-    const t = setTimeout(() => setResultOpen(true), status === "won" ? 600 : 300);
+    const t = setTimeout(() => setResultOpen(true), status === "won" ? WIN_RESULT_MS : LOSS_RESULT_MS);
     return () => clearTimeout(t);
   }, [status, current, puzzle, mode]);
 
@@ -129,25 +130,26 @@ export function TorresGame({ puzzle, mode }: { puzzle: TorresPuzzle; mode: GameM
           wave={status === "won"}
           gridRef={gridRef}
         />
-        {status === "won" && <WinBurst delay={250} />}
+        {status === "won" && <WinBurst delay={150} />}
       </section>
 
       <CheckMessage />
 
-      <section aria-label="Controles" className="mt-1 space-y-2">
-        {status === "playing" ? (
-          <>
-            <NumberPad />
-            <Toolbar />
-          </>
-        ) : (
-          <div className="flex justify-center">
-            <button className="text-sm font-semibold underline decoration-margin decoration-2 underline-offset-4" onClick={() => setResultOpen(true)}>
-              Ver resultado
-            </button>
-          </div>
-        )}
-      </section>
+      {/* Al terminar, "Ver resultado" ocupa el lugar de los controles: nada se corre de lugar. */}
+      <FinishSlot
+        className="mt-1"
+        finished={status !== "playing"}
+        done={
+          <button className="min-h-11 text-sm font-semibold underline decoration-margin decoration-2 underline-offset-4" onClick={() => setResultOpen(true)}>
+            Ver resultado
+          </button>
+        }
+      >
+        <section aria-label="Controles" className="space-y-2">
+          <NumberPad />
+          <Toolbar />
+        </section>
+      </FinishSlot>
 
       {mode.kind !== "tutorial" && <ResultDialog
         open={resultOpen}

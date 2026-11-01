@@ -1,6 +1,6 @@
 import { todayKey } from "@cranea/core";
 import { useConvexAuth, useMutation } from "convex/react";
-import { useRouter, type Href } from "expo-router";
+import { Stack, useRouter, type Href } from "expo-router";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -135,7 +135,8 @@ function DailyDone({ gameId, game, home, date, title, result, reveal, onPractice
 
   return (
     <Screen>
-      <Text variant="display">{title}</Text>
+      {/* El título ("Puentes del día #2") va en la barra, no repetido en la pantalla. */}
+      <Stack.Screen options={{ title }} />
       <Animated.View entering={FadeInDown.duration(260)}>
         <Card raised>
           <Row gap={12}>

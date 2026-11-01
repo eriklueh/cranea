@@ -10,9 +10,6 @@ import Animated, {
   interpolate,
   useAnimatedStyle,
   useSharedValue,
-  withDelay,
-  withSequence,
-  withSpring,
   withTiming,
   type SharedValue,
 } from "react-native-reanimated";
@@ -20,7 +17,7 @@ import { scheduleOnRN } from "react-native-worklets";
 import { Text, shadow } from "@/components/ui";
 import { haptic } from "@/lib/haptics";
 import { useOnChange, useReducedMotion } from "@/lib/hooks";
-import { useShake } from "@/lib/motion";
+import { pulse, useShake, waveStep } from "@/lib/motion";
 import { useTheme } from "@/theme/theme";
 import { alpha, fonts } from "@/theme/tokens";
 import { useNonograma } from "../store";
@@ -103,7 +100,8 @@ export const Board = forwardRef<BoardHandle, { puzzle: NonogramaPuzzle; layout: 
   const { cell, zoomable, maxScale, clueW, clueH } = layout;
   const gridW = W * cell;
   const gridH = H * cell;
-  const step = Math.min(40, Math.round(700 / (W + H - 2)));
+  // Al terminar, el dibujo aparece (o late, si ganaste) en diagonal en ~0,4 s.
+  const step = waveStep(W + H - 2, 400, 40);
 
   const scale = useSharedValue(1);
   const tx = useSharedValue(0);
@@ -312,11 +310,11 @@ const CellView = memo(function CellView({ i, r, c, W, H, size, rowClue, colClue,
 
   // La tinta entra con un golpe corto; al terminar, el dibujo aparece (o late, si ganaste) en diagonal.
   const stamp = useMemo(() => (reduced ? undefined : new Keyframe(stampFrames).duration(finished ? 220 : 140).delay(finished ? delay : 0)), [reduced, finished, delay]);
-  const pulse = useSharedValue(1);
+  const beat = useSharedValue(1);
   useEffect(() => {
-    if (won && state === FILLED && !reduced) pulse.value = withDelay(260 + delay, withSequence(withTiming(0.72, { duration: 110 }), withSpring(1, { damping: 7 })));
-  }, [won, state, reduced, delay, pulse]);
-  const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
+    if (won && state === FILLED && !reduced) beat.value = pulse(delay, 0.72);
+  }, [won, state, reduced, delay, beat]);
+  const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: beat.value }] }));
 
   const thickR = (c + 1) % 5 === 0;
   const thickB = (r + 1) % 5 === 0;

@@ -2,6 +2,7 @@
 import { useMemo, type CSSProperties, type Ref } from "react";
 import { clueState, duplicateCells, type ClueState, type Side, type TorresClues } from "@cranea/core/torres";
 import { cn } from "@/lib/utils";
+import { waveStep } from "@/lib/motion";
 
 const SIDE_LABEL: Record<Side, string> = { top: "arriba", bottom: "abajo", left: "la izquierda", right: "la derecha" };
 const STATE_LABEL: Record<ClueState, string> = { none: "", pending: "", ok: ", cumplida", conflict: ", no se cumple" };
@@ -113,7 +114,7 @@ export function Board({ size, clues, givens, values, notes, selected = null, wro
     const content = (
       <>
         {v ? (
-          <span key={v} className={cn("inline-block origin-bottom", (wave || (!given && !readOnly)) && "anim-rise")} style={wave ? ({ "--i": r + c } as CSSProperties) : undefined}>
+          <span key={v} className={cn("inline-block origin-bottom", (wave || (!given && !readOnly)) && "anim-rise")} style={wave ? ({ "--i": r + c, "--step": waveStep(2 * size - 2, 320, 45) } as CSSProperties) : undefined}>
             {v}
           </span>
         ) : noteMask ? (

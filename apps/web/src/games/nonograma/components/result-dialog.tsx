@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { attemptMarks, ResultShareButton, resultLabel, SHARE_FOOTER } from "@/components/share/result-share";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatTime } from "@/lib/utils";
@@ -18,7 +18,6 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry }: {
   onRetry: () => void;
 }) {
   const { puzzle, status, checks, startedAt, finishedAt } = useNonograma();
-  const [copied, setCopied] = useState(false);
   if (!puzzle || status === "playing") return null;
 
   const won = status === "won";
@@ -27,18 +26,18 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry }: {
   const title = mode.kind === "daily" ? `Nonograma del día #${mode.number}` : `Nonograma ${mode.world}-${mode.level}`;
   const picture = mode.kind === "daily" ? "el dibujo del día" : `«${puzzle.title}»`;
 
-  const share = async () => {
-    const marks = Array.from({ length: MAX_ATTEMPTS }, (_, i) => (won && i === attempts - 1 ? "🟩" : i < attempts - 1 || !won ? "🟥" : "⬜")).join("");
-    const text = `Craneá · ${title}\n${marks} ${won ? `${attempts}/${MAX_ATTEMPTS}` : "X"} en ${time}\n${location.origin}/nonograma`;
-    try {
-      if (navigator.share) await navigator.share({ text });
-      else {
-        await navigator.clipboard.writeText(text);
-        setCopied(true);
-      }
-    } catch {
-      /* el usuario canceló */
-    }
+  const marks = Array.from({ length: MAX_ATTEMPTS }, (_, i) => (won && i === attempts - 1 ? "🟩" : i < attempts - 1 || !won ? "🟥" : "⬜")).join("");
+  const shareText = `Craneá · ${title}\n${marks} ${won ? `${attempts}/${MAX_ATTEMPTS}` : "X"} en ${time}\n${location.origin}/nonograma`;
+  // La silueta del tablero, sin una sola casilla pintada: el dibujo no se revela.
+  const card = {
+    game: "Nonograma",
+    label: resultLabel(mode),
+    won,
+    headline: won ? `${attempts}/${MAX_ATTEMPTS}` : "No salió",
+    detail: won ? `${puzzle.width}×${puzzle.height} · ${attempts === 1 ? "sin revisar" : `${attempts} intentos`} · ${time}` : `Sin resolver · ${time}`,
+    visual: { kind: "board" as const, width: puzzle.width, height: puzzle.height, blocks: 5 },
+    marks: attemptMarks(MAX_ATTEMPTS, won ? attempts - 1 : MAX_ATTEMPTS, won),
+    footer: SHARE_FOOTER,
   };
 
   return (
@@ -57,9 +56,7 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry }: {
           {mode.kind === "level" && <p className="font-display text-2xl font-extrabold">{puzzle.title}</p>}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={share}>
-            {copied ? "Copiado" : "Compartir resultado"}
-          </Button>
+          <ResultShareButton text={shareText} card={card} filename={`cranea-nonograma-${mode.kind === "daily" ? mode.date : `${mode.world}-${mode.level}`}.png`} />
           {mode.kind === "level" && (!won || attempts > 1) && (
             <Button variant="outline" onClick={onRetry}>
               Reintentar

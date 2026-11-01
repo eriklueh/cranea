@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { ResultShareButton, resultLabel, SHARE_FOOTER } from "@/components/share/result-share";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatTime } from "@/lib/utils";
@@ -18,23 +18,21 @@ export function ResultDialog({ open, onOpenChange, mode }: {
   mode: GameMode;
 }) {
   const { puzzle, status, mistakes, startedAt, finishedAt } = usePuentes();
-  const [copied, setCopied] = useState(false);
   if (!puzzle || status !== "won") return null;
 
   const time = formatTime((finishedAt ?? Date.now()) - startedAt);
   const title = mode.kind === "daily" ? `Puentes del día #${mode.number}` : `Puentes ${mode.world}-${mode.level}`;
 
-  const share = async () => {
-    const text = `Craneá · ${title}\n🌉 ${mistakesText(mistakes)} en ${time}\n${location.origin}/puentes`;
-    try {
-      if (navigator.share) await navigator.share({ text });
-      else {
-        await navigator.clipboard.writeText(text);
-        setCopied(true);
-      }
-    } catch {
-      /* el usuario canceló */
-    }
+  const shareText = `Craneá · ${title}\n🌉 ${mistakesText(mistakes)} en ${time}\n${location.origin}/puentes`;
+  // Solo dónde están las islas: sin números ni puentes, no se puede copiar la solución.
+  const card = {
+    game: "Puentes",
+    label: resultLabel(mode),
+    won: true,
+    headline: mistakes === 0 ? "Sin errores" : mistakes === 1 ? "1 error" : `${mistakes} errores`,
+    detail: `${puzzle.islands.length} islas · ${time}`,
+    visual: { kind: "board" as const, width: puzzle.width, height: puzzle.height, dots: puzzle.islands.map(({ r, c }) => ({ r, c })) },
+    footer: SHARE_FOOTER,
   };
 
   return (
@@ -45,9 +43,7 @@ export function ResultDialog({ open, onOpenChange, mode }: {
           <DialogDescription>{`${title}, ${mistakesText(mistakes)} y en ${time}.`}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={share}>
-            {copied ? "Copiado" : "Compartir resultado"}
-          </Button>
+          <ResultShareButton text={shareText} card={card} filename={`cranea-puentes-${mode.kind === "daily" ? mode.date : `${mode.world}-${mode.level}`}.png`} />
           {mode.kind === "level" && mode.nextHref ? (
             <Button asChild>
               <Link href={mode.nextHref}>Siguiente nivel</Link>

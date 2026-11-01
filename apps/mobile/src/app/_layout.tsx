@@ -9,7 +9,7 @@ import { StatusBar } from "expo-status-bar";
 import * as SystemUI from "expo-system-ui";
 import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { initialWindowMetrics, SafeAreaProvider } from "react-native-safe-area-context";
 import { AccountProvider } from "@/account/account-provider";
 import { ThemeProvider, useTheme } from "@/theme/theme";
 import { fonts } from "@/theme/tokens";
@@ -33,7 +33,8 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
+      {/* Con las medidas iniciales, los márgenes seguros son correctos desde el primer cuadro (sin saltos). */}
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
         <ThemeProvider>
           <AccountProvider>
             <Navigator />

@@ -4,13 +4,16 @@ import { useEffect, useRef, useState } from "react";
 import { AppState, Pressable, StyleSheet, View } from "react-native";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { DailyNotice } from "@/components/daily-gate";
-import { GameHeader } from "@/components/game-header";
-import { ResultSheet, shareText } from "@/components/result-sheet";
+import { FinishSlot, ResultLink } from "@/components/finish-slot";
+import { GameHeader, gameTitle } from "@/components/game-header";
+import { ResultSheet } from "@/components/result-sheet";
+import { attemptMarks, ResultShareButton, resultLabel, type ResultCard } from "@/components/share-card";
 import { ExtraAttemptOffer, HintOffer, useExtraAttemptOffer } from "@/components/rewards";
 import { Button, Icon, Row, Screen, Text } from "@/components/ui";
 import { SHARE_URL } from "@/config";
 import { FREE_HINTS, usePlus } from "@/entitlements";
 import { formatTime } from "@/lib/format";
+import { LOSS_RESULT_MS, WIN_RESULT_MS } from "@/lib/motion";
 import { useProgress } from "@/stores/progress";
 import { useTheme } from "@/theme/theme";
 import { fonts, radius } from "@/theme/tokens";
@@ -95,19 +98,18 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
     // Con el intento extra: si sale, reemplaza a la derrota (más intentos, `first`); si no, queda la derrota.
     else if (!mode.practice && (result.won || !s.extraAttempt)) p.recordDaily(GAME_ID, mode.date, result);
     clearSession(puzzle.id);
-    const t = setTimeout(() => setResultOpen(true), status === "won" ? 700 : 350);
+    const t = setTimeout(() => setResultOpen(true), status === "won" ? WIN_RESULT_MS : LOSS_RESULT_MS);
     return () => clearTimeout(t);
   }, [status, current, puzzle, mode, loaded]);
 
-  const title = mode.kind === "daily" ? `Cifra del día #${mode.number}` : `Nivel ${mode.level}`;
-  const subtitle = mode.kind === "daily" ? "Mismo tablero para todos" : `Mundo ${mode.world}`;
+  const context = mode.kind === "daily" ? "Mismo tablero para todos" : `Código de ${puzzle.length} cifras`;
   const ready = loaded && current === puzzle;
 
   return (
     <>
-      <Stack.Screen options={{ title: mode.kind === "daily" ? "Cifra del día" : `Cifra · ${mode.world}-${mode.level}` }} />
+      <Stack.Screen options={{ title: gameTitle("Cifra", mode) }} />
       <Screen>
-        <GameHeader title={title} subtitle={subtitle} right={ready ? <><Lives /><Timer /></> : null} />
+        <GameHeader context={context} right={ready ? <><Lives /><Timer /></> : null} />
         {mode.kind === "daily" && <DailyNotice practice={mode.practice} />}
         {ready && (
           <>
@@ -123,15 +125,13 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
             <Tools />
             <HintPanel />
 
-            <View style={{ alignItems: "center", gap: 10 }}>
+            <View style={{ alignItems: "center" }}>
               <InputSlots />
-              {status !== "playing" && (
-                <Pressable onPress={() => setResultOpen(true)} accessibilityRole="button" style={{ minHeight: 44, justifyContent: "center" }}>
-                  <Text variant="bodyBold" style={{ textDecorationLine: "underline", textDecorationColor: colors.margin }}>Ver resultado</Text>
-                </Pressable>
-              )}
             </View>
-            <Keypad />
+            {/* Al terminar, "Ver resultado" ocupa el lugar del teclado: nada se corre de lugar. */}
+            <FinishSlot finished={status !== "playing"} done={<ResultLink onPress={() => setResultOpen(true)} />}>
+              <Keypad />
+            </FinishSlot>
           </>
         )}
       </Screen>
@@ -191,14 +191,20 @@ function Tools() {
   const hasMarks = useCifra((s) => Object.keys(s.marks).length > 0);
   const hint = useCifra((s) => s.hint);
   const plus = usePlus();
-  if (status !== "playing") return null;
+  const playing = status === "playing";
   const ask = () => {
     const s = useCifra.getState();
     if (!s.puzzle || !traceFor(s.puzzle).solved) return;
     s.askHint(nextHintStep(s.puzzle, s.misses, s.marks), plus ? null : FREE_HINTS);
   };
   return (
-    <Row style={{ justifyContent: "center" }} gap={4}>
+    // Al terminar quedan invisibles en su lugar: si desaparecieran, el código y el teclado subirían de golpe.
+    <Row
+      style={[{ justifyContent: "center" }, !playing && { opacity: 0 }]}
+      gap={4}
+      pointerEvents={playing ? "auto" : "none"}
+      importantForAccessibility={playing ? "auto" : "no-hide-descendants"}
+    >
       <Button title="Pista" icon="bulb-outline" variant="ghost" onPress={ask} accessibilityLabel={hint?.level === 1 ? "Ver la deducción" : "Pedir una pista"} />
       <Button title="Borrar marcas" icon="trash-outline" variant="ghost" disabled={!hasMarks} onPress={() => useCifra.getState().clearMarks()} />
     </Row>
@@ -213,8 +219,9 @@ function HintPanel() {
   const showHint = useCifra((s) => s.showHint);
   const closeHint = useCifra((s) => s.closeHint);
   const outOfHints = useCifra((s) => s.outOfHints);
-  if (!puzzle || status !== "playing") return null;
-  if (outOfHints) {
+  if (!puzzle) return null;
+  // Al terminar, la pista abierta se queda (si desapareciera, todo lo de abajo saltaría); la oferta, no.
+  if (outOfHints && status === "playing") {
     return (
       <HintOffer
         onClose={closeHint}
@@ -271,10 +278,17 @@ function CifraResult({ open, onClose, mode, onRetry, onExtra }: { open: boolean;
   const title = mode.kind === "daily" ? `Cifra del día #${mode.number}` : `Nivel ${mode.world}-${mode.level}`;
   // Diario perdido con el intento extra a mano: la solución queda tapada hasta que se elige.
   const offering = official && !won && !extraAttempt && offer.available && !revealed;
-  const share = () => {
-    const marks = Array.from({ length: misses.length + (won ? 1 : 0) }, (_, i) => (i < misses.length ? "🟥" : "🟩")).join("") + "⬜".repeat(Math.max(0, MAX_ATTEMPTS - misses.length - (won ? 1 : 0)));
-    const score = won ? (extraAttempt ? "con un intento extra" : `${attempts}/${MAX_ATTEMPTS}`) : "X";
-    void shareText(`Craneá · ${title}\n${marks} ${score} en ${time}\n${SHARE_URL}/cifra`);
+  const marks = Array.from({ length: misses.length + (won ? 1 : 0) }, (_, i) => (i < misses.length ? "🟥" : "🟩")).join("") + "⬜".repeat(Math.max(0, MAX_ATTEMPTS - misses.length - (won ? 1 : 0)));
+  const score = won ? (extraAttempt ? "con un intento extra" : `${attempts}/${MAX_ATTEMPTS}`) : "X";
+  const shareMessage = `Craneá · ${title}\n${marks} ${score} en ${time}\n${SHARE_URL}/cifra`;
+  // Solo las marcas de los intentos: el código no aparece.
+  const card: ResultCard = {
+    game: "Cifra",
+    label: resultLabel(mode),
+    won,
+    headline: won ? (extraAttempt ? "Con intento extra" : `${attempts}/${MAX_ATTEMPTS}`) : "No salió",
+    detail: won ? `${attempts === 1 ? "Al primer intento" : `${attempts} intentos`} · ${time}` : `Sin resolver · ${time}`,
+    marks: attemptMarks(Math.max(MAX_ATTEMPTS, misses.length + (won ? 1 : 0)), misses.length, won),
   };
 
   return (
@@ -319,7 +333,7 @@ function CifraResult({ open, onClose, mode, onRetry, onExtra }: { open: boolean;
         {mode.kind === "daily" && (
           <Button title="Ver ranking" variant="outline" icon="trophy-outline" onPress={() => { onClose(); router.push({ pathname: "/ranking", params: { juego: GAME_ID, fecha: mode.date } }); }} />
         )}
-        <Button title="Compartir resultado" variant="outline" icon="share-outline" onPress={share} />
+        <ResultShareButton text={shareMessage} card={card} />
       </View>
     </ResultSheet>
   );

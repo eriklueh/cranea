@@ -4,12 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import { Alert, Pressable, StyleSheet, View } from "react-native";
 import Animated, { ZoomIn } from "react-native-reanimated";
 import { DailyNotice } from "@/components/daily-gate";
-import { GameHeader } from "@/components/game-header";
-import { ResultSheet, shareText } from "@/components/result-sheet";
+import { FinishSlot, ResultLink } from "@/components/finish-slot";
+import { GameHeader, gameTitle } from "@/components/game-header";
+import { ResultSheet } from "@/components/result-sheet";
+import { attemptMarks, ResultShareButton, resultLabel, type ResultCard } from "@/components/share-card";
 import { ExtraAttemptOffer, useExtraAttemptOffer } from "@/components/rewards";
 import { Button, Icon, Row, Screen, Text, shadow } from "@/components/ui";
 import { SHARE_URL } from "@/config";
 import { formatTime } from "@/lib/format";
+import { WIN_RESULT_MS } from "@/lib/motion";
 import { haptic } from "@/lib/haptics";
 import { useSettled } from "@/lib/hooks";
 import { useProgress } from "@/stores/progress";
@@ -25,7 +28,7 @@ export type GameMode =
   | { kind: "daily"; date: string; number: number; practice: boolean };
 
 /** Lo que tarda el dibujo en aparecer (o latir) en diagonal antes de la hoja de resultado. */
-const RESULT_DELAY = { won: 1100, lost: 700 } as const;
+const RESULT_DELAY = { won: WIN_RESULT_MS, lost: 650 } as const;
 
 export function NonogramaGame({ puzzle, mode }: { puzzle: NonogramaPuzzle; mode: GameMode }) {
   const { colors } = useTheme();
@@ -62,36 +65,30 @@ export function NonogramaGame({ puzzle, mode }: { puzzle: NonogramaPuzzle; mode:
     if (settled) setResultOpen(true);
   }, [settled]);
 
-  const title = mode.kind === "daily" ? `Nonograma del día #${mode.number}` : `Nivel ${mode.level}`;
-  const subtitle = mode.kind === "daily" ? "Mismo tablero para todos" : `Mundo ${mode.world} · ${puzzle.width}×${puzzle.height}`;
+  const context = mode.kind === "daily" ? "Mismo tablero para todos" : `${puzzle.width}×${puzzle.height}`;
   const ready = current === puzzle;
 
   return (
     <>
-      <Stack.Screen options={{ title: mode.kind === "daily" ? "Nonograma del día" : `Nonograma · ${mode.world}-${mode.level}` }} />
+      <Stack.Screen options={{ title: gameTitle("Nonograma", mode) }} />
       <Screen contentStyle={{ paddingHorizontal: GAME_PAD, gap: 10 }}>
         <View style={{ paddingHorizontal: 8 }}>
-          <GameHeader title={title} subtitle={subtitle} right={ready ? <><ChecksLeft /><Timer /></> : null} />
+          <GameHeader context={context} right={ready ? <><ChecksLeft /><Timer /></> : null} />
         </View>
         {mode.kind === "daily" && <View style={{ paddingHorizontal: 8 }}><DailyNotice practice={mode.practice} /></View>}
         {ready && (
           <>
             <Board ref={board} puzzle={puzzle} layout={layout} onZoomChange={setZoomed} />
             <Message daily={mode.kind === "daily"} zoomHint={layout.zoomable && !zoomed} />
-            {status === "playing" ? (
+            {/* Al terminar, "Ver resultado" ocupa el lugar de los controles: la pantalla no cambia de alto. */}
+            <FinishSlot finished={status !== "playing"} done={settled ? <ResultLink onPress={() => setResultOpen(true)} /> : null}>
               <Controls
                 zoomable={layout.zoomable}
                 zoomed={zoomed}
                 onZoom={() => setZoomed(board.current?.toggleZoom() ?? false)}
                 canOfferExtra={official && offer.available}
               />
-            ) : (
-              settled && (
-                <Pressable onPress={() => setResultOpen(true)} accessibilityRole="button" style={{ minHeight: 44, alignSelf: "center", justifyContent: "center" }}>
-                  <Text variant="bodyBold" style={{ textDecorationLine: "underline", textDecorationColor: colors.margin }}>Ver resultado</Text>
-                </Pressable>
-              )
-            )}
+            </FinishSlot>
           </>
         )}
       </Screen>
@@ -138,7 +135,8 @@ function Message({ daily, zoomHint }: { daily: boolean; zoomHint: boolean }) {
     <Text
       accessibilityLiveRegion="polite"
       style={{
-        minHeight: 22,
+        // Alto del texto grande: al ganar crece sin empujar lo de abajo.
+        minHeight: 28,
         textAlign: "center",
         fontFamily: status === "won" ? fonts.displayHeavy : fonts.bodyBold,
         fontSize: status === "won" ? 20 : 14,
@@ -299,10 +297,18 @@ function NonogramaResult({ open, onClose, mode, offerAvailable, onRetry, onExtra
   const picture = mode.kind === "daily" ? "el dibujo del día" : `«${puzzle.title}»`;
   const offering = mode.kind === "daily" && !mode.practice && !won && conceal && offerAvailable;
 
-  const share = () => {
-    const marks = Array.from({ length: MAX_ATTEMPTS }, (_, i) => (won && !extraAttempt && i === attempts - 1 ? "🟩" : i < attempts - 1 || !won || extraAttempt ? "🟥" : "⬜")).join("");
-    const score = won ? (extraAttempt ? "con un intento extra" : `${attempts}/${MAX_ATTEMPTS}`) : "X";
-    void shareText(`Craneá · ${title}\n${marks} ${score} en ${time}\n${SHARE_URL}/nonograma`);
+  const marks = Array.from({ length: MAX_ATTEMPTS }, (_, i) => (won && !extraAttempt && i === attempts - 1 ? "🟩" : i < attempts - 1 || !won || extraAttempt ? "🟥" : "⬜")).join("");
+  const score = won ? (extraAttempt ? "con un intento extra" : `${attempts}/${MAX_ATTEMPTS}`) : "X";
+  const shareMessage = `Craneá · ${title}\n${marks} ${score} en ${time}\n${SHARE_URL}/nonograma`;
+  // La silueta del tablero, sin una sola casilla pintada: el dibujo no se revela.
+  const card: ResultCard = {
+    game: "Nonograma",
+    label: resultLabel(mode),
+    won,
+    headline: won ? (extraAttempt ? "Con intento extra" : `${attempts}/${MAX_ATTEMPTS}`) : "No salió",
+    detail: won ? `${puzzle.width}×${puzzle.height} · ${attempts === 1 ? "sin revisar" : `${attempts} intentos`} · ${time}` : `Sin resolver · ${time}`,
+    visual: { kind: "board", width: puzzle.width, height: puzzle.height, blocks: 5 },
+    marks: attemptMarks(MAX_ATTEMPTS, won && !extraAttempt ? attempts - 1 : MAX_ATTEMPTS, won && !extraAttempt),
   };
 
   return (
@@ -347,7 +353,7 @@ function NonogramaResult({ open, onClose, mode, offerAvailable, onRetry, onExtra
         {mode.kind === "daily" && (
           <Button title="Ver ranking" variant="outline" icon="trophy-outline" onPress={() => { onClose(); router.push({ pathname: "/ranking", params: { juego: GAME_ID, fecha: mode.date } }); }} />
         )}
-        <Button title="Compartir resultado" variant="outline" icon="share-outline" onPress={share} />
+        <ResultShareButton text={shareMessage} card={card} />
       </View>
     </ResultSheet>
   );

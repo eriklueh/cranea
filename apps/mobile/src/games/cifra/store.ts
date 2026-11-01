@@ -133,7 +133,7 @@ export const useCifra = create<CifraSession>((set, get) => ({
     const now = Date.now();
     const feedback = score(puzzle.solution, input);
     if (feedback.exact === puzzle.length) {
-      set({ status: "won", elapsed: playedMs(s, now), startedAt: 0, finishedAt: now, hint: null });
+      set({ status: "won", elapsed: playedMs(s, now), startedAt: 0, finishedAt: now });
       return;
     }
     const next = [...misses, { guess: input, feedback }];
@@ -142,7 +142,7 @@ export const useCifra = create<CifraSession>((set, get) => ({
       misses: next,
       input: [],
       shakeKey: shakeKey + 1,
-      ...(lost ? { status: "lost" as const, elapsed: playedMs(s, now), startedAt: 0, finishedAt: now, hint: null } : {}),
+      ...(lost ? { status: "lost" as const, elapsed: playedMs(s, now), startedAt: 0, finishedAt: now } : {}),
     });
   },
 

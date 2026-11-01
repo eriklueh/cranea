@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState, type CSSProperties } from "react";
+import { attemptMarks, ResultShareButton, resultLabel, SHARE_FOOTER } from "@/components/share/result-share";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatTime } from "@/lib/utils";
@@ -22,7 +23,6 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry, celebration }:
   celebration?: Celebration | null;
 }) {
   const { puzzle, status, misses, elapsed, hintsUsed } = useCifra();
-  const [copied, setCopied] = useState(false);
   const [explaining, setExplaining] = useState(false);
   if (!puzzle || status === "playing") return null;
 
@@ -35,18 +35,16 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry, celebration }:
   };
   const title = mode.kind === "daily" ? `Cifra del día #${mode.number}` : `Nivel ${mode.world}-${mode.level}`;
 
-  const share = async () => {
-    const marks = Array.from({ length: MAX_ATTEMPTS }, (_, i) => (i < misses.length ? "🟥" : won && i === misses.length ? "🟩" : "⬜")).join("");
-    const text = `Craneá · ${title}\n${marks} ${won ? `${attempts}/${MAX_ATTEMPTS}` : "X"} en ${time}\n${location.origin}/cifra`;
-    try {
-      if (navigator.share) await navigator.share({ text });
-      else {
-        await navigator.clipboard.writeText(text);
-        setCopied(true);
-      }
-    } catch {
-      /* el usuario canceló */
-    }
+  const marks = Array.from({ length: MAX_ATTEMPTS }, (_, i) => (i < misses.length ? "🟥" : won && i === misses.length ? "🟩" : "⬜")).join("");
+  const shareText = `Craneá · ${title}\n${marks} ${won ? `${attempts}/${MAX_ATTEMPTS}` : "X"} en ${time}\n${location.origin}/cifra`;
+  const card = {
+    game: "Cifra",
+    label: resultLabel(mode),
+    won,
+    headline: won ? `${attempts}/${MAX_ATTEMPTS}` : "No salió",
+    detail: won ? `${attempts === 1 ? "Al primer intento" : `${attempts} intentos`} · ${time}` : `Sin resolver · ${time}`,
+    marks: attemptMarks(MAX_ATTEMPTS, misses.length, won),
+    footer: SHARE_FOOTER,
   };
 
   return (
@@ -74,9 +72,7 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry, celebration }:
           {hintsUsed > 0 && <span className="text-muted-foreground">{hintsUsed === 1 ? "Usaste 1 pista" : `Usaste ${hintsUsed} pistas`}</span>}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={share}>
-            {copied ? "Copiado" : "Compartir resultado"}
-          </Button>
+          <ResultShareButton text={shareText} card={card} filename={`cranea-cifra-${mode.kind === "daily" ? mode.date : `${mode.world}-${mode.level}`}.png`} />
           {mode.kind === "daily" && (
             <Button variant="outline" asChild>
               <Link href={`/ranking?juego=cifra&fecha=${mode.date}`}>Ver ranking</Link>

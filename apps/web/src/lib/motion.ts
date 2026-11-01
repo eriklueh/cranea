@@ -70,3 +70,14 @@ export function useSettled(active: boolean, ms: number) {
   }, [active, ms]);
   return active && settled;
 }
+
+/**
+ * Cuándo se abre el resultado después de ganar. Los festejos de los cinco juegos terminan antes
+ * (o se superponen apenas con la entrada del diálogo): nada queda latiendo ni rebotando.
+ */
+export const WIN_RESULT_MS = 800;
+/** Después de perder solo se muestra la solución: el resultado llega antes. */
+export const LOSS_RESULT_MS = 350;
+
+/** Paso de una ola en diagonal de `span` pasos para que entera dure como mucho `budget` ms. */
+export const waveStep = (span: number, budget = 360, max = 50) => `${Math.min(max, Math.round(budget / Math.max(1, span)))}ms`;

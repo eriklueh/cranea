@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
-import { useState, type CSSProperties } from "react";
+import type { CSSProperties } from "react";
+import { ResultShareButton, resultLabel, SHARE_FOOTER } from "@/components/share/result-share";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatTime } from "@/lib/utils";
@@ -22,7 +23,6 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry }: {
   const misses = usePalabra((s) => s.misses);
   const startedAt = usePalabra((s) => s.startedAt);
   const finishedAt = usePalabra((s) => s.finishedAt);
-  const [copied, setCopied] = useState(false);
   if (!puzzle || status === "playing") return null;
 
   const won = status === "won";
@@ -31,20 +31,19 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry }: {
   const time = formatTime((finishedAt ?? Date.now()) - startedAt);
   const title = mode.kind === "daily" ? `Palabra del día #${mode.number}` : `Nivel ${mode.world}-${mode.level}`;
 
-  const share = async () => {
-    // Como Wordle: los colores de cada intento, sin las letras.
-    const rows = [...misses.map((m) => m.scores), ...(won ? [[2, 2, 2, 2, 2]] : [])];
-    const grid = rows.map((r) => r.map((x) => (x === 2 ? "🟩" : x === 1 ? "🟨" : "⬜")).join("")).join("\n");
-    const text = `Craneá · ${title} ${won ? `${attempts}/${total}` : `X/${total}`} en ${time}\n${grid}\n${location.origin}/palabra`;
-    try {
-      if (navigator.share) await navigator.share({ text });
-      else {
-        await navigator.clipboard.writeText(text);
-        setCopied(true);
-      }
-    } catch {
-      /* el usuario canceló */
-    }
+  // Como Wordle: los colores de cada intento, sin las letras.
+  const rows: (0 | 1 | 2)[][] = [...misses.map((m) => m.scores), ...(won ? [[2, 2, 2, 2, 2] as (0 | 1 | 2)[]] : [])];
+  const grid = rows.map((r) => r.map((x) => (x === 2 ? "🟩" : x === 1 ? "🟨" : "⬜")).join("")).join("\n");
+  const score = won ? `${attempts}/${total}` : `X/${total}`;
+  const shareText = `Craneá · ${title} ${score} en ${time}\n${grid}\n${location.origin}/palabra`;
+  const card = {
+    game: "Palabra",
+    label: resultLabel(mode),
+    won,
+    headline: won ? score : "No salió",
+    detail: won ? `${attempts} ${attempts === 1 ? "intento" : "intentos"} · ${time}` : `${score} · ${time}`,
+    visual: { kind: "colors" as const, rows },
+    footer: SHARE_FOOTER,
   };
 
   return (
@@ -62,9 +61,7 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry }: {
           ))}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={share}>
-            {copied ? "Copiado" : "Compartir resultado"}
-          </Button>
+          <ResultShareButton text={shareText} card={card} filename={`cranea-palabra-${mode.kind === "daily" ? mode.date : `${mode.world}-${mode.level}`}.png`} />
           {mode.kind === "level" && !won && (
             <Button variant="outline" onClick={onRetry}>
               Reintentar

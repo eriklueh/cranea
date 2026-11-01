@@ -3,7 +3,9 @@ import Link from "next/link";
 import { CheckIcon, ChevronLeftIcon, RotateCcwIcon, Undo2Icon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { PuentesPuzzle } from "@cranea/core/puentes";
+import { FinishSlot } from "@/components/finish-slot";
 import { Button } from "@/components/ui/button";
+import { WIN_RESULT_MS } from "@/lib/motion";
 import { useProgress } from "@/stores/progress";
 import { GAME_ID, levelKey } from "../data";
 import { attemptsOf, usePuentes, type Notice } from "../store";
@@ -33,7 +35,6 @@ export function PuentesGame({ puzzle, mode, alreadyPlayed = false }: { puzzle: P
   const { undo, reset, check } = usePuentes.getState();
   const [resultOpen, setResultOpen] = useState(false);
   const recorded = useRef(false);
-  const playing = status === "playing";
 
   useEffect(() => {
     if (alreadyPlayed) review(puzzle);
@@ -63,7 +64,7 @@ export function PuentesGame({ puzzle, mode, alreadyPlayed = false }: { puzzle: P
     const p = useProgress.getState();
     if (mode.kind === "level") p.recordLevel(GAME_ID, levelKey(mode.world, mode.level), result);
     else if (!mode.practice) p.recordDaily(GAME_ID, mode.date, result);
-    const t = setTimeout(() => setResultOpen(true), 500);
+    const t = setTimeout(() => setResultOpen(true), WIN_RESULT_MS);
     return () => clearTimeout(t);
   }, [status, current, puzzle, mode]);
 
@@ -96,36 +97,37 @@ export function PuentesGame({ puzzle, mode, alreadyPlayed = false }: { puzzle: P
         {message}
       </p>
 
-      {playing ? (
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <Button variant="outline" size="lg" onClick={undo} disabled={!canUndo}>
-            <Undo2Icon /> Deshacer
-          </Button>
-          <Button variant="outline" size="lg" onClick={reset} disabled={!hasBridges}>
-            <RotateCcwIcon /> Empezar de nuevo
-          </Button>
-          <Button size="lg" onClick={check} disabled={!hasBridges}>
-            <CheckIcon /> Revisar
-          </Button>
-        </div>
-      ) : status === "won" ? (
-        <div className="flex justify-center">
-          <button className="text-sm font-semibold underline decoration-margin decoration-2 underline-offset-4" onClick={() => setResultOpen(true)}>
-            Ver resultado ({mistakesText(mistakes)})
-          </button>
-        </div>
-      ) : (
+      {status === "review" ? (
         <div className="flex justify-center">
           <Button asChild variant="outline" size="lg">
             <Link href="/puentes">Volver a los mundos</Link>
           </Button>
         </div>
-      )}
-
-      {playing && (
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          Deslizá desde una isla o tocá dos islas para tender un puente. Tocá el puente para sumar el segundo o sacarlo.
-        </p>
+      ) : (
+        // Al ganar, "Ver resultado" ocupa el lugar de los controles sin cambiar el alto de la página.
+        <FinishSlot
+          finished={status === "won"}
+          done={
+            <button className="min-h-11 text-sm font-semibold underline decoration-margin decoration-2 underline-offset-4" onClick={() => setResultOpen(true)}>
+              Ver resultado ({mistakesText(mistakes)})
+            </button>
+          }
+        >
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <Button variant="outline" size="lg" onClick={undo} disabled={!canUndo}>
+              <Undo2Icon /> Deshacer
+            </Button>
+            <Button variant="outline" size="lg" onClick={reset} disabled={!hasBridges}>
+              <RotateCcwIcon /> Empezar de nuevo
+            </Button>
+            <Button size="lg" onClick={check} disabled={!hasBridges}>
+              <CheckIcon /> Revisar
+            </Button>
+          </div>
+          <p className="mt-6 text-center text-xs text-muted-foreground">
+            Deslizá desde una isla o tocá dos islas para tender un puente. Tocá el puente para sumar el segundo o sacarlo.
+          </p>
+        </FinishSlot>
       )}
 
       {mode.kind !== "tutorial" && <ResultDialog open={resultOpen} onOpenChange={setResultOpen} mode={mode} />}

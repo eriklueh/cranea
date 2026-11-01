@@ -2,7 +2,7 @@
 import { useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from "react";
 import { bridgeCounts, type PuentesPuzzle } from "@cranea/core/puentes";
 import { cn } from "@/lib/utils";
-import { haptic, play, SHAKE, useOnChange } from "@/lib/motion";
+import { haptic, play, SHAKE, useOnChange, waveStep } from "@/lib/motion";
 import { sound } from "@/lib/sound";
 import { WinBurst } from "@/components/win-burst";
 import { usePuentes } from "../store";
@@ -260,7 +260,7 @@ export function PuentesBoard({ puzzle }: { puzzle: PuentesPuzzle }) {
                   !isSelected && selectable.has(i) && "ring-2 ring-ring/50",
                   "group-focus-visible:ring-[3px] group-focus-visible:ring-ring group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-paper",
                 )}
-                style={{ fontSize: `${42 / W}cqw`, "--i": isl.r + isl.c } as CSSProperties}
+                style={{ fontSize: `${42 / W}cqw`, "--i": isl.r + isl.c, "--step": waveStep(W + H - 2) } as CSSProperties}
               >
                 {isl.n}
                 {/* Anillo que se abre cuando la isla queda completa. */}

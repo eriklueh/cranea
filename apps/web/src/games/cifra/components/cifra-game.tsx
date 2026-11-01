@@ -16,6 +16,8 @@ import { DrawingBoard } from "./drawing-board";
 import { ClearMarks } from "./clear-marks";
 import { HintButton, HintPanel, useHintRows } from "./hint";
 import { WinBurst } from "@/components/win-burst";
+import { FinishSlot } from "@/components/finish-slot";
+import { LOSS_RESULT_MS, WIN_RESULT_MS } from "@/lib/motion";
 import { STREAK_MILESTONES, worldCelebration, type Celebration } from "./celebration";
 import type { TutorialMode } from "@/components/tutorial/mode";
 
@@ -120,7 +122,7 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
     }
     setCelebration(reached);
     clearSession(puzzle.id);
-    const t = setTimeout(() => setResultOpen(true), status === "won" ? 450 : 250);
+    const t = setTimeout(() => setResultOpen(true), status === "won" ? WIN_RESULT_MS : LOSS_RESULT_MS);
     return () => clearTimeout(t);
   }, [status, current, puzzle, mode]);
 
@@ -159,14 +161,19 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
       <section aria-label="Tu código" className="space-y-3">
         <div className="relative flex flex-col items-center gap-3">
           <InputSlots />
-          {status === "won" && <WinBurst delay={150} />}
-          {status !== "playing" && (
-            <button className="text-sm font-semibold underline decoration-margin decoration-2 underline-offset-4" onClick={() => setResultOpen(true)}>
+          {status === "won" && <WinBurst delay={100} />}
+        </div>
+        {/* Al terminar, "Ver resultado" ocupa el lugar del teclado: nada se corre de lugar. */}
+        <FinishSlot
+          finished={status !== "playing"}
+          done={
+            <button className="min-h-11 text-sm font-semibold underline decoration-margin decoration-2 underline-offset-4" onClick={() => setResultOpen(true)}>
               Ver resultado
             </button>
-          )}
-        </div>
-        <Keypad />
+          }
+        >
+          <Keypad />
+        </FinishSlot>
       </section>
       </DrawingBoard>
 
