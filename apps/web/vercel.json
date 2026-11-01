@@ -1,4 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "if [ -n \"$CONVEX_DEPLOY_KEY\" ]; then npx convex deploy --cmd 'pnpm build'; else pnpm build; fi"
+  "buildCommand": "if [ -n \"$CONVEX_DEPLOY_KEY\" ]; then npx convex deploy --cmd 'pnpm build'; else pnpm build; fi",
+  "redirects": [
+    { "source": "/:path*", "has": [{ "type": "host", "value": "www.cranea.app" }], "destination": "https://cranea.app/:path*", "permanent": true },
+    { "source": "/:path*", "has": [{ "type": "host", "value": "cranea.vercel.app" }], "destination": "https://cranea.app/:path*", "permanent": true }
+  ]
 }

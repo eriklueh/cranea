@@ -21,7 +21,7 @@ export interface ShareCard {
   rows: ShareCardRow[];
   /** Línea chica debajo de la ficha ("Racha Craneá: 3 días"). */
   note?: string;
-  /** "cranea.vercel.app" */
+  /** "cranea.app" */
   footer: string;
 }
 
