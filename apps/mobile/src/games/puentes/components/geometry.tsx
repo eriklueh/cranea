@@ -1,7 +1,8 @@
 import type { Edge, Island, PuentesPuzzle } from "@cranea/core/puentes";
 import { useEffect } from "react";
 import { useWindowDimensions } from "react-native";
-import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from "react-native-reanimated";
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import { timing, useMotionReduced } from "@/lib/motion";
 
 /** Medidas en unidades de celda (las mismas que la web: geometry.tsx). */
 export const ISLAND_R = 0.4;
@@ -125,14 +126,15 @@ export function BridgeLines({ islands, edge, count, cell, color, thin, opacity =
 function Line({ horizontal, x, y, len, t, offset, color, opacity, draw, split, fromEnd }: {
   horizontal: boolean; x: number; y: number; len: number; t: number; offset: number; color: string; opacity: number; draw: boolean; split: boolean; fromEnd: boolean;
 }) {
-  const reduced = useReducedMotion();
+  const reduced = useMotionReduced();
   const progress = useSharedValue(draw && !reduced ? 0 : 1);
   const shift = useSharedValue(split && !reduced ? 0 : offset);
   useEffect(() => {
-    progress.value = withTiming(1, { duration: 220, easing: Easing.out(Easing.cubic) });
+    // `draw`: el puente se tiende desde la isla de origen.
+    progress.value = withTiming(1, timing("base"));
   }, [progress]);
   useEffect(() => {
-    shift.value = split && !reduced ? withTiming(offset, { duration: 180, easing: Easing.out(Easing.cubic) }) : offset;
+    shift.value = split && !reduced ? withTiming(offset, timing("base")) : offset;
   }, [offset, split, reduced, shift]);
   const style = useAnimatedStyle(() =>
     horizontal ? { transform: [{ translateY: shift.value }, { scaleX: progress.value }] } : { transform: [{ translateX: shift.value }, { scaleY: progress.value }] },

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { AccessibilityInfo, AppState } from "react-native";
+import { AppState } from "react-native";
+import { useMotionReduced } from "@/lib/motion";
 
 /** La hora, actualizada cada `everyMs` y al volver la app al frente: el diario depende de la fecha UTC. */
 export function useClock(everyMs = 30_000) {
@@ -32,27 +33,17 @@ export function useOnChange<T>(value: T, run: (value: T, previous: T) => void) {
   }, [value]);
 }
 
-/** Si la persona pidió reducir el movimiento en el sistema. */
-export function useReducedMotion() {
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled().then(setReduced).catch(() => {});
-    const sub = AccessibilityInfo.addEventListener("reduceMotionChanged", setReduced);
-    return () => sub.remove();
-  }, []);
-  return reduced;
-}
-
-/** Pasa a true `ms` después de que `active` se vuelve true, para no tapar una animación. */
+/** Pasa a true `ms` después de que `active` se vuelve true (al instante con movimiento reducido), para no tapar una animación. */
 export function useSettled(active: boolean, ms: number) {
+  const reduced = useMotionReduced();
   const [settled, setSettled] = useState(false);
   useEffect(() => {
     if (!active) {
       setSettled(false);
       return;
     }
-    const t = setTimeout(() => setSettled(true), ms);
+    const t = setTimeout(() => setSettled(true), reduced ? 0 : ms);
     return () => clearTimeout(t);
-  }, [active, ms]);
+  }, [active, ms, reduced]);
   return active && settled;
 }

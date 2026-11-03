@@ -2,10 +2,10 @@ import type { Clue, Marks, TileMark } from "@cranea/core/cifra";
 import { tileMarkState } from "@cranea/core/cifra";
 import { useEffect } from "react";
 import { Pressable, StyleSheet, View, useWindowDimensions, type StyleProp, type ViewStyle } from "react-native";
-import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming, ZoomIn } from "react-native-reanimated";
+import Animated, { useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 import { Text, shadow } from "@/components/ui";
 import { haptic } from "@/lib/haptics";
-import { hop as hopTo } from "@/lib/motion";
+import { celebrateStep, DURATION, hop as hopTo, motion, MOTION, PRESS_SCALE, pulse, staggerStep, type Entering } from "@/lib/motion";
 import { useTheme } from "@/theme/theme";
 import { fonts, radius } from "@/theme/tokens";
 
@@ -22,8 +22,9 @@ export function DigitTile({
   disabled,
   size = 48,
   tone = "clue",
-  enterDelay,
+  entering,
   hop,
+  hopSpan = 0,
 }: {
   digit?: number;
   mark?: TileMark;
@@ -33,10 +34,11 @@ export function DigitTile({
   /** Lado en dp (ver useTileSize). */
   size?: number;
   tone?: DigitTone;
-  /** Aparece con un giro, `enterDelay` ms después de montarse (filas recién agregadas). */
-  enterDelay?: number;
-  /** Salto al descifrar el código. */
+  /** Cómo entra al montarse: `motion.pop()` lo tipeado, `motion.reveal(delay)` una fila recién puntuada. */
+  entering?: Entering;
+  /** Lugar en la ola de festejo al descifrar el código (`celebrate`), sobre `hopSpan` lugares. */
   hop?: number;
+  hopSpan?: number;
 }) {
   const { colors } = useTheme();
   const dim = size;
@@ -44,11 +46,12 @@ export function DigitTile({
   const lift = useSharedValue(0);
 
   useEffect(() => {
-    if (mark === "here") bump.value = withSequence(withTiming(1.12, { duration: 90 }), withSpring(1, { damping: 8 }));
+    // `confirm`: un latido corto al marcar "va ahí", sin rebote.
+    if (mark === "here") bump.value = pulse(0);
   }, [mark, bump]);
   useEffect(() => {
-    if (hop !== undefined) lift.value = hopTo(hop * 50, -10);
-  }, [hop, lift]);
+    if (hop !== undefined) lift.value = hopTo(hop * celebrateStep(hopSpan), -size * MOTION.hop);
+  }, [hop, hopSpan, size, lift]);
 
   const animated = useAnimatedStyle(() => ({ transform: [{ scale: bump.value }, { translateY: lift.value }] }));
 
@@ -71,7 +74,6 @@ export function DigitTile({
     </>
   );
 
-  const entering = enterDelay !== undefined ? ZoomIn.delay(enterDelay).springify().damping(14) : undefined;
 
   if (!onPress) {
     return (
@@ -91,7 +93,7 @@ export function DigitTile({
           haptic("tap");
           onPress();
         }}
-        style={({ pressed }) => [box, pressed && { transform: [{ scale: 0.94 }] }]}
+        style={({ pressed }) => [box, pressed && { transform: [{ scale: PRESS_SCALE }] }]}
       >
         {content}
       </Pressable>
@@ -102,12 +104,12 @@ export function DigitTile({
 type Kind = "exact" | "present";
 
 /** Puntaje de una fila: círculo lleno = en su lugar; aro = en otro lugar. Mismo ancho aunque sea cero. */
-export function Indicator({ kind, value, enterDelay }: { kind: Kind; value: number; enterDelay?: number }) {
+export function Indicator({ kind, value, entering }: { kind: Kind; value: number; entering?: Entering }) {
   const { colors } = useTheme();
   const fg = kind === "exact" ? colors.clueExact : colors.cluePresent;
   return (
     <Animated.View
-      entering={enterDelay !== undefined ? ZoomIn.delay(enterDelay) : undefined}
+      entering={entering}
       accessible
       accessibilityRole="image"
       accessibilityLabel={`${value} ${kind === "exact" ? "en su lugar" : "en otro lugar"}`}
@@ -149,15 +151,16 @@ export function ClueRow({
   disabled?: boolean;
   miss?: boolean;
   highlight?: boolean;
-  /** Fila recién agregada: las fichas aparecen una por una y después el puntaje. */
+  /** Fila recién agregada (`reveal`): las fichas se dan vuelta una por una y después aparece el puntaje, todo en ≤ 600 ms. */
   reveal?: boolean;
   size?: number;
 }) {
   const { colors } = useTheme();
-  const scoreDelay = reveal ? clue.guess.length * 70 + 120 : undefined;
+  const step = staggerStep(clue.guess.length + 1, DURATION.base);
+  const score = reveal ? motion.pop(clue.guess.length * step) : undefined;
   return (
     <View style={[styles.row, highlight && { backgroundColor: colors.cluePresentBg }]}>
-      <Indicator kind="exact" value={clue.feedback.exact} enterDelay={scoreDelay} />
+      <Indicator kind="exact" value={clue.feedback.exact} entering={score} />
       <View style={[styles.tiles, miss && { borderBottomWidth: 2, borderBottomColor: colors.margin, paddingBottom: 5 }]}>
         {clue.guess.map((d, i) => (
           <DigitTile
@@ -168,11 +171,11 @@ export function ClueRow({
             mark={marks ? tileMarkState(marks, row, i) : "none"}
             onPress={onCycleMark ? () => onCycleMark(row, i) : undefined}
             disabled={disabled}
-            enterDelay={reveal ? i * 70 : undefined}
+            entering={reveal ? motion.reveal(i * step) : undefined}
           />
         ))}
       </View>
-      <Indicator kind="present" value={clue.feedback.present} enterDelay={scoreDelay} />
+      <Indicator kind="present" value={clue.feedback.present} entering={score} />
     </View>
   );
 }

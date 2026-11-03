@@ -8,27 +8,26 @@ import { useMutation, useQuery, useAction } from "convex/react";
 import { useEffect, useState } from "react";
 import { Alert, Platform, Pressable, StyleSheet, Switch, TextInput, View } from "react-native";
 import { PlusBadge, usePlusPaywall } from "@/components/plus";
-import { ReminderSettings } from "@/components/reminder";
 import { Button, Card, Icon, Row, Screen, Text } from "@/components/ui";
 import { PRIVACY_URL } from "@/config";
 import { usePlus } from "@/entitlements";
 import { adPrivacyOptionsRequired, adsAvailable, showAdPrivacyOptions } from "@/monetization/ads";
 import { openManageSubscription } from "@/monetization/purchases";
 import { api, accountsEnabled } from "@/lib/convex";
-import { useTheme, type ThemePreference } from "@/theme/theme";
+import { useRouter } from "expo-router";
+import { useTheme } from "@/theme/theme";
 import { fonts, radius } from "@/theme/tokens";
 
 // Cierra la ventana del navegador cuando Google vuelve a la app.
 WebBrowser.maybeCompleteAuthSession();
 
-/** Cuenta y ajustes. La cuenta es opcional: sin sesión todo funciona en el dispositivo. */
+/** Tu cuenta: sesión, ranking, Plus y borrar la cuenta. Lo del dispositivo está en Ajustes. La cuenta es opcional. */
 export default function AccountScreen() {
   return (
     <Screen contentStyle={{ gap: 18 }}>
       {accountsEnabled ? <Account /> : <Card><Text variant="muted">Las cuentas no están configuradas en esta versión. Tu progreso se guarda en este dispositivo.</Text></Card>}
       <PlusCard />
-      <ReminderSettings />
-      <ThemePicker />
+      <SettingsLink />
       <About />
     </Screen>
   );
@@ -342,33 +341,24 @@ function PlusCard() {
   );
 }
 
-function ThemePicker() {
-  const { colors, preference, setPreference } = useTheme();
-  const options: { value: ThemePreference; label: string }[] = [
-    { value: "system", label: "Automático" },
-    { value: "light", label: "Cuaderno" },
-    { value: "dark", label: "Pizarrón" },
-  ];
+/** Tema, colores, letra, animaciones, sonido, vibración y recordatorio: en Ajustes. */
+function SettingsLink() {
+  const { colors } = useTheme();
+  const router = useRouter();
   return (
-    <View style={{ gap: 8 }}>
-      <Text variant="label">Tema</Text>
-      <View accessibilityRole="radiogroup" style={[styles.segment, { backgroundColor: colors.muted }]}>
-        {options.map((o) => {
-          const selected = preference === o.value;
-          return (
-            <Pressable
-              key={o.value}
-              accessibilityRole="radio"
-              accessibilityState={{ selected }}
-              onPress={() => setPreference(o.value)}
-              style={[styles.segmentItem, selected && { backgroundColor: colors.card, borderColor: colors.border }]}
-            >
-              <Text style={{ fontFamily: fonts.bodyBold, color: selected ? colors.ink : colors.mutedForeground }}>{o.label}</Text>
-            </Pressable>
-          );
-        })}
+    <Pressable
+      onPress={() => router.push("/ajustes")}
+      accessibilityRole="button"
+      accessibilityLabel="Ajustes. Tema, colores, letra, sonido y recordatorio."
+      style={({ pressed }) => [styles.settings, { borderColor: colors.border, backgroundColor: pressed ? colors.accent : colors.card }]}
+    >
+      <Icon name="settings-outline" size={22} />
+      <View style={{ flex: 1 }}>
+        <Text variant="bodyBold">Ajustes</Text>
+        <Text variant="small">Tema, colores, letra, sonido y recordatorio.</Text>
       </View>
-    </View>
+      <Icon name="chevron-forward" size={18} color={colors.pencil} />
+    </Pressable>
   );
 }
 
@@ -385,6 +375,5 @@ function About() {
 
 const styles = StyleSheet.create({
   input: { borderWidth: 2, borderRadius: radius.md, minHeight: 50, paddingHorizontal: 14, fontSize: 17, fontFamily: fonts.body },
-  segment: { flexDirection: "row", borderRadius: radius.xl, padding: 4, gap: 4 },
-  segmentItem: { flex: 1, minHeight: 44, alignItems: "center", justifyContent: "center", borderRadius: radius.lg, borderWidth: 1, borderColor: "transparent" },
+  settings: { flexDirection: "row", alignItems: "center", gap: 12, minHeight: 60, borderWidth: 2, borderRadius: radius.xl, paddingHorizontal: 16, paddingVertical: 10 },
 });

@@ -2,7 +2,7 @@ import type { CifraPuzzle } from "@cranea/core/cifra";
 import { Stack, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { AppState, Pressable, StyleSheet, View } from "react-native";
-import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 import { DailyNotice } from "@/components/daily-gate";
 import { FinishSlot, ResultLink } from "@/components/finish-slot";
 import { GameHeader, gameTitle } from "@/components/game-header";
@@ -14,7 +14,7 @@ import { Button, Icon, Row, Screen, Text } from "@/components/ui";
 import { SHARE_URL } from "@/config";
 import { FREE_HINTS, usePlus } from "@/entitlements";
 import { formatTime } from "@/lib/format";
-import { LOSS_RESULT_MS, WIN_RESULT_MS } from "@/lib/motion";
+import { DURATION, LOSS_RESULT_MS, motion, staggerStep, WIN_RESULT_MS } from "@/lib/motion";
 import { useProgress } from "@/stores/progress";
 import { useTheme } from "@/theme/theme";
 import { fonts, radius } from "@/theme/tokens";
@@ -114,7 +114,7 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
         {mode.kind === "daily" && <DailyNotice practice={mode.practice} />}
         {ready && (
           <>
-            <Animated.View entering={FadeInDown.duration(260)} style={{ gap: 8 }} accessibilityLabel="Pistas">
+            <Animated.View entering={motion.appear()} style={{ gap: 8 }} accessibilityLabel="Pistas">
               {puzzle.clues.map((c, i) => (
                 <ClueRow key={i} clue={c} marks={marks} row={i} size={size} highlight={hintRows.includes(i)} onCycleMark={cycleMark} disabled={status !== "playing"} />
               ))}
@@ -237,7 +237,7 @@ function HintPanel() {
   if (!hint) return null;
   const step = hint.step >= 0 ? traceFor(puzzle).steps[hint.step] : null;
   return (
-    <Animated.View entering={FadeInUp.duration(200)} style={[styles.hint, { backgroundColor: colors.card, borderColor: colors.border }]} accessibilityLiveRegion="polite">
+    <Animated.View entering={motion.appear()} style={[styles.hint, { backgroundColor: colors.card, borderColor: colors.border }]} accessibilityLiveRegion="polite">
       <Icon name="bulb" size={18} color={colors.cluePresent} />
       <View style={{ flex: 1, gap: 6 }}>
         {!step ? (
@@ -312,7 +312,7 @@ function CifraResult({ open, onClose, mode, onRetry, onExtra }: { open: boolean;
       ) : (
         <Row gap={6} style={{ justifyContent: "center" }}>
           {puzzle.solution.map((d, i) => (
-            <DigitTile key={i} digit={d} tone="solution" enterDelay={140 + i * 70} />
+            <DigitTile key={i} digit={d} tone="solution" entering={motion.pop(DURATION.slow + i * staggerStep(puzzle.solution.length, DURATION.fast))} />
           ))}
         </Row>
       )}

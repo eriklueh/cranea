@@ -2,7 +2,7 @@ import { keyboardStates, WORD_LENGTH, type KeyState, type LetterScore, type Pala
 import { Stack, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
-import Animated, { FlipInXUp, ZoomIn, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
+import Animated, { useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 import { DailyNotice } from "@/components/daily-gate";
 import { FinishSlot, ResultLink } from "@/components/finish-slot";
 import { GameHeader, gameTitle } from "@/components/game-header";
@@ -14,11 +14,12 @@ import { Button, Icon, Row, Screen, Text, shadow } from "@/components/ui";
 import { SHARE_URL } from "@/config";
 import { formatTime } from "@/lib/format";
 import { haptic } from "@/lib/haptics";
+import { sound } from "@/lib/sound";
 import { useOnChange, useSettled } from "@/lib/hooks";
 import { useProgress } from "@/stores/progress";
 import { useTheme } from "@/theme/theme";
 import { fonts, radius } from "@/theme/tokens";
-import { hop as hopTo, useShake, WIN_RESULT_MS } from "@/lib/motion";
+import { celebrateStep, DURATION, hop as hopTo, LOSS_RESULT_MS, motion, MOTION, PRESS_SCALE, staggerStep, useShake, WIN_RESULT_MS, type Entering } from "@/lib/motion";
 import { GAME_ID, getDictionary, levelKey } from "../data";
 import { attemptLimit, usePalabra } from "../store";
 
@@ -26,12 +27,14 @@ export type GameMode =
   | { kind: "level"; world: number; level: number; next: number | null }
   | { kind: "daily"; date: string; number: number; practice: boolean };
 
-const FLIP_STEP = 120;
-/** La fila ganadora se da vuelta más rápido y salta enseguida: el festejo entero entra en ~0,8 s. */
-const WIN_FLIP_STEP = 60;
-const WIN_FLIP_MS = 280;
-/** Lo que tarda en darse vuelta una fila (y en saltar, si ganaste): el resultado espera a que termine. */
-const REVEAL_MS = { won: WIN_RESULT_MS, lost: 900 } as const;
+/** `reveal`: cada fila se da vuelta letra por letra; entera tarda REVEAL_TOTAL (≤ 600 ms). */
+const FLIP_STEP = staggerStep(WORD_LENGTH, DURATION.base);
+const REVEAL_TOTAL = FLIP_STEP * (WORD_LENGTH - 1) + DURATION.base;
+/** `celebrate`: la fila ganadora salta letra por letra justo después de darse vuelta; todo entra en WIN_RESULT_MS. */
+const HOP_START = FLIP_STEP * (WORD_LENGTH - 1);
+const HOP_STEP = celebrateStep(WORD_LENGTH - 1);
+/** El resultado espera a que la fila termine de darse vuelta (y de saltar, si ganaste). */
+const REVEAL_MS = { won: WIN_RESULT_MS, lost: REVEAL_TOTAL + LOSS_RESULT_MS } as const;
 const SCORE_LABEL: Record<LetterScore, string> = { 2: "en su lugar", 1: "está en otro lugar", 0: "no está" };
 
 export function PalabraGame({ puzzle, mode }: { puzzle: PalabraPuzzle; mode: GameMode }) {
@@ -118,7 +121,9 @@ function Board() {
   const tile = useTile();
   const shake = useShake(shakeKey);
   useOnChange(shakeKey, (key) => key > 0 && haptic("invalid"));
-  useOnChange(status, (s) => s === "won" && setTimeout(() => haptic("win"), WIN_FLIP_STEP * WORD_LENGTH));
+  useOnChange(status, (s) => s === "won" && setTimeout(() => haptic("win"), REVEAL_TOTAL));
+  useOnChange(input.length, (n, before) => n > before && sound("tap"));
+  useOnChange(misses.length, (n, before) => n > before && sound("line"));
   if (!puzzle) return null;
   const won = status === "won";
   const rows = won ? [...misses, { word: puzzle.answer, scores: Array(WORD_LENGTH).fill(2) as LetterScore[] }] : misses;
@@ -136,8 +141,7 @@ function Board() {
                   letter={letter}
                   tone={toneFor(row.scores[j])}
                   size={tile}
-                  flipDelay={j * (won && i === misses.length ? WIN_FLIP_STEP : FLIP_STEP)}
-                  flipMs={won && i === misses.length ? WIN_FLIP_MS : undefined}
+                  entering={motion.reveal(j * FLIP_STEP)}
                   hop={won && i === misses.length ? j : undefined}
                 />
               ))}
@@ -148,7 +152,7 @@ function Board() {
           return (
             <Animated.View key="input" style={[styles.row, shake]} accessibilityLabel={`Tu palabra: ${input.join("").toUpperCase() || "vacía"}`}>
               {Array.from({ length: WORD_LENGTH }, (_, j) =>
-                input[j] === undefined ? <LetterTile key={j} tone="empty" size={tile} /> : <LetterTile key={`${j}-${input[j]}`} letter={input[j]} tone="input" size={tile} />,
+                input[j] === undefined ? <LetterTile key={j} tone="empty" size={tile} /> : <LetterTile key={`${j}-${input[j]}`} letter={input[j]} tone="input" size={tile} entering={TYPED} />,
               )}
             </Animated.View>
           );
@@ -167,12 +171,15 @@ function Board() {
 type Tone = "exact" | "present" | "absent" | "input" | "empty" | "solution";
 const toneFor = (score: LetterScore): Tone => (score === 2 ? "exact" : score === 1 ? "present" : "absent");
 
-export function LetterTile({ letter, tone = "absent", size = 48, flipDelay, flipMs = 320, hop }: { letter?: string; tone?: Tone; size?: number; flipDelay?: number; flipMs?: number; hop?: number }) {
+/** `pop`: la letra tipeada aparece en 120 ms, sin rebote. */
+const TYPED = motion.pop();
+
+export function LetterTile({ letter, tone = "absent", size = 48, entering, hop }: { letter?: string; tone?: Tone; size?: number; entering?: Entering; hop?: number }) {
   const { colors } = useTheme();
   const lift = useSharedValue(0);
   useEffect(() => {
-    if (hop !== undefined) lift.value = hopTo(WIN_FLIP_STEP * (WORD_LENGTH - 1) + WIN_FLIP_MS - 60 + hop * 40, -12);
-  }, [hop, lift]);
+    if (hop !== undefined) lift.value = hopTo(HOP_START + hop * HOP_STEP, -size * MOTION.hop);
+  }, [hop, size, lift]);
   const hopStyle = useAnimatedStyle(() => ({ transform: [{ translateY: lift.value }] }));
 
   const look =
@@ -188,7 +195,7 @@ export function LetterTile({ letter, tone = "absent", size = 48, flipDelay, flip
               ? { borderColor: colors.ok, backgroundColor: colors.tile, color: colors.ok, ...shadow(colors.ok, 2) }
               : { borderColor: colors.pencil, backgroundColor: "transparent", color: colors.ink, borderStyle: "dashed" as const };
   const { color, ...box } = look;
-  const entering = flipDelay !== undefined ? FlipInXUp.delay(flipDelay).duration(flipMs) : tone === "input" ? ZoomIn.duration(120) : undefined;
+
   const score = tone === "exact" ? 2 : tone === "present" ? 1 : 0;
 
   return (
@@ -241,7 +248,7 @@ function Keyboard({ onSubmit }: { onSubmit: () => void }) {
   const backspace = usePalabra((s) => s.backspace);
   const [shown, setShown] = useState(misses);
   useEffect(() => {
-    const t = setTimeout(() => setShown(misses), misses.length ? FLIP_STEP * WORD_LENGTH + 200 : 0);
+    const t = setTimeout(() => setShown(misses), misses.length ? REVEAL_TOTAL : 0);
     return () => clearTimeout(t);
   }, [misses]);
   const states = useMemo(() => keyboardStates(shown), [shown]);
@@ -303,11 +310,18 @@ function Key({ label, a11y, onPress, disabled, look, flex = 1, small, icon, flat
         { flex },
         box,
         !flat && shadow(colors.shadowInk, pressed ? 0 : 2),
-        pressed && { transform: [{ translateY: 1 }, { scale: 0.95 }] },
+        pressed && { transform: [{ translateY: 1 }, { scale: PRESS_SCALE }] },
         disabled && { opacity: 0.4 },
       ]}
     >
-      {icon ? <Icon name="backspace-outline" size={20} color={color} /> : <Text style={{ fontFamily: fonts.display, fontSize: small ? 14 : 18, color }}>{label}</Text>}
+      {icon ? (
+        <Icon name="backspace-outline" size={20} color={color} />
+      ) : (
+        // Siempre en una línea: en teléfonos de 360 dp (o con letra del sistema grande) «Probar» se achica en vez de partirse.
+        <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} maxFontSizeMultiplier={1.2} style={{ fontFamily: fonts.display, fontSize: small ? 14 : 18, color }}>
+          {label}
+        </Text>
+      )}
     </Pressable>
   );
 }
@@ -395,5 +409,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: "row", gap: 6 },
   tile: { borderRadius: radius.md, borderWidth: 2, alignItems: "center", justifyContent: "center" },
   mark: { position: "absolute", top: 4, right: 4, width: 7, height: 7, borderRadius: 4 },
-  key: { height: 52, minWidth: 0, borderRadius: radius.sm, borderWidth: 2, alignItems: "center", justifyContent: "center" },
+  key: { height: 52, minWidth: 0, borderRadius: radius.sm, borderWidth: 2, alignItems: "center", justifyContent: "center", paddingHorizontal: 2 },
 });

@@ -3,7 +3,8 @@ import { DAYS_PER_PROTECTOR, grantPlus, MAX_PROTECTORS, sameProtectors, unseenCo
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { useEffect, useRef, useState } from "react";
 import { AppState, Modal, Pressable, StyleSheet, View } from "react-native";
-import Animated, { FadeInUp, FadeOutUp } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
+import { motion } from "@/lib/motion";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { create } from "zustand";
 import { useAccountReady } from "@/account/progress-sync";
@@ -112,8 +113,8 @@ function ProtectorToast({ text, onDone }: { text: string; onDone: () => void }) 
   return (
     <View pointerEvents="box-none" style={[styles.toastWrap, { top: insets.top + 8 }]}>
       <Animated.View
-        entering={FadeInUp.duration(220)}
-        exiting={FadeOutUp.duration(180)}
+        entering={motion.appear()}
+        exiting={motion.exit()}
         accessibilityLiveRegion="polite"
         accessibilityRole="alert"
         style={[styles.toast, { backgroundColor: colors.card, borderColor: colors.ink, ...shadow(colors.shadowInk, 3) }]}
@@ -232,9 +233,14 @@ function ProtectorsSheet({ open, onClose, stock, nextIn }: { open: boolean; onCl
     "Cuida la racha de cada juego. Si faltás más días de los que cubrís, la racha se corta y los guardás.",
   ];
   return (
-    <Modal visible={open} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Cerrar" />
-      <View style={[styles.sheet, { backgroundColor: colors.paper, borderColor: colors.ink, paddingBottom: insets.bottom + 18 }]}>
+    <Modal visible={open} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
+      {open && (
+        <Animated.View entering={motion.fade()} style={StyleSheet.absoluteFill}>
+          <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Cerrar" />
+        </Animated.View>
+      )}
+      {open && (
+      <Animated.View entering={motion.sheetIn()} style={[styles.sheet, { backgroundColor: colors.paper, borderColor: colors.ink, paddingBottom: insets.bottom + 18 }]}>
         <Row gap={10}>
           <Icon name="shield-half" size={28} color={colors.primary} />
           <Text variant="title">Protector de racha</Text>
@@ -252,7 +258,8 @@ function ProtectorsSheet({ open, onClose, stock, nextIn }: { open: boolean; onCl
           ))}
         </View>
         <Button title="Entendido" size="lg" onPress={onClose} />
-      </View>
+      </Animated.View>
+      )}
     </Modal>
   );
 }
@@ -264,5 +271,5 @@ const styles = StyleSheet.create({
   badge: { flexDirection: "row", alignItems: "center", gap: 2, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 },
   row: { flexDirection: "row", alignItems: "center", gap: 12, borderWidth: 1, borderRadius: radius.xl, padding: 14 },
   backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.35)" },
-  sheet: { borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, borderWidth: 2, borderBottomWidth: 0, padding: 20, gap: 14 },
+  sheet: { position: "absolute", left: 0, right: 0, bottom: 0, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, borderWidth: 2, borderBottomWidth: 0, padding: 20, gap: 14 },
 });

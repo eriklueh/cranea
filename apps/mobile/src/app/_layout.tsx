@@ -11,6 +11,8 @@ import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { initialWindowMetrics, SafeAreaProvider } from "react-native-safe-area-context";
 import { AccountProvider } from "@/account/account-provider";
+import { MotionPreference, useMotionReduced } from "@/lib/motion";
+import { usePrefs } from "@/lib/prefs";
 import { ThemeProvider, useTheme } from "@/theme/theme";
 import { fonts } from "@/theme/tokens";
 
@@ -24,17 +26,22 @@ export default function RootLayout() {
     BricolageGrotesque_800ExtraBold,
   });
 
+  // Los ajustes (tema, paleta, letra, animaciones) se leen antes del primer cuadro: sin destellos.
+  const prefsReady = usePrefs((s) => s.hydrated);
+  const ready = (loaded || Boolean(error)) && prefsReady;
+
   useEffect(() => {
-    if (loaded || error) SplashScreen.hideAsync().catch(() => {});
-  }, [loaded, error]);
+    if (ready) SplashScreen.hideAsync().catch(() => {});
+  }, [ready]);
 
   // Si una fuente no carga se sigue con la del sistema: nunca se bloquea la app.
-  if (!loaded && !error) return null;
+  if (!ready) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       {/* Con las medidas iniciales, los márgenes seguros son correctos desde el primer cuadro (sin saltos). */}
       <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+        <MotionPreference />
         <ThemeProvider>
           <AccountProvider>
             <Navigator />
@@ -47,6 +54,7 @@ export default function RootLayout() {
 
 function Navigator() {
   const { colors, scheme } = useTheme();
+  const reduced = useMotionReduced();
   useEffect(() => {
     SystemUI.setBackgroundColorAsync(colors.paper).catch(() => {});
   }, [colors.paper]);
@@ -61,11 +69,13 @@ function Navigator() {
           headerTitleStyle: { fontFamily: fonts.displayHeavy, fontSize: 18 },
           headerBackButtonDisplayMode: "minimal",
           contentStyle: { backgroundColor: colors.paper },
-          animation: "slide_from_right",
+          // Con movimiento reducido las pantallas cambian con un fundido, sin deslizarse.
+          animation: reduced ? "fade" : "slide_from_right",
         }}
       >
         <Stack.Screen name="index" options={{ title: "Craneá" }} />
         <Stack.Screen name="cuenta" options={{ title: "Tu cuenta", presentation: "modal" }} />
+        <Stack.Screen name="ajustes" options={{ title: "Ajustes" }} />
         <Stack.Screen name="plus" options={{ title: "Craneá Plus", presentation: "modal" }} />
         <Stack.Screen name="sso-callback" options={{ headerShown: false, animation: "none" }} />
         <Stack.Screen name="+not-found" options={{ title: "Craneá" }} />

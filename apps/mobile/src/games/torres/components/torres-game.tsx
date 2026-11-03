@@ -2,7 +2,7 @@ import type { TorresPuzzle } from "@cranea/core/torres";
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState, View } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 import { DailyNotice } from "@/components/daily-gate";
 import { FinishSlot, ResultLink } from "@/components/finish-slot";
 import { GameHeader, gameTitle } from "@/components/game-header";
@@ -14,8 +14,9 @@ import { Button, Screen } from "@/components/ui";
 import { SHARE_URL } from "@/config";
 import { formatTime } from "@/lib/format";
 import { haptic } from "@/lib/haptics";
+import { sound } from "@/lib/sound";
 import { useOnChange, useSettled } from "@/lib/hooks";
-import { LOSS_RESULT_MS, useShake, WIN_RESULT_MS } from "@/lib/motion";
+import { DURATION, LOSS_RESULT_MS, motion, useShake, WIN_RESULT_MS } from "@/lib/motion";
 import { useProgress } from "@/stores/progress";
 import { GAME_ID, MAX_ATTEMPTS, levelKey } from "../data";
 import { clearSession, loadSession, saveSession } from "../session";
@@ -40,9 +41,12 @@ export function TorresGame({ puzzle, mode }: { puzzle: TorresPuzzle; mode: GameM
 
   useOnChange(check, (c) => {
     if (c?.kind === "wrong") haptic("invalid");
-    else if (c?.kind === "ok") haptic("tap");
+    else if (c?.kind === "ok") haptic("line");
   });
   useOnChange(status, (s) => s === "won" && haptic("win"));
+  // Sonido al escribir o borrar una altura (como la web; solo con «Sonido» prendido).
+  const values = useTorres((s) => s.values);
+  useOnChange(values, () => sound("tap"));
 
   // Retomar la partida guardada en el dispositivo (o empezar de cero).
   useEffect(() => {
@@ -114,7 +118,7 @@ export function TorresGame({ puzzle, mode }: { puzzle: TorresPuzzle; mode: GameM
         {mode.kind === "daily" && <DailyNotice practice={mode.practice} />}
         {ready && (
           <>
-            <Animated.View entering={FadeInDown.duration(260)}>
+            <Animated.View entering={motion.appear()}>
               <PlayBoard />
             </Animated.View>
             <CheckMessage />
@@ -196,7 +200,7 @@ function TorresResult({ open, onClose, mode, onRetry, onExtra }: { open: boolean
   const offer = useExtraAttemptOffer(GAME_ID, official ? mode.date : null);
   const [revealed, setRevealed] = useState(false);
   // La ciudad resuelta se levanta en ola apenas sube la hoja.
-  const settled = useSettled(open, 180);
+  const settled = useSettled(open, DURATION.slow);
   if (!puzzle || status === "playing") return null;
 
   const won = status === "won";

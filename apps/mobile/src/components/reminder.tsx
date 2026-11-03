@@ -1,7 +1,8 @@
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { AppState, Linking, Pressable, StyleSheet, Switch, View } from "react-native";
-import Animated, { FadeInDown, FadeOut } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
+import { motion } from "@/lib/motion";
 import { Button, Card, Icon, Row, Text } from "@/components/ui";
 import {
   disableReminder,
@@ -161,7 +162,7 @@ export function ReminderOffer() {
   };
 
   return (
-    <Animated.View entering={FadeInDown.duration(260)} exiting={FadeOut.duration(150)}>
+    <Animated.View entering={motion.appear()} exiting={motion.exit()}>
       <Card raised style={{ gap: 12 }}>
         <Row gap={12} style={{ alignItems: "flex-start" }}>
           <View style={[styles.bell, { backgroundColor: colors.muted }]}>

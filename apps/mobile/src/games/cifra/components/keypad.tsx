@@ -2,8 +2,9 @@ import { Pressable, StyleSheet, View } from "react-native";
 import Animated from "react-native-reanimated";
 import { Button, Text, shadow } from "@/components/ui";
 import { haptic } from "@/lib/haptics";
+import { sound } from "@/lib/sound";
 import { useOnChange } from "@/lib/hooks";
-import { useShake } from "@/lib/motion";
+import { motion, PRESS_SCALE, useShake } from "@/lib/motion";
 import { useTheme } from "@/theme/theme";
 import { fonts, radius } from "@/theme/tokens";
 import { useCifra } from "../store";
@@ -19,6 +20,7 @@ export function InputSlots() {
   const shake = useShake(shakeKey);
   useOnChange(shakeKey, (key) => key > 0 && haptic("invalid"));
   useOnChange(won, (w) => w && haptic("win"));
+  useOnChange(input.length, (n, before) => n > before && sound("tap"));
   if (!puzzle) return null;
   return (
     <Animated.View
@@ -30,12 +32,15 @@ export function InputSlots() {
         input[i] === undefined ? (
           <DigitTile key={i} tone="empty" size={size} />
         ) : (
-          <DigitTile key={`${i}-${input[i]}`} digit={input[i]} tone={won ? "solution" : "input"} size={size} enterDelay={0} hop={won ? i : undefined} />
+          <DigitTile key={`${i}-${input[i]}`} digit={input[i]} tone={won ? "solution" : "input"} size={size} entering={TYPED} hop={won ? i : undefined} hopSpan={puzzle.length - 1} />
         ),
       )}
     </Animated.View>
   );
 }
+
+/** `pop`: la cifra tipeada aparece en 120 ms (0,9 → 1), sin rebote. */
+const TYPED = motion.pop();
 
 export function Keypad() {
   const { colors } = useTheme();
@@ -66,7 +71,7 @@ export function Keypad() {
                 style={({ pressed }) => [
                   styles.key,
                   { borderColor: colors.ink, backgroundColor: colors.tile, ...shadow(colors.shadowInk, pressed ? 0 : 2) },
-                  pressed && { transform: [{ translateY: 2 }, { scale: 0.96 }] },
+                  pressed && { transform: [{ translateY: 2 }, { scale: PRESS_SCALE }] },
                   disabled && { opacity: 0.35 },
                 ]}
               >

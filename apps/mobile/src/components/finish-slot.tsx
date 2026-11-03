@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
-import Animated, { FadeIn } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
+import { motion } from "@/lib/motion";
 import { Text } from "@/components/ui";
 import { useTheme } from "@/theme/theme";
 
@@ -21,7 +22,7 @@ export function FinishSlot({ finished, done, children, style }: { finished: bool
         {children}
       </View>
       {finished && (
-        <Animated.View entering={FadeIn.duration(180)} style={styles.done}>
+        <Animated.View entering={motion.appear()} style={styles.done}>
           {done}
         </Animated.View>
       )}

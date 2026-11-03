@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, View } from "react-native";
-import Animated, { FadeInUp } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
+import { motion } from "@/lib/motion";
 import { usePlusPaywall, useRewardedAd } from "@/components/plus";
 import { Button, Card, Icon, Text } from "@/components/ui";
 import { usePlus } from "@/entitlements";
@@ -30,7 +31,7 @@ export function HintOffer({ onEarned, onClose }: { onEarned: () => void; onClose
   const { state, run } = useRewardedAd();
   const ads = adsAvailable();
   return (
-    <Animated.View entering={FadeInUp.duration(200)} style={[styles.panel, { backgroundColor: colors.card, borderColor: colors.border }]} accessibilityLiveRegion="polite">
+    <Animated.View entering={motion.appear()} style={[styles.panel, { backgroundColor: colors.card, borderColor: colors.border }]} accessibilityLiveRegion="polite">
       <Icon name="bulb-outline" size={18} color={colors.cluePresent} />
       <View style={{ flex: 1, gap: 8 }}>
         <Text>Ya usaste la pista gratis de este tablero.</Text>

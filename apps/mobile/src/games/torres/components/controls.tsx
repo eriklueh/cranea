@@ -1,7 +1,8 @@
 import { duplicateCells } from "@cranea/core/torres";
 import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
-import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
+import { motion } from "@/lib/motion";
 import { Icon, Row, Text, shadow, type IconName } from "@/components/ui";
 import { formatTime } from "@/lib/format";
 import { haptic } from "@/lib/haptics";
@@ -149,7 +150,7 @@ export function CheckMessage() {
   return (
     <View style={{ minHeight: 22, justifyContent: "center" }} accessibilityLiveRegion="polite">
       {check && visible && (
-        <Animated.View key={check.key} entering={FadeIn.duration(160)} exiting={FadeOut.duration(200)}>
+        <Animated.View key={check.key} entering={motion.fade()} exiting={motion.exit()}>
           <Text variant="bodyBold" style={{ fontSize: 14, textAlign: "center", color: check.kind === "ok" ? colors.ok : colors.margin }}>
             {text}
           </Text>

@@ -1,45 +1,42 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
 import { useColorScheme } from "react-native";
-import { dark, light, type Palette } from "./tokens";
+import { usePrefs, type ThemePreference } from "@/lib/prefs";
+import { colorblind, dark, LARGE_TEXT_SCALE, light, type Palette } from "./tokens";
 
-export type ThemePreference = "system" | "light" | "dark";
+export type { ThemePreference };
 
 interface ThemeValue {
   colors: Palette;
   scheme: "light" | "dark";
   preference: ThemePreference;
   setPreference: (p: ThemePreference) => void;
+  /** Multiplicador del texto de lectura (Ajustes > Tamaño de letra). */
+  textScale: number;
 }
 
-const KEY = "cranea-theme";
 const ThemeContext = createContext<ThemeValue | null>(null);
 
-/** Tema claro (cuaderno) u oscuro (pizarrón). Sigue al sistema salvo que elijas uno. */
+/**
+ * Tema claro (cuaderno) u oscuro (pizarrón), paleta de las pistas y tamaño de letra, según Ajustes
+ * (`usePrefs`). El layout raíz espera a que los ajustes estén leídos antes del primer cuadro.
+ */
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const system = useColorScheme();
-  const [preference, setPref] = useState<ThemePreference>("system");
-
-  useEffect(() => {
-    AsyncStorage.getItem(KEY)
-      .then((v) => {
-        if (v === "light" || v === "dark" || v === "system") setPref(v);
-      })
-      .catch(() => {});
-  }, []);
+  const preference = usePrefs((s) => s.theme);
+  const palette = usePrefs((s) => s.palette);
+  const text = usePrefs((s) => s.text);
 
   const value = useMemo<ThemeValue>(() => {
     const scheme = preference === "system" ? (system === "dark" ? "dark" : "light") : preference;
+    const base = scheme === "dark" ? dark : light;
     return {
-      colors: scheme === "dark" ? dark : light,
+      colors: palette === "colorblind" ? { ...base, ...colorblind[scheme] } : base,
       scheme,
       preference,
-      setPreference: (p) => {
-        setPref(p);
-        AsyncStorage.setItem(KEY, p).catch(() => {});
-      },
+      setPreference: (theme) => usePrefs.getState().set({ theme }),
+      textScale: text === "large" ? LARGE_TEXT_SCALE : 1,
     };
-  }, [preference, system]);
+  }, [preference, system, palette, text]);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }

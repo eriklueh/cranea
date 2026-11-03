@@ -2,7 +2,8 @@ import { todayKey } from "@cranea/core";
 import { Link, useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
-import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
+import { motion } from "@/lib/motion";
 import { PlusBadge, usePlusPaywall } from "@/components/plus";
 import { Button, Card, Icon, Row, Screen, Text, shadow } from "@/components/ui";
 import { FREE_LEVELS, isFreeLevel, isPlusWorld, plusLevelCount, usePlus, usePlusReady } from "@/entitlements";
@@ -164,7 +165,7 @@ function DailyCard({ config, progress, now }: { config: GameHomeConfig; progress
 
   if (!played) {
     return (
-      <Animated.View entering={FadeInDown.duration(260)}>
+      <Animated.View entering={motion.appear()}>
         <Card raised>
           <Row style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
             <Text variant="title">
@@ -183,7 +184,7 @@ function DailyCard({ config, progress, now }: { config: GameHomeConfig; progress
 
   const fem = article === "la";
   return (
-    <Animated.View entering={FadeIn.duration(200)} style={[styles.dailyDone, { backgroundColor: alpha(colors.card, 0.7), borderColor: colors.border }]}>
+    <Animated.View entering={motion.fade()} style={[styles.dailyDone, { backgroundColor: alpha(colors.card, 0.7), borderColor: colors.border }]}>
       <Row gap={12}>
         <View style={[styles.doneDot, { backgroundColor: played.won ? colors.ok : colors.pencil }]}>
           <Icon name={played.won ? "checkmark" : "moon"} size={18} color={colors.card} />

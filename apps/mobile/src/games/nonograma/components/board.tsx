@@ -1,12 +1,9 @@
 import { colCells, EMPTY, FILLED, lineDone, rowCells, type Cell, type LineClue, type NonogramaPuzzle } from "@cranea/core/nonograma";
-import * as Haptics from "expo-haptics";
+
 import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
-import { Platform, StyleSheet, View, useWindowDimensions, PixelRatio } from "react-native";
+import { StyleSheet, View, useWindowDimensions, PixelRatio } from "react-native";
 import { GestureDetector, usePanGesture, usePinchGesture, useSimultaneousGestures } from "react-native-gesture-handler";
 import Animated, {
-  Easing,
-  FadeIn,
-  Keyframe,
   interpolate,
   useAnimatedStyle,
   useSharedValue,
@@ -16,8 +13,9 @@ import Animated, {
 import { scheduleOnRN } from "react-native-worklets";
 import { Text, shadow } from "@/components/ui";
 import { haptic } from "@/lib/haptics";
-import { useOnChange, useReducedMotion } from "@/lib/hooks";
-import { pulse, useShake, waveStep } from "@/lib/motion";
+import { sound } from "@/lib/sound";
+import { useOnChange } from "@/lib/hooks";
+import { celebrateStep, DURATION, motion, MOTION, pulse, timing, useMotionReduced, useShake } from "@/lib/motion";
 import { useTheme } from "@/theme/theme";
 import { alpha, fonts } from "@/theme/tokens";
 import { useNonograma } from "../store";
@@ -95,13 +93,13 @@ const clamp = (v: number, lo: number, hi: number) => {
 
 export const Board = forwardRef<BoardHandle, { puzzle: NonogramaPuzzle; layout: BoardLayout; onZoomChange?: (zoomed: boolean) => void }>(function Board({ puzzle, layout, onZoomChange }, ref) {
   const { colors } = useTheme();
-  const reduced = useReducedMotion();
+  const reduced = useMotionReduced();
   const { width: W, height: H } = puzzle;
   const { cell, zoomable, maxScale, clueW, clueH } = layout;
   const gridW = W * cell;
   const gridH = H * cell;
-  // Al terminar, el dibujo aparece (o late, si ganaste) en diagonal en ~0,4 s.
-  const step = waveStep(W + H - 2, 400, 40);
+  // Al terminar, el dibujo aparece (o late, si ganaste) en una ola diagonal de ≤ 600 ms.
+  const step = celebrateStep(W + H - 2);
 
   const scale = useSharedValue(1);
   const tx = useSharedValue(0);
@@ -123,7 +121,7 @@ export const Board = forwardRef<BoardHandle, { puzzle: NonogramaPuzzle; layout: 
     } else haptic("tap");
   });
   useOnChange(status, (s) => {
-    if (s === "won") setTimeout(() => haptic("win"), 120);
+    if (s === "won") setTimeout(() => haptic("win"), DURATION.fast);
   });
 
   const indexAt = useCallback(
@@ -181,9 +179,9 @@ export const Board = forwardRef<BoardHandle, { puzzle: NonogramaPuzzle; layout: 
   const settle = () => {
     "worklet";
     if (scale.value < 1.05) {
-      scale.value = withTiming(1, { duration: 180 });
-      tx.value = withTiming(0, { duration: 180 });
-      ty.value = withTiming(0, { duration: 180 });
+      scale.value = withTiming(1, timing("base"));
+      tx.value = withTiming(0, timing("base"));
+      ty.value = withTiming(0, timing("base"));
       scheduleOnRN(zoomChanged, false);
     } else scheduleOnRN(zoomChanged, true);
   };
@@ -229,20 +227,21 @@ export const Board = forwardRef<BoardHandle, { puzzle: NonogramaPuzzle; layout: 
     ref,
     () => ({
       toggleZoom: () => {
-        const duration = reduced ? 0 : 260;
+        // Acercar o alejar es un movimiento grande: `slow`. Con movimiento reducido, salta.
+        const move = reduced ? { duration: 0 } : timing("slow");
         if (scale.value > 1.01) {
-          scale.value = withTiming(1, { duration });
-          tx.value = withTiming(0, { duration });
-          ty.value = withTiming(0, { duration });
+          scale.value = withTiming(1, move);
+          tx.value = withTiming(0, move);
+          ty.value = withTiming(0, move);
           return false;
         }
         const cursor = useNonograma.getState().cursor ?? Math.floor(H / 2) * W + Math.floor(W / 2);
         const S = maxScale;
         const cx = ((cursor % W) + 0.5) * cell;
         const cy = (Math.floor(cursor / W) + 0.5) * cell;
-        scale.value = withTiming(S, { duration });
-        tx.value = withTiming(clamp(gridW / 2 - cx * S, gridW * (1 - S), 0), { duration });
-        ty.value = withTiming(clamp(gridH / 2 - cy * S, gridH * (1 - S), 0), { duration });
+        scale.value = withTiming(S, move);
+        tx.value = withTiming(clamp(gridW / 2 - cx * S, gridW * (1 - S), 0), move);
+        ty.value = withTiming(clamp(gridH / 2 - cy * S, gridH * (1 - S), 0), move);
         return true;
       },
     }),
@@ -294,10 +293,8 @@ export const Board = forwardRef<BoardHandle, { puzzle: NonogramaPuzzle; layout: 
   );
 });
 
-const stampFrames = {
-  0: { opacity: 0, transform: [{ scale: 1.35 }] },
-  100: { opacity: 1, transform: [{ scale: 1 }] },
-};
+/** `stamp`: la tinta entra en 120 ms (0,6 → 1). */
+const STAMP = motion.stamp();
 
 /** Una casilla. Memo y suscrita solo a lo suyo: pintar una no vuelve a dibujar las demás. */
 const CellView = memo(function CellView({ i, r, c, W, H, size, rowClue, colClue, delay, reduced }: { i: number; r: number; c: number; W: number; H: number; size: number; rowClue: LineClue; colClue: LineClue; delay: number; reduced: boolean }) {
@@ -308,11 +305,11 @@ const CellView = memo(function CellView({ i, r, c, W, H, size, rowClue, colClue,
   const finished = useNonograma((s) => s.status !== "playing" && !s.conceal);
   const won = useNonograma((s) => s.status === "won");
 
-  // La tinta entra con un golpe corto; al terminar, el dibujo aparece (o late, si ganaste) en diagonal.
-  const stamp = useMemo(() => (reduced ? undefined : new Keyframe(stampFrames).duration(finished ? 220 : 140).delay(finished ? delay : 0)), [reduced, finished, delay]);
+  // `stamp` al pintar; al terminar, el dibujo aparece en diagonal y, si ganaste, late en ola (`celebrate`).
+  const stamp = useMemo(() => (reduced ? undefined : finished ? motion.stamp(delay) : STAMP), [reduced, finished, delay]);
   const beat = useSharedValue(1);
   useEffect(() => {
-    if (won && state === FILLED && !reduced) beat.value = pulse(delay, 0.72);
+    if (won && state === FILLED && !reduced) beat.value = pulse(delay, MOTION.dip);
   }, [won, state, reduced, delay, beat]);
   const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: beat.value }] }));
 
@@ -343,19 +340,22 @@ const CellView = memo(function CellView({ i, r, c, W, H, size, rowClue, colClue,
     >
       {state === FILLED && <Animated.View entering={stamp} style={[StyleSheet.absoluteFill, { backgroundColor: colors.ink }, pulseStyle]} />}
       {state === EMPTY && <Cross size={size} color={colors.pencil} animate={!reduced} />}
-      {flagged && <Animated.View entering={reduced ? undefined : FadeIn.duration(200)} style={[StyleSheet.absoluteFill, { backgroundColor: alpha(colors.margin, 0.25), borderWidth: 2, borderColor: colors.margin }]} />}
+      {flagged && <Animated.View entering={reduced ? undefined : FLAG} style={[StyleSheet.absoluteFill, { backgroundColor: alpha(colors.margin, 0.25), borderWidth: 2, borderColor: colors.margin }]} />}
     </View>
   );
 });
 
-/** La cruz: dos palitos de lápiz. */
+const FLAG = motion.fade();
+const CROSS = motion.pop();
+
+/** La cruz: dos palitos de lápiz (`pop` al ponerla). */
 export function Cross({ size, color, animate = false }: { size: number; color: string; animate?: boolean }) {
   const inner = size * 0.56;
   const len = inner * 1.3;
   const thick = Math.max(1.5, size * 0.075);
   const bar = { position: "absolute" as const, left: (inner - len) / 2, top: (inner - thick) / 2, width: len, height: thick, borderRadius: thick, backgroundColor: color };
   return (
-    <Animated.View entering={animate ? FadeIn.duration(120) : undefined} pointerEvents="none" style={{ position: "absolute", left: (size - inner) / 2, top: (size - inner) / 2, width: inner, height: inner }}>
+    <Animated.View entering={animate ? CROSS : undefined} pointerEvents="none" style={{ position: "absolute", left: (size - inner) / 2, top: (size - inner) / 2, width: inner, height: inner }}>
       <View style={[bar, { transform: [{ rotate: "45deg" }] }]} />
       <View style={[bar, { transform: [{ rotate: "-45deg" }] }]} />
     </Animated.View>
@@ -376,7 +376,7 @@ const RowClue = memo(function RowClue({ r, clue, W, layout, ty, scale }: { r: nu
   const place = useAnimatedStyle(() => ({ top: ty.value + scale.value * r * cell, height: scale.value * cell }));
   return (
     <Animated.View style={[styles.rowClue, place]}>
-      <Animated.View style={[styles.rowClueInner, { opacity: done || finished ? 0.35 : 1, backgroundColor: near ? colors.accent : alpha(colors.accent, 0), transitionProperty: ["opacity", "backgroundColor"], transitionDuration: 250 }]}>
+      <Animated.View style={[styles.rowClueInner, { opacity: done || finished ? 0.35 : 1, backgroundColor: near ? colors.accent : alpha(colors.accent, 0), transitionProperty: ["opacity", "backgroundColor"], transitionDuration: DURATION.base }]}>
         <Text maxFontSizeMultiplier={1} numberOfLines={1} adjustsFontSizeToFit style={{ fontFamily: fonts.display, fontSize: font, color: colors.ink, fontVariant: ["tabular-nums"] }}>
           {(clue.length ? clue : [0]).join(" ")}
         </Text>
@@ -396,7 +396,7 @@ const ColClue = memo(function ColClue({ c, clue, W, layout, tx, scale }: { c: nu
   const place = useAnimatedStyle(() => ({ left: tx.value + scale.value * c * cell, width: scale.value * cell }));
   return (
     <Animated.View style={[styles.colClue, place]}>
-      <Animated.View style={[styles.colClueInner, { opacity: done || finished ? 0.35 : 1, backgroundColor: near ? colors.accent : alpha(colors.accent, 0), transitionProperty: ["opacity", "backgroundColor"], transitionDuration: 250 }]}>
+      <Animated.View style={[styles.colClueInner, { opacity: done || finished ? 0.35 : 1, backgroundColor: near ? colors.accent : alpha(colors.accent, 0), transitionProperty: ["opacity", "backgroundColor"], transitionDuration: DURATION.base }]}>
         {(clue.length ? clue : [0]).map((n, k) => (
           <Text key={k} maxFontSizeMultiplier={1} style={{ fontFamily: fonts.display, fontSize: font, lineHeight: lineH, color: colors.ink, fontVariant: ["tabular-nums"], textAlign: "center" }}>
             {n}
@@ -407,7 +407,7 @@ const ColClue = memo(function ColClue({ c, clue, W, layout, tx, scale }: { c: nu
   );
 });
 
-/** Una pasada de color sobre la fila o columna que acaba de quedar completa. */
+/** `confirm`: una pasada de color sobre la fila o columna que acaba de quedar completa. */
 const LineSweep = memo(function LineSweep({ kind, index, clue, W, cell, length }: { kind: "row" | "col"; index: number; clue: LineClue; W: number; cell: number; length: number }) {
   const { colors } = useTheme();
   const sel = useMemo(() => (kind === "row" ? rowDone(W, index, clue) : colDone(W, index, clue)), [kind, W, index, clue]);
@@ -417,7 +417,7 @@ const LineSweep = memo(function LineSweep({ kind, index, clue, W, cell, length }
   useOnChange(done, (d) => {
     if (!d || clue.length === 0 || useNonograma.getState().status !== "playing") return;
     p.value = 0;
-    p.value = withTiming(1, { duration: 560, easing: Easing.out(Easing.quad) });
+    p.value = withTiming(1, timing("slow"));
   });
   const style = useAnimatedStyle(() => {
     const offset = -band + p.value * (length + band);
@@ -444,8 +444,11 @@ function LineFeedback({ puzzle }: { puzzle: NonogramaPuzzle }) {
     return n;
   });
   useOnChange(count, (n, before) => {
-    if (n > before && Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    if (n > before) haptic("line");
   });
+  // Sonido al pintar o tachar (como la web; solo con «Sonido» prendido).
+  const board = useNonograma((s) => (s.status === "playing" ? s.board : null));
+  useOnChange(board, (b, before) => b && before && sound("tap"));
   return null;
 }
 

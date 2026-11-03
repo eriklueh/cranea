@@ -1,17 +1,15 @@
 import { useRef, type ReactNode } from "react";
 import { Modal, Pressable, ScrollView, Share, StyleSheet, View } from "react-native";
-import Animated, { Easing, FadeIn, ReduceMotion, SlideInDown } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 import { initialWindowMetrics, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/ui";
+import { motion } from "@/lib/motion";
 import { useTheme } from "@/theme/theme";
 import { alpha, radius } from "@/theme/tokens";
 
-/**
- * Entrada de la hoja: un deslizamiento corto, sin resorte (el resorte se pasaba de largo y rebotaba).
- * Con "reducir movimiento" del sistema aparece sin animación.
- */
-const SHEET_IN = SlideInDown.duration(220).easing(Easing.out(Easing.cubic)).reduceMotion(ReduceMotion.System);
-const BACKDROP_IN = FadeIn.duration(160).reduceMotion(ReduceMotion.System);
+/** `sheet`: la hoja sube en `slow` sin pasarse; el fondo, `fade`. Con movimiento reducido aparecen sin animación. */
+const SHEET_IN = motion.sheetIn();
+const BACKDROP_IN = motion.fade();
 
 /**
  * Margen inferior estable mientras la hoja está abierta. Dentro de un Modal translúcido de Android

@@ -3,7 +3,8 @@ import { Stack, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
+import { motion } from "@/lib/motion";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DailyNotice } from "@/components/daily-gate";
 import { FinishSlot, ResultLink } from "@/components/finish-slot";
@@ -99,7 +100,7 @@ export function PuentesGame({ puzzle, mode }: { puzzle: PuentesPuzzle; mode: Gam
           }
         />
         {mode.kind === "daily" && <DailyNotice practice={mode.practice} />}
-        <Animated.View entering={FadeInDown.duration(260)} style={{ marginHorizontal: -6 }}>
+        <Animated.View entering={motion.appear()} style={{ marginHorizontal: -6 }}>
           <PuentesBoard puzzle={puzzle} width={width} board={board} />
         </Animated.View>
         <Text

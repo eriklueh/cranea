@@ -2,10 +2,11 @@ import { bridgeCounts, type Island, type PuentesPuzzle } from "@cranea/core/puen
 import { memo, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { StyleSheet, Text as RNText, View, type AccessibilityActionEvent } from "react-native";
 import { GestureDetector, useCompetingGestures, usePanGesture, useTapGesture, type PanGesture } from "react-native-gesture-handler";
-import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from "react-native-reanimated";
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { haptic } from "@/lib/haptics";
+import { sound } from "@/lib/sound";
 import { useOnChange } from "@/lib/hooks";
-import { pulse, useShake, waveStep } from "@/lib/motion";
+import { celebrateStep, MOTION, pulse, shake as shakeTo, timing, useMotionReduced, useShake } from "@/lib/motion";
 import { useTheme } from "@/theme/theme";
 import { alpha, fonts } from "@/theme/tokens";
 import { usePuentes } from "../store";
@@ -65,7 +66,7 @@ export function PuentesBoard({ puzzle, width, board }: { puzzle: PuentesPuzzle; 
   const { cycle, select } = usePuentes.getState();
   const playing = live && status === "playing";
   const won = live && status === "won";
-  const reduced = useReducedMotion();
+  const reduced = useMotionReduced();
 
   const { width: W, height: H, islands, edges } = puzzle;
   const cell = width / W;
@@ -92,9 +93,13 @@ export function PuentesBoard({ puzzle, width, board }: { puzzle: PuentesPuzzle; 
   useOnChange(notice, (n) => {
     if (!live || n?.kind !== "blocked") return;
     haptic("invalid");
-    nudge.value = withSequence(...[-3, 3, -2, 0].map((v) => withTiming(v, { duration: 55 })));
+    nudge.value = shakeTo(true);
   });
-  useOnChange(bridges, () => live && status === "playing" && haptic("tap"));
+  useOnChange(bridges, () => {
+    if (!live || status !== "playing") return;
+    haptic("tap");
+    sound("tap");
+  });
   useOnChange(won, (w) => w && haptic("win"));
 
   const link = (from: number, edge: number) => {
@@ -114,7 +119,7 @@ export function PuentesBoard({ puzzle, width, board }: { puzzle: PuentesPuzzle; 
   };
 
   const hideGhost = () => {
-    go.value = withTiming(0, { duration: 120 });
+    go.value = withTiming(0, timing("fast", "in"));
   };
 
   board.input.current = {
@@ -208,7 +213,7 @@ export function PuentesBoard({ puzzle, width, board }: { puzzle: PuentesPuzzle; 
                   selectable={selectable.has(i)}
                   live={live}
                   won={won}
-                  step={waveStep(W + H - 2)}
+                  step={celebrateStep(W + H - 2)}
                   reduced={reduced}
                   playing={playing}
                   actions={playing ? [{ name: "activate", label: selected === null ? "Elegir" : "Unir" }, ...actions] : []}
@@ -271,20 +276,20 @@ function IslandView({ island, cell, have, selected, selectable, live, won, step,
   const scale = useSharedValue(1);
   const ring = useSharedValue(0);
 
-  // Al completarse, la isla late y suelta un anillo; al ganar, todas laten en una ola en diagonal.
+  // `confirm`: al completarse, la isla late y suelta un anillo. `celebrate`: al ganar, todas laten en una ola en diagonal.
   useOnChange(complete, (c) => {
     if (!c || !live || reduced) return;
-    scale.value = withSequence(withTiming(1.16, { duration: 110 }), withSpring(1, { damping: 9, stiffness: 260 }));
+    scale.value = pulse(0);
     ring.value = 0;
-    ring.value = withTiming(1, { duration: 480, easing: Easing.out(Easing.quad) });
+    ring.value = withTiming(1, timing("slow"));
   });
   useOnChange(won, (w) => {
     if (!w || reduced) return;
-    scale.value = pulse((island.r + island.c) * step, 1.18);
+    scale.value = pulse((island.r + island.c) * step);
   });
+  // La isla elegida queda apenas más grande (`fast`, sin resorte).
   useEffect(() => {
-    if (!selected) scale.value = withTiming(1, { duration: 120 });
-    else scale.value = withSpring(1.1, { damping: 14, stiffness: 320 });
+    scale.value = withTiming(selected ? MOTION.bump : 1, timing("fast"));
   }, [selected, scale]);
 
   const bump = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));

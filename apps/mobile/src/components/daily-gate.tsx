@@ -3,7 +3,8 @@ import { useConvexAuth, useMutation } from "convex/react";
 import { Stack, useRouter, type Href } from "expo-router";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { View } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
+import { motion } from "@/lib/motion";
 import { useAccountReady } from "@/account/progress-sync";
 import { PlusNudge } from "@/components/plus-nudge";
 import { ProtectorBadge } from "@/components/protectors";
@@ -140,7 +141,7 @@ function DailyDone({ gameId, game, home, date, title, result, reveal, onPractice
     <Screen>
       {/* El título ("Puentes del día #2") va en la barra, no repetido en la pantalla. */}
       <Stack.Screen options={{ title }} />
-      <Animated.View entering={FadeInDown.duration(260)}>
+      <Animated.View entering={motion.appear()}>
         <Card raised>
           <Row gap={12}>
             <View style={{ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: result.won ? colors.clueExactBg : colors.muted }}>

@@ -1,7 +1,8 @@
 import * as WebBrowser from "expo-web-browser";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { View } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
+import { motion } from "@/lib/motion";
 import { NotFound } from "@/components/not-found";
 import { Button, Card, Icon, Screen, Text } from "@/components/ui";
 import { SHARE_URL } from "@/config";
@@ -18,7 +19,7 @@ export default function Soon() {
     <>
       <Stack.Screen options={{ title: meta.name }} />
       <Screen>
-        <Animated.View entering={FadeInDown.duration(260)}>
+        <Animated.View entering={motion.appear()}>
           <Card raised style={{ gap: 10, alignItems: "flex-start" }}>
             <View style={{ backgroundColor: colors.cluePresentBg, borderRadius: 999, padding: 10 }}>
               <Icon name="construct-outline" size={24} color={colors.cluePresent} />

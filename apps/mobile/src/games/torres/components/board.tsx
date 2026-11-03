@@ -1,17 +1,15 @@
 import { clueState, duplicateCells, type ClueState, type Side, type TorresClues } from "@cranea/core/torres";
 import { memo, useEffect, useMemo } from "react";
 import { Pressable, StyleSheet, View, useWindowDimensions, type StyleProp, type ViewStyle } from "react-native";
-import Animated, { Keyframe, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from "react-native-reanimated";
+import Animated, { useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 import { shadow, Text } from "@/components/ui";
-import { useOnChange, useReducedMotion } from "@/lib/hooks";
-import { hop as hopTo, waveStep } from "@/lib/motion";
+import { useOnChange } from "@/lib/hooks";
+import { celebrateStep, hop as hopTo, motion, MOTION, pulse, shake, useMotionReduced } from "@/lib/motion";
 import { useTheme } from "@/theme/theme";
 import { alpha, fonts, radius } from "@/theme/tokens";
 
 const SIDE_LABEL: Record<Side, string> = { top: "arriba", bottom: "abajo", left: "la izquierda", right: "la derecha" };
 const STATE_LABEL: Record<ClueState, string> = { none: "", pending: "", ok: ", cumplida", conflict: ", no se cumple" };
-/** Paso de la ola al ganar, por diagonal (como `--step` en la web). */
-const WAVE_STEP = 45;
 const MAX_CELL = 64;
 const MIN_CLUE = 22;
 const FRAME = 2;
@@ -61,7 +59,7 @@ interface Props {
 /** Tablero de Torres: casillas en el centro y pistas de borde alrededor (apps/web/src/games/torres/components/board.tsx). */
 export function Board({ size, clues, givens, values, notes, selected = null, wrong = [], onSelect, readOnly = false, feedback = true, wave = false, rise = false, width, style }: Props) {
   const { colors } = useTheme();
-  const reduced = useReducedMotion();
+  const reduced = useMotionReduced();
   const { cell, clue, width: total } = boardMetrics(size, width);
   const dupes = useMemo(() => duplicateCells(values, size), [values, size]);
   const wrongSet = useMemo(() => new Set(wrong), [wrong]);
@@ -146,11 +144,11 @@ const Clue = memo(function Clue({ side, index, value, state, size, reduced }: { 
   const { colors } = useTheme();
   const scale = useSharedValue(1);
   const x = useSharedValue(0);
-  // Cada cambio de estado tiene su propio gesto: un salto al cumplirse, un temblor al no cumplirse.
+  // Cada cambio de estado tiene su propio gesto: un latido al cumplirse (`confirm`), una sacudida chica al no cumplirse (`shake`).
   useOnChange(state, (s) => {
     if (reduced) return;
-    if (s === "ok") scale.value = withSequence(withTiming(1.18, { duration: 120 }), withSpring(1, { damping: 9, stiffness: 260 }));
-    else if (s === "conflict") x.value = withSequence(...[-2.5, 2.5, -2.5, 2.5, 0].map((v) => withTiming(v, { duration: 55 })));
+    if (s === "ok") scale.value = pulse(0);
+    else if (s === "conflict") x.value = shake(true);
   });
   const anim = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }, { scale: scale.value }] }));
   if (!value) return null;
@@ -212,7 +210,7 @@ const Cell = memo(function Cell({ index, row, col, size, cell, value, given, not
   const content = (
     <>
       {value ? (
-        <Tower key={value} value={value} color={fg} cell={cell} rise={rise && !given} wave={wave} delay={(row + col) * waveStep(2 * size - 2, 320, WAVE_STEP)} />
+        <Tower key={value} value={value} color={fg} cell={cell} rise={rise && !given} wave={wave} delay={(row + col) * celebrateStep(2 * size - 2)} />
       ) : notes ? (
         <Notes mask={notes} size={size} cell={cell} />
       ) : null}
@@ -235,27 +233,16 @@ const Cell = memo(function Cell({ index, row, col, size, cell, value, given, not
   );
 });
 
-/** Una torre escrita: sube desde abajo al aparecer y salta en la ola de la victoria. */
+/** Una torre escrita: aparece con `pop` y salta en la ola de la victoria (`celebrate`). */
 function Tower({ value, color, cell, rise, wave, delay }: { value: number; color: string; cell: number; rise: boolean; wave: boolean; delay: number }) {
   const y = useSharedValue(0);
   useEffect(() => {
     if (!wave) return;
-    y.value = hopTo(delay, -cell * 0.22);
+    y.value = hopTo(delay, -cell * MOTION.hop);
   }, [wave, delay, cell, y]);
   const hop = useAnimatedStyle(() => ({ transform: [{ translateY: y.value }] }));
-  const entering = useMemo(
-    () =>
-      rise
-        ? new Keyframe({
-            0: { opacity: 0, transform: [{ translateY: cell * 0.3 }, { scaleY: 0.6 }] },
-            60: { opacity: 1, transform: [{ translateY: -cell * 0.05 }, { scaleY: 1.06 }] },
-            100: { opacity: 1, transform: [{ translateY: 0 }, { scaleY: 1 }] },
-          }).duration(320)
-        : undefined,
-    [rise, cell],
-  );
   return (
-    <Animated.View entering={entering} style={hop}>
+    <Animated.View entering={rise ? TYPED : undefined} style={hop}>
       <Text maxFontSizeMultiplier={1} style={{ fontFamily: fonts.display, fontSize: Math.round(cell * 0.52), lineHeight: Math.round(cell * 0.66), color, fontVariant: ["tabular-nums"] }}>
         {value}
       </Text>
@@ -285,17 +272,16 @@ function Notes({ mask, size, cell }: { mask: number; size: number; cell: number 
   );
 }
 
-/** La raya roja de una casilla equivocada, que se dibuja de izquierda a derecha. */
+const TYPED = motion.pop();
+/** `draw`: la raya roja de una casilla equivocada se dibuja de izquierda a derecha. */
+const STRIKE = motion.draw(0, "-12deg");
+
 function Strike({ cell, color }: { cell: number; color: string }) {
   const w = cell * 0.56;
-  const entering = useMemo(
-    () => new Keyframe({ 0: { transform: [{ rotate: "-12deg" }, { scaleX: 0 }] }, 100: { transform: [{ rotate: "-12deg" }, { scaleX: 1 }] } }).duration(200),
-    [],
-  );
   return (
     <Animated.View
       pointerEvents="none"
-      entering={entering}
+      entering={STRIKE}
       style={{ position: "absolute", top: cell / 2 - 1, left: (cell - w) / 2, width: w, height: 2, borderRadius: 1, backgroundColor: color, transform: [{ rotate: "-12deg" }] }}
     />
   );

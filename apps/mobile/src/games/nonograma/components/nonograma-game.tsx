@@ -2,7 +2,7 @@ import type { NonogramaPuzzle } from "@cranea/core/nonograma";
 import { Stack, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { Alert, Pressable, StyleSheet, View } from "react-native";
-import Animated, { ZoomIn } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 import { DailyNotice } from "@/components/daily-gate";
 import { FinishSlot, ResultLink } from "@/components/finish-slot";
 import { GameHeader, gameTitle } from "@/components/game-header";
@@ -13,7 +13,7 @@ import { ExtraAttemptOffer, useExtraAttemptOffer } from "@/components/rewards";
 import { Button, Icon, Row, Screen, Text, shadow } from "@/components/ui";
 import { SHARE_URL } from "@/config";
 import { formatTime } from "@/lib/format";
-import { WIN_RESULT_MS } from "@/lib/motion";
+import { DURATION, motion, STAGGER, WIN_RESULT_MS } from "@/lib/motion";
 import { haptic } from "@/lib/haptics";
 import { useSettled } from "@/lib/hooks";
 import { useProgress } from "@/stores/progress";
@@ -29,7 +29,7 @@ export type GameMode =
   | { kind: "daily"; date: string; number: number; practice: boolean };
 
 /** Lo que tarda el dibujo en aparecer (o latir) en diagonal antes de la hoja de resultado. */
-const RESULT_DELAY = { won: WIN_RESULT_MS, lost: 650 } as const;
+const RESULT_DELAY = { won: WIN_RESULT_MS, lost: STAGGER.max } as const;
 
 export function NonogramaGame({ puzzle, mode }: { puzzle: NonogramaPuzzle; mode: GameMode }) {
   const { colors } = useTheme();
@@ -331,7 +331,7 @@ function NonogramaResult({ open, onClose, mode, offerAvailable, onRetry, onExtra
         <ExtraAttemptOffer gameId={GAME_ID} date={mode.date} onGranted={onExtra} onReveal={() => setConceal(false)} />
       ) : (
         <Row gap={16}>
-          <Animated.View entering={ZoomIn.delay(120).springify().damping(14)}>
+          <Animated.View entering={motion.pop(DURATION.slow)}>
             <Picture puzzle={puzzle} />
           </Animated.View>
           {mode.kind === "level" && <Text variant="title" style={{ flex: 1 }}>{puzzle.title}</Text>}

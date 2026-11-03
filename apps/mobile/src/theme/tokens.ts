@@ -74,6 +74,18 @@ export const dark: Palette = {
   ring: "#92b4e7",
 };
 
+/**
+ * Ajustes > Colores de las pistas > Daltonismo: azul (en su lugar) y naranja (en otro lugar) en vez de
+ * verde y amarillo. Mismos valores que `html[data-palette="colorblind"]` en globals.css.
+ */
+export const colorblind: Record<"light" | "dark", Pick<Palette, "ok" | "clueExact" | "clueExactBg" | "cluePresent" | "cluePresentBg">> = {
+  light: { ok: "#174f96", clueExact: "#174f96", clueExactBg: "#dde9f9", cluePresent: "#943d00", cluePresentBg: "#ffe2c8" },
+  dark: { ok: "#9ccdff", clueExact: "#9ccdff", clueExactBg: "#1c3049", cluePresent: "#ffb877", cluePresentBg: "#4a2f19" },
+};
+
+/** Ajustes > Tamaño de letra > Grande: el texto de lectura crece como en la web (~1,125×); los tableros no. */
+export const LARGE_TEXT_SCALE = 1.125;
+
 /** Familias cargadas en el layout raíz con expo-font. */
 export const fonts = {
   body: "AtkinsonHyperlegible_400Regular",

@@ -3,7 +3,8 @@ import { useQuery } from "convex/react";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from "react-native";
-import Animated, { FadeIn } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
+import { motion } from "@/lib/motion";
 import { Button, Card, Icon, Row, Screen, Text } from "@/components/ui";
 import { GAMES } from "@/games/registry";
 import { api, accountsEnabled } from "@/lib/convex";
@@ -82,7 +83,7 @@ function Board({ gameId, date }: { gameId: string; date: string }) {
   }
   const rows = data.me ? [...data.top, data.me] : data.top;
   return (
-    <Animated.View entering={FadeIn.duration(200)} style={{ gap: 4 }}>
+    <Animated.View entering={motion.fade()} style={{ gap: 4 }}>
       {rows.map((r, i) => (
         <View key={`${r.rank}-${i}`}>
           {data.me && r === data.me && <Text variant="small" style={{ textAlign: "center", paddingVertical: 2 }}>⋯</Text>}

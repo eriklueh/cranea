@@ -7,7 +7,8 @@ import { WORLDS as PUENTES_WORLDS } from "@cranea/core/puentes";
 import { WORLDS as TORRES_WORLDS } from "@cranea/core/torres";
 import { useEffect, useState } from "react";
 import { Pressable, View } from "react-native";
-import Animated, { FadeIn } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
+import { motion } from "@/lib/motion";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { usePlusPaywall } from "@/components/plus";
@@ -95,7 +96,7 @@ function NudgeCard({ game, levels, onDismiss, onLeave }: { game: string; levels:
   };
 
   return (
-    <Animated.View entering={FadeIn.duration(220)} style={{ borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.cluePresentBg, padding: 12, gap: 10 }}>
+    <Animated.View entering={motion.appear()} style={{ borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.cluePresentBg, padding: 12, gap: 10 }}>
       <Row gap={10} style={{ alignItems: "flex-start" }}>
         <View style={{ width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center", backgroundColor: colors.card }}>
           <Icon name="star" size={16} color={colors.cluePresent} />

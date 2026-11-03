@@ -2,7 +2,8 @@ import { todayKey } from "@cranea/core";
 import { Stack } from "expo-router";
 import { useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
-import Animated, { FadeIn } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
+import { motion } from "@/lib/motion";
 import { ProtectorsRow } from "@/components/protectors";
 import { Button, Card, Row, Screen, Text } from "@/components/ui";
 import { GAMES } from "@/games/registry";
@@ -39,7 +40,7 @@ function GameStatsView({ gameId }: { gameId: string }) {
   const max = Math.max(1, s.attempts.lost, ...tries.map((t) => s.attempts.counts[t]));
 
   return (
-    <Animated.View entering={FadeIn.duration(200)} style={{ gap: 14 }}>
+    <Animated.View entering={motion.fade()} style={{ gap: 14 }}>
       <View style={styles.grid}>
         <Stat label="Jugadas" value={String(s.played)} />
         <Stat label="Ganadas" value={`${winRate}%`} />

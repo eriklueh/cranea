@@ -23,7 +23,7 @@ type Variant = "body" | "bodyBold" | "muted" | "small" | "title" | "display" | "
 
 /** Texto con las fuentes de la marca. `display`/`title` usan Bricolage; el resto, Atkinson Hyperlegible. */
 export function Text({ variant = "body", style, ...props }: TextProps & { variant?: Variant }) {
-  const { colors } = useTheme();
+  const { colors, textScale } = useTheme();
   const base: TextStyle =
     variant === "display"
       ? { fontFamily: fonts.displayHeavy, fontSize: 30, lineHeight: 34, color: colors.ink, letterSpacing: -0.5 }
@@ -38,7 +38,23 @@ export function Text({ variant = "body", style, ...props }: TextProps & { varian
               : variant === "label"
                 ? { fontFamily: fonts.bodyBold, fontSize: 12, letterSpacing: 1, textTransform: "uppercase", color: colors.mutedForeground }
                 : { fontFamily: fonts.body, fontSize: 16, lineHeight: 22, color: colors.ink };
-  return <RNText maxFontSizeMultiplier={1.6} {...props} style={[base, style]} />;
+  return <RNText maxFontSizeMultiplier={1.6} {...props} style={textScale === 1 || props.maxFontSizeMultiplier === 1 ? [base, style] : scaled([base, style], textScale)} />;
+}
+
+const READING_FONTS: string[] = [fonts.body, fonts.bodyBold];
+
+/**
+ * Letra grande (Ajustes): agranda solo el texto de lectura (Atkinson). Las cifras, letras y números
+ * de los tableros usan Bricolage o tamaños fijos (`maxFontSizeMultiplier={1}`), así no se desarman.
+ */
+function scaled(style: StyleProp<TextStyle>, k: number): TextStyle {
+  const flat = StyleSheet.flatten(style) ?? {};
+  if (!flat.fontFamily || !READING_FONTS.includes(flat.fontFamily)) return flat;
+  return {
+    ...flat,
+    fontSize: flat.fontSize !== undefined ? Math.round(flat.fontSize * k) : undefined,
+    lineHeight: flat.lineHeight !== undefined ? Math.round(flat.lineHeight * k) : undefined,
+  };
 }
 
 export type IconName = ComponentProps<typeof Ionicons>["name"];

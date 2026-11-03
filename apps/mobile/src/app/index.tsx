@@ -1,7 +1,7 @@
 import { todayKey } from "@cranea/core";
 import { Stack, useRouter } from "expo-router";
 import { Pressable, StyleSheet, View } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 import { ProtectorBadge } from "@/components/protectors";
 import { ReminderOffer } from "@/components/reminder";
 import { Icon, Row, Screen, Text, shadow } from "@/components/ui";
@@ -12,6 +12,7 @@ import { PuentesPreview } from "@/games/puentes/components/preview";
 import { NonogramaPreview } from "@/games/nonograma/components/examples";
 import { GAMES, type MobileGame } from "@/games/registry";
 import { useClock } from "@/lib/hooks";
+import { motion, staggerStep } from "@/lib/motion";
 import { dailyStreak, useProgress } from "@/stores/progress";
 import { useTheme } from "@/theme/theme";
 import { fonts, radius } from "@/theme/tokens";
@@ -27,6 +28,7 @@ export default function Home() {
           headerRight: () => (
             <Row gap={4}>
               <HeaderButton icon="stats-chart-outline" label="Estadísticas" onPress={() => router.push("/estadisticas")} />
+              <HeaderButton icon="settings-outline" label="Ajustes" onPress={() => router.push("/ajustes")} />
               <HeaderButton icon="person-circle-outline" label="Tu cuenta" onPress={() => router.push("/cuenta")} />
             </Row>
           ),
@@ -36,7 +38,7 @@ export default function Home() {
         <TodayStrip />
         <ReminderOffer />
         {GAMES.map((g, i) => (
-          <Animated.View key={g.id} entering={FadeInDown.delay(i * 50).duration(260)}>
+          <Animated.View key={g.id} entering={motion.appear(i * staggerStep(GAMES.length))}>
             <GameCard game={g} />
           </Animated.View>
         ))}
@@ -45,7 +47,7 @@ export default function Home() {
   );
 }
 
-function HeaderButton({ icon, label, onPress }: { icon: "stats-chart-outline" | "person-circle-outline"; label: string; onPress: () => void }) {
+function HeaderButton({ icon, label, onPress }: { icon: "stats-chart-outline" | "settings-outline" | "person-circle-outline"; label: string; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} hitSlop={8} style={{ padding: 6 }}>
       <Icon name={icon} size={24} />
