@@ -48,7 +48,7 @@ export function TodayHub() {
               "Los diarios de hoy"
             ) : (
               <>
-                <PartyPopperIcon aria-hidden className="size-5 text-ok motion-safe:animate-in motion-safe:zoom-in-50 motion-safe:spin-in-12 motion-safe:duration-500" />
+                <PartyPopperIcon aria-hidden className="size-5 text-ok anim-pop" />
                 ¡Hiciste los cinco!
               </>
             )}

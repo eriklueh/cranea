@@ -67,7 +67,7 @@ export function HintPanel() {
   const step = hint.step >= 0 ? traceFor(puzzle).steps[hint.step] : null;
 
   return (
-    <div role="status" className="mb-4 flex items-start gap-2 rounded-xl border border-border bg-card px-3 py-2.5 text-sm motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-1">
+    <div role="status" className="mb-4 flex items-start gap-2 rounded-xl border border-border bg-card px-3 py-2.5 text-sm anim-appear">
       <LightbulbIcon aria-hidden className="mt-0.5 size-4 shrink-0 text-clue-present" />
       <div className="flex-1 space-y-1.5">
         {!step ? (

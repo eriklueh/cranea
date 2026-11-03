@@ -52,7 +52,7 @@ export function BridgeLines({ islands, edge, count, className, strokeWidth = 0.0
             strokeWidth={strokeWidth}
             strokeLinecap="round"
             style={shift}
-            className={cn(animate && "transition-[transform,stroke-width] duration-200 ease-out", animate && (k === 0 ? "anim-draw" : "anim-split"))}
+            className={cn(animate && "transition-[transform,stroke-width] duration-(--dur-base) ease-out", animate && (k === 0 ? "anim-draw" : "anim-split"))}
           />
         );
       })}

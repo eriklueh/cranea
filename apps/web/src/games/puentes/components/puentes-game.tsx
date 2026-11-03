@@ -89,7 +89,7 @@ export function PuentesGame({ puzzle, mode, alreadyPlayed = false }: { puzzle: P
         )}
       </div>
 
-      <section aria-label="Tablero" className="anim-fade-up mb-3">
+      <section aria-label="Tablero" className="anim-appear mb-3">
         <PuentesBoard puzzle={puzzle} />
       </section>
 

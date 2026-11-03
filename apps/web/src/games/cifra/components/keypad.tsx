@@ -3,7 +3,7 @@ import type { CSSProperties } from "react";
 import { DeleteIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { haptic, useOnChange } from "@/lib/motion";
+import { celebrateStep, haptic, useOnChange } from "@/lib/motion";
 import { sound } from "@/lib/sound";
 import { useCifra } from "../store";
 import { DigitTile } from "./digit-tile";
@@ -18,13 +18,13 @@ export function InputSlots() {
   useOnChange(input.length, (n, before) => n > before && sound("tap"));
   if (!puzzle) return null;
   return (
-    <div key={shakeKey} data-tutorial="code" className={cn("flex gap-1.5", shakeKey > 0 && "animate-shake")} aria-live="polite">
+    <div key={shakeKey} data-tutorial="code" className={cn("flex gap-1.5", shakeKey > 0 && "anim-shake")} aria-live="polite">
       {Array.from({ length: puzzle.length }, (_, i) =>
         input[i] === undefined ? (
           <DigitTile key={i} tone="empty" />
         ) : (
           // Al descifrar el código, las fichas saltan una por una.
-          <DigitTile key={`${i}-${input[i]}`} digit={input[i]} tone={won ? "solution" : "input"} className={won ? "anim-hop" : undefined} style={{ "--i": i } as CSSProperties} />
+          <DigitTile key={`${i}-${input[i]}`} digit={input[i]} tone={won ? "solution" : "input"} className={won ? "anim-hop" : undefined} style={{ "--i": i, "--step": celebrateStep(puzzle.length - 1) } as CSSProperties} />
         ),
       )}
     </div>
@@ -45,7 +45,7 @@ export function Keypad() {
             disabled={!playing || input.includes(d) || full}
             onClick={() => press(d)}
             className={cn(
-              "h-12 rounded-md border-2 border-ink bg-tile font-display text-xl font-bold tabular-nums shadow-[0_2px_0_0_var(--shadow-ink)] transition-[translate,scale,opacity] duration-100 outline-none active:translate-y-px active:scale-95 focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-35",
+              "h-12 rounded-md border-2 border-ink bg-tile font-display text-xl font-bold tabular-nums shadow-[0_2px_0_0_var(--shadow-ink)] transition-[translate,scale,opacity] duration-(--dur-fast) outline-none active:translate-y-px active:scale-96 focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-35",
             )}
           >
             {d}

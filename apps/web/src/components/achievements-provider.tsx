@@ -101,7 +101,7 @@ function AchievementToast({ toast, onDone }: { toast: Toast; onDone: () => void 
       className="pointer-events-none fixed inset-x-0 top-[max(0.75rem,env(safe-area-inset-top))] z-50 flex justify-center px-3"
     >
       {visible && (
-        <div className="pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-xl border-2 border-ink bg-card p-2 pl-3 text-card-foreground shadow-[0_4px_0_0_var(--shadow-ink)] animate-dialog-in motion-reduce:animate-none">
+        <div className="pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-xl border-2 border-ink bg-card p-2 pl-3 text-card-foreground shadow-[0_4px_0_0_var(--shadow-ink)] anim-dialog-in motion-reduce:animate-none">
           <span className="grid size-11 shrink-0 place-items-center rounded-full bg-clue-present-bg text-clue-present">
             <AchievementIcon icon={"one" in toast ? toast.one.icon : "trophy"} className="size-6" />
           </span>

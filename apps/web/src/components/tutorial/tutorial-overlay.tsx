@@ -275,7 +275,7 @@ export function TutorialOverlay<S>({ script }: { script: TutorialScript<S> }) {
         ref={bubbleRef}
         role="region"
         aria-label={`Tutorial de ${script.name}`}
-        className="pointer-events-auto absolute rounded-xl border-2 border-ink bg-card p-4 text-card-foreground shadow-[0_4px_0_0_var(--shadow-ink)] transition-[top,left] duration-300 ease-out motion-reduce:transition-none"
+        className="pointer-events-auto absolute rounded-xl border-2 border-ink bg-card p-4 text-card-foreground shadow-[0_4px_0_0_var(--shadow-ink)] transition-[top,left] duration-(--dur-slow) ease-out motion-reduce:transition-none"
         style={{ top, left, width: bw }}
       >
         <div className="mb-1 flex items-center justify-between gap-2">
@@ -287,10 +287,10 @@ export function TutorialOverlay<S>({ script }: { script: TutorialScript<S> }) {
           )}
         </div>
         {finished && <p className="font-display text-2xl font-extrabold tracking-tight">¡Listo!</p>}
-        <p key={finished ? "end" : `step-${state.step}`} className="anim-fade-up text-base leading-snug font-medium">
+        <p key={finished ? "end" : `step-${state.step}`} className="anim-appear text-base leading-snug font-medium">
           {text}
         </p>
-        <p key={`nudge-${state.nudgeKey}`} className={cn("text-sm font-semibold text-margin", state.nudge ? "anim-nudge mt-2" : "hidden")}>
+        <p key={`nudge-${state.nudgeKey}`} className={cn("text-sm font-semibold text-margin", state.nudge ? "anim-shake-sm mt-2" : "hidden")}>
           {state.nudge}
         </p>
         {step && !step.check && (

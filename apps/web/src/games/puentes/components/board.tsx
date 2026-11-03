@@ -2,7 +2,7 @@
 import { useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from "react";
 import { bridgeCounts, type PuentesPuzzle } from "@cranea/core/puentes";
 import { cn } from "@/lib/utils";
-import { haptic, play, SHAKE, useOnChange, waveStep } from "@/lib/motion";
+import { celebrateStep, haptic, play, SHAKE, SHAKE_SMALL, useOnChange } from "@/lib/motion";
 import { sound } from "@/lib/sound";
 import { WinBurst } from "@/components/win-burst";
 import { usePuentes } from "../store";
@@ -11,8 +11,6 @@ import { BridgeLines, edgeEnds } from "./geometry";
 type Dir = "up" | "down" | "left" | "right";
 const KEY_DIR: Record<string, Dir> = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right" };
 /** Empujoncito para un puente que cruzaría otro: más suave que la sacudida de un error. */
-const NUDGE: Keyframe[] = [{ transform: "translateX(0)" }, { transform: "translateX(-3px)" }, { transform: "translateX(3px)" }, { transform: "translateX(0)" }];
-
 /** Para cada isla, la conexión y la vecina en cada dirección. */
 function neighborMap(p: PuentesPuzzle) {
   const map = p.islands.map(() => ({}) as Partial<Record<Dir, { edge: number; other: number }>>);
@@ -75,7 +73,7 @@ export function PuentesBoard({ puzzle }: { puzzle: PuentesPuzzle }) {
   useOnChange(notice, (n) => {
     if (!live || n?.kind !== "blocked") return;
     haptic("invalid");
-    play(boardRef, NUDGE, { duration: 220, easing: "ease-in-out" });
+    play(boardRef, SHAKE_SMALL);
   });
   useOnChange(won, (w) => w && haptic("win"));
   useOnChange(bridges, () => live && sound("tap"));
@@ -191,8 +189,8 @@ export function PuentesBoard({ puzzle }: { puzzle: PuentesPuzzle }) {
               animate={live}
               from={origin?.edge === i && origin.island === edge.b ? "b" : "a"}
               className={cn(
-                "transition-[color,opacity] duration-300",
-                ghost ? cn("text-pencil", removing ? "opacity-40" : "opacity-60") : live && wrong.includes(i) ? "anim-flash text-margin" : won ? "text-ok" : "text-ink",
+                "transition-[color,opacity] duration-(--dur-base)",
+                ghost ? cn("text-pencil", removing ? "opacity-40" : "opacity-60") : live && wrong.includes(i) ? "text-margin" : won ? "text-ok" : "text-ink",
               )}
             />
           );
@@ -224,8 +222,8 @@ export function PuentesBoard({ puzzle }: { puzzle: PuentesPuzzle }) {
           const complete = have === isl.n;
           const over = have > isl.n;
           const isSelected = selected === i;
-          // Al completarse, la isla late; al ganar, todas laten en una ola en diagonal.
-          const motion = won ? "anim-ripple" : complete && live ? "anim-bump" : undefined;
+          // `confirm`: al completarse, la isla late; `celebrate`: al ganar, todas laten en una ola en diagonal.
+          const motion = won ? "anim-pulse" : complete && live ? "anim-bump" : undefined;
           return (
             <button
               key={i}
@@ -251,16 +249,16 @@ export function PuentesBoard({ puzzle }: { puzzle: PuentesPuzzle }) {
             >
               <span
                 className={cn(
-                  "relative grid aspect-square w-[80%] place-items-center rounded-full border-2 font-display font-bold tabular-nums transition-[color,background-color,border-color,box-shadow,scale] duration-200 ease-out",
+                  "relative grid aspect-square w-[80%] place-items-center rounded-full border-2 font-display font-bold tabular-nums transition-[color,background-color,border-color,box-shadow,scale] duration-(--dur-base) ease-out",
                   motion,
-                  isSelected && "scale-110",
+                  isSelected && "scale-108",
                   complete ? "border-ok bg-ok text-paper" : over ? "border-margin bg-tile text-margin" : "border-ink bg-tile text-ink",
                   playing && !complete && !over && "group-hover:bg-accent",
                   isSelected && "ring-[3px] ring-ring ring-offset-2 ring-offset-paper",
                   !isSelected && selectable.has(i) && "ring-2 ring-ring/50",
                   "group-focus-visible:ring-[3px] group-focus-visible:ring-ring group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-paper",
                 )}
-                style={{ fontSize: `${42 / W}cqw`, "--i": isl.r + isl.c, "--step": waveStep(W + H - 2) } as CSSProperties}
+                style={{ fontSize: `${42 / W}cqw`, "--i": isl.r + isl.c, "--step": celebrateStep(W + H - 2) } as CSSProperties}
               >
                 {isl.n}
                 {/* Anillo que se abre cuando la isla queda completa. */}
@@ -273,7 +271,7 @@ export function PuentesBoard({ puzzle }: { puzzle: PuentesPuzzle }) {
       <span
         ref={ghostRef}
         aria-hidden
-        className="pointer-events-none absolute top-0 left-0 aspect-square rounded-full bg-ring/20 opacity-0 ring-2 ring-ring/45 transition-opacity duration-150 will-change-transform"
+        className="pointer-events-none absolute top-0 left-0 aspect-square rounded-full bg-ring/20 opacity-0 ring-2 ring-ring/45 transition-opacity duration-(--dur-fast) will-change-transform"
         style={{ width: `${55 / W}%` }}
       />
       {won && <WinBurst />}

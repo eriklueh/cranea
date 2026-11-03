@@ -37,11 +37,11 @@ export function DigitTile({ digit, mark = "none", position = 0, interactive = fa
         tone === "empty"
           ? "border-2 border-dashed border-pencil/50 bg-transparent"
           : "border-2 border-ink bg-tile shadow-[0_2px_0_0_var(--shadow-ink)]",
-        tone === "input" && "animate-pop",
+        tone === "input" && "anim-pop",
         tone === "solution" && "border-ok text-ok shadow-[0_2px_0_0_var(--ok)]",
         mark === "out" && "text-pencil/60",
         mark === "here" && "border-ok bg-ok text-paper shadow-[0_2px_0_0_var(--ok)]",
-        interactive && "min-h-11 min-w-11 cursor-pointer transition-[color,background-color,border-color,box-shadow,scale] duration-150 outline-none enabled:active:scale-95 focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:cursor-default",
+        interactive && "min-h-11 min-w-11 cursor-pointer transition-[color,background-color,border-color,box-shadow,scale] duration-(--dur-fast) outline-none enabled:active:scale-96 focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:cursor-default",
         interactive && (mark === "here" ? "enabled:hover:bg-ok/90" : "enabled:hover:bg-accent"),
         // Al marcar "va ahí", la ficha salta apenas.
         interactive && mark === "here" && "anim-bump",
@@ -50,9 +50,9 @@ export function DigitTile({ digit, mark = "none", position = 0, interactive = fa
     >
       {digit ?? ""}
       {mark === "out" && (
-        <span aria-hidden className={cn("absolute inset-x-2 top-1/2 h-0.5 origin-left -rotate-12 rounded bg-margin", interactive && "anim-grow-x")} />
+        <span aria-hidden className={cn("absolute inset-x-2 top-1/2 h-0.5 origin-left -rotate-12 rounded bg-margin", interactive && "anim-draw-x")} />
       )}
-      {mark === "in" && <span aria-hidden className={cn("absolute inset-1.5 rounded-full border-2 border-clue-present", interactive && "anim-pop-in")} />}
+      {mark === "in" && <span aria-hidden className={cn("absolute inset-1.5 rounded-full border-2 border-clue-present", interactive && "anim-pop [--i:0]")} />}
     </Tile>
   );
 }

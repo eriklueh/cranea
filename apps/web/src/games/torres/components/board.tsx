@@ -2,7 +2,7 @@
 import { useMemo, type CSSProperties, type Ref } from "react";
 import { clueState, duplicateCells, type ClueState, type Side, type TorresClues } from "@cranea/core/torres";
 import { cn } from "@/lib/utils";
-import { waveStep } from "@/lib/motion";
+import { celebrateStep } from "@/lib/motion";
 
 const SIDE_LABEL: Record<Side, string> = { top: "arriba", bottom: "abajo", left: "la izquierda", right: "la derecha" };
 const STATE_LABEL: Record<ClueState, string> = { none: "", pending: "", ok: ", cumplida", conflict: ", no se cumple" };
@@ -44,10 +44,10 @@ function Clue({ value, state, side, index, size }: { value: number; state: ClueS
         data-tutorial={`clue-${side}-${index}`}
         aria-label={`Desde ${SIDE_LABEL[side]}, ${line}: se ven ${value}${STATE_LABEL[state]}`}
         className={cn(
-          "grid size-[min(1.9rem,92%)] place-items-center rounded-full font-display text-[clamp(0.95rem,3.8vw,1.2rem)] font-bold tabular-nums transition-colors duration-300",
-          // Cada cambio de estado tiene su propio gesto: un salto al cumplirse, un temblor al no cumplirse.
+          "grid size-[min(1.9rem,92%)] place-items-center rounded-full font-display text-[clamp(0.95rem,3.8vw,1.2rem)] font-bold tabular-nums transition-colors duration-(--dur-slow)",
+          // Cada cambio de estado tiene su propio gesto: un latido al cumplirse (`confirm`), una sacudida chica al no cumplirse (`shake`).
           state === "ok" && "anim-bump bg-clue-exact-bg text-clue-exact",
-          state === "conflict" && "anim-nudge bg-margin text-paper",
+          state === "conflict" && "anim-shake-sm bg-margin text-paper",
         )}
       >
         {value}
@@ -100,7 +100,7 @@ export function Board({ size, clues, givens, values, notes, selected = null, wro
     const noteList = range.filter((k) => noteMask & (1 << k)).map((k) => k + 1);
     const label = `Fila ${r + 1}, columna ${c + 1}: ${v ? `altura ${v}` : "vacía"}${given ? ", dada" : ""}${conflict ? ", repetida" : ""}${isWrong ? ", incorrecta" : ""}${noteList.length ? `, notas ${noteList.join(" ")}` : ""}`;
     const cls = cn(
-      "relative grid aspect-square place-items-center font-display text-[clamp(1.15rem,6vw,1.9rem)] font-bold tabular-nums select-none outline-none transition-[color,background-color,box-shadow] duration-200 ease-out",
+      "relative grid aspect-square place-items-center font-display text-[clamp(1.15rem,6vw,1.9rem)] font-bold tabular-nums select-none outline-none transition-[color,background-color,box-shadow] duration-(--dur-base) ease-out",
       "border-ink/20",
       c < size - 1 && "border-r",
       r < size - 1 && "border-b",
@@ -114,14 +114,14 @@ export function Board({ size, clues, givens, values, notes, selected = null, wro
     const content = (
       <>
         {v ? (
-          <span key={v} className={cn("inline-block origin-bottom", (wave || (!given && !readOnly)) && "anim-rise")} style={wave ? ({ "--i": r + c, "--step": waveStep(2 * size - 2, 320, 45) } as CSSProperties) : undefined}>
+          <span key={v} className={cn("inline-block origin-bottom", wave ? "anim-hop" : !given && !readOnly && "anim-pop")} style={wave ? ({ "--i": r + c, "--step": celebrateStep(2 * size - 2) } as CSSProperties) : undefined}>
             {v}
           </span>
         ) : noteMask ? (
           <Notes mask={noteMask} size={size} />
         ) : null}
         {given && <span aria-hidden className="absolute inset-x-[32%] bottom-[13%] h-0.5 rounded bg-ink/35" />}
-        {isWrong && <span aria-hidden className="anim-grow-x absolute inset-x-[22%] top-1/2 h-0.5 origin-left -rotate-12 rounded bg-margin" />}
+        {isWrong && <span aria-hidden className="anim-draw-x absolute inset-x-[22%] top-1/2 h-0.5 origin-left -rotate-12 rounded bg-margin" />}
       </>
     );
     const pos: CSSProperties = { gridRow: r + 2, gridColumn: c + 2 };

@@ -33,7 +33,7 @@ export function LetterTile({ letter, tone = "absent", size = "md", className, st
         tone === "exact" && "border-clue-exact bg-clue-exact text-paper shadow-[0_2px_0_0_var(--shadow-ink)]",
         tone === "present" && "border-clue-present bg-clue-present-bg text-clue-present shadow-[0_2px_0_0_var(--shadow-ink)]",
         tone === "absent" && "border-pencil/40 bg-tile text-pencil",
-        tone === "input" && "animate-pop border-ink bg-tile text-ink shadow-[0_2px_0_0_var(--shadow-ink)]",
+        tone === "input" && "anim-pop border-ink bg-tile text-ink shadow-[0_2px_0_0_var(--shadow-ink)]",
         tone === "empty" && "border-dashed border-pencil/50 bg-transparent",
         tone === "solution" && "border-ok bg-tile text-ok shadow-[0_2px_0_0_var(--ok)]",
         className,

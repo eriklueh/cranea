@@ -10,6 +10,11 @@ import { plusLevelCount } from "@/lib/free-levels";
 import { formatTime } from "@/lib/utils";
 import { usePalabra } from "../store";
 import { LetterTile } from "./letter-tile";
+import { popStep } from "@/lib/motion";
+import { WORD_LENGTH } from "@cranea/core/palabra";
+
+/** La palabra entra con `pop` escalonado después del diálogo. */
+const SOLUTION_STEP = popStep(WORD_LENGTH);
 
 export type GameMode =
   | { kind: "level"; world: number; level: number; nextHref: string | null }
@@ -60,7 +65,7 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry }: {
         </DialogHeader>
         <div className="flex gap-1.5" role="img" aria-label={`Respuesta: ${puzzle.display}`}>
           {[...puzzle.answer].map((letter, i) => (
-            <LetterTile key={i} letter={letter} tone="solution" className="anim-pop-in [--base:140ms]" style={{ "--i": i } as CSSProperties} />
+            <LetterTile key={i} letter={letter} tone="solution" className="anim-pop [--base:var(--dur-base)]" style={{ "--i": i, "--step": SOLUTION_STEP } as CSSProperties} />
           ))}
         </div>
         <DialogFooter>

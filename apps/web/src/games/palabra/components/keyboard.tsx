@@ -1,12 +1,15 @@
 "use client";
-import { useMemo } from "react";
+import { useMemo, type CSSProperties } from "react";
 import { DeleteIcon } from "lucide-react";
 import { keyboardStates, WORD_LENGTH, type KeyState } from "@cranea/core/palabra";
 import { cn } from "@/lib/utils";
+import { revealMs } from "@/lib/motion";
 import { usePalabra } from "../store";
 import { SCORE_LABEL } from "./letter-tile";
 
 const ROWS = ["qwertyuiop", "asdfghjklñ", "zxcvbnm"];
+/** Cada tecla toma su color cuando la fila termina de darse vuelta. */
+const KEY_DELAY = { "--key-delay": `${revealMs(WORD_LENGTH)}ms` } as CSSProperties;
 
 function keyClass(state: KeyState | undefined) {
   if (state === 2) return "border-clue-exact bg-clue-exact text-paper";
@@ -26,7 +29,7 @@ export function Keyboard({ ready, onSubmit }: { ready: boolean; onSubmit: () => 
   const playing = status === "playing";
   const full = input.length === WORD_LENGTH;
   const base =
-    "inline-flex h-12 min-w-0 flex-1 items-center justify-center rounded-md border-2 font-display text-lg font-bold uppercase shadow-[0_2px_0_0_var(--shadow-ink)] [transition:translate_90ms,scale_90ms,background-color_260ms_ease_var(--key-delay,0ms),border-color_260ms_ease_var(--key-delay,0ms),color_260ms_ease_var(--key-delay,0ms)] outline-none active:translate-y-px active:scale-95 focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-40";
+    "inline-flex h-12 min-w-0 flex-1 items-center justify-center rounded-md border-2 font-display text-lg font-bold uppercase shadow-[0_2px_0_0_var(--shadow-ink)] [transition:translate_var(--dur-fast)_var(--ease-out),scale_var(--dur-fast)_var(--ease-out),background-color_var(--dur-base)_var(--ease-out)_var(--key-delay,0ms),border-color_var(--dur-base)_var(--ease-out)_var(--key-delay,0ms),color_var(--dur-base)_var(--ease-out)_var(--key-delay,0ms)] outline-none active:translate-y-px active:scale-96 focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-40";
 
   return (
     <div className="space-y-1.5" role="group" aria-label="Teclado" data-tutorial="keyboard">
@@ -51,7 +54,8 @@ export function Keyboard({ ready, onSubmit }: { ready: boolean; onSubmit: () => 
                 type="button"
                 disabled={!playing || full}
                 onClick={() => press(letter)}
-                className={cn(base, keyClass(state), "[--key-delay:600ms]")}
+                className={cn(base, keyClass(state))}
+                style={KEY_DELAY}
                 aria-label={`${letter.toUpperCase()}${state !== undefined && state !== "unknown" ? `, ${SCORE_LABEL[state]}` : ""}`}
               >
                 {letter}

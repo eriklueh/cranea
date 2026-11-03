@@ -15,15 +15,21 @@ import { ResultDialog, type GameMode } from "./result-dialog";
 import { Timer } from "./timer";
 import { describeRow } from "./word-row";
 import { cn } from "@/lib/utils";
-import { haptic, useOnChange, useSettled } from "@/lib/motion";
+import { celebrateStep, DURATION, haptic, LOSS_RESULT_MS, revealMs, revealStep, useOnChange, useSettled, WIN_RESULT_MS } from "@/lib/motion";
 import { sound } from "@/lib/sound";
 import { WinBurst } from "@/components/win-burst";
 import { FinishSlot } from "@/components/finish-slot";
 import { WORD_LENGTH } from "@cranea/core/palabra";
 import type { TutorialMode } from "@/components/tutorial/mode";
 
-/** Lo que tarda en darse vuelta una fila (y en saltar, si ganaste): el resultado espera a que termine. */
-const REVEAL_MS = { won: 850, lost: 700 } as const;
+/**
+ * `reveal`: cada fila se da vuelta letra por letra en ≤ 600 ms. `celebrate`: la ganadora salta letra por
+ * letra justo después (como en la app). El resultado espera a que termine.
+ */
+const REVEAL_TOTAL = revealMs(WORD_LENGTH);
+const REVEAL_MS = { won: WIN_RESULT_MS, lost: REVEAL_TOTAL + LOSS_RESULT_MS } as const;
+const FLIP = { "--step": revealStep(WORD_LENGTH) } as CSSProperties;
+const FLIP_WIN = { ...FLIP, "--hop-base": `${REVEAL_TOTAL - DURATION.base}ms`, "--hop-step": celebrateStep(WORD_LENGTH - 1) } as CSSProperties;
 
 export function PalabraGame({ puzzle, mode }: { puzzle: PalabraPuzzle; mode: GameMode | TutorialMode }) {
   const start = usePalabra((s) => s.start);
@@ -80,8 +86,8 @@ export function PalabraGame({ puzzle, mode }: { puzzle: PalabraPuzzle; mode: Gam
     const p = useProgress.getState();
     if (mode.kind === "level") p.recordLevel(GAME_ID, levelKey(mode.world, mode.level), result);
     else if (!mode.practice) p.recordDaily(GAME_ID, mode.date, result);
-    const t = setTimeout(() => setResultOpen(true), status === "won" ? 450 : 250);
-    return () => clearTimeout(t);
+    // El diálogo espera a que la fila termine de revelarse (`revealed`, REVEAL_MS).
+    setResultOpen(true);
   }, [status, current, puzzle, mode]);
 
   const title = mode.kind === "tutorial" ? "Tutorial" : mode.kind === "daily" ? `Palabra del día #${mode.number}` : `Nivel ${mode.level}`;
@@ -102,7 +108,7 @@ export function PalabraGame({ puzzle, mode }: { puzzle: PalabraPuzzle; mode: Gam
         </div>
       </div>
 
-      <section aria-label="Tablero" className="anim-fade-up mb-3 space-y-3">
+      <section aria-label="Tablero" className="anim-appear mb-3 space-y-3">
         <Board />
         {puzzle.hard && <p className="text-center text-xs text-muted-foreground">Modo difícil: usá todo lo que ya descubriste.</p>}
       </section>
@@ -173,14 +179,14 @@ function Board() {
                 <li key={i} data-tutorial={`row-${i}`} className="flex gap-1.5">
                   <span className="sr-only">{`Intento ${i + 1}: ${row.word.toUpperCase()}. ${describeRow(row)}.`}</span>
                   {[...row.word].map((letter, j) => (
-                    <LetterTile key={j} letter={letter} tone={toneFor(row.scores[j])} className={cn(TILE, flip)} style={{ "--i": j } as CSSProperties} />
+                    <LetterTile key={j} letter={letter} tone={toneFor(row.scores[j])} className={cn(TILE, flip)} style={{ ...(won && i === misses.length ? FLIP_WIN : FLIP), "--i": j } as CSSProperties} />
                   ))}
                 </li>
               );
             }
             if (i === rows.length && status === "playing") {
               return (
-                <li key={`in-${shakeKey}`} data-tutorial={`row-${i}`} className={cn("flex gap-1.5", shakeKey > 0 && "animate-shake")} aria-label={`Tu palabra: ${input.join("").toUpperCase() || "vacía"}`}>
+                <li key={`in-${shakeKey}`} data-tutorial={`row-${i}`} className={cn("flex gap-1.5", shakeKey > 0 && "anim-shake")} aria-label={`Tu palabra: ${input.join("").toUpperCase() || "vacía"}`}>
                   {Array.from({ length: WORD_LENGTH }, (_, j) =>
                     input[j] === undefined
                       ? <LetterTile key={j} tone="empty" className={cn(TILE, "border-solid border-pencil/60")} />
@@ -196,7 +202,7 @@ function Board() {
             );
           })}
         </ol>
-        {won && <WinBurst delay={500} />}
+        {won && <WinBurst delay={REVEAL_TOTAL - DURATION.base} />}
       </div>
       <p role="status" aria-live="polite" className="min-h-5 text-center text-sm text-muted-foreground">{message}</p>
     </>

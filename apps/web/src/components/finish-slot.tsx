@@ -12,7 +12,7 @@ export function FinishSlot({ finished, done, children, className }: { finished: 
       <div className={cn("[grid-area:1/1] min-w-0", finished && "invisible")} inert={finished} aria-hidden={finished || undefined}>
         {children}
       </div>
-      {finished && <div className="anim-fade-up [grid-area:1/1] flex min-w-0 items-start justify-center">{done}</div>}
+      {finished && <div className="anim-appear [grid-area:1/1] flex min-w-0 items-start justify-center">{done}</div>}
     </div>
   );
 }

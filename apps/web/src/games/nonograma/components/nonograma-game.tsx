@@ -5,7 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import type { NonogramaPuzzle } from "@cranea/core/nonograma";
 import { FinishSlot } from "@/components/finish-slot";
 import { Button } from "@/components/ui/button";
-import { LOSS_RESULT_MS, WIN_RESULT_MS } from "@/lib/motion";
+import { STAGGER } from "@cranea/core/motion";
+import { WIN_RESULT_MS } from "@/lib/motion";
 import { cn, formatTime } from "@/lib/utils";
 import { useProgress } from "@/stores/progress";
 import { GAME_ID, levelKey } from "../data";
@@ -50,7 +51,7 @@ export function NonogramaGame({ puzzle, mode }: { puzzle: NonogramaPuzzle; mode:
     const p = useProgress.getState();
     if (mode.kind === "level") p.recordLevel(GAME_ID, levelKey(mode.world, mode.level), result);
     else if (!mode.practice) p.recordDaily(GAME_ID, mode.date, result);
-    const t = setTimeout(() => setResultOpen(true), status === "won" ? WIN_RESULT_MS : LOSS_RESULT_MS + 100);
+    const t = setTimeout(() => setResultOpen(true), status === "won" ? WIN_RESULT_MS : STAGGER.max); // al perder, el dibujo aparece en diagonal (≤ 600 ms)
     return () => clearTimeout(t);
   }, [status, current, puzzle, mode]);
 
@@ -185,7 +186,7 @@ function ChecksLeft() {
   return (
     <span className="inline-flex items-center gap-1" role="img" aria-label={`Intento ${attempts} de ${MAX_ATTEMPTS}`}>
       {Array.from({ length: MAX_ATTEMPTS }, (_, i) => (
-        <span key={i} className={cn("h-4 w-1.5 rounded-full transition-[background-color,scale] duration-300 ease-out", i < left ? "bg-ink" : "scale-y-60 bg-margin/40")} />
+        <span key={i} className={cn("h-4 w-1.5 rounded-full transition-[background-color,scale] duration-(--dur-slow) ease-out", i < left ? "bg-ink" : "scale-y-60 bg-margin/40")} />
       ))}
     </span>
   );

@@ -1,6 +1,8 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { FlameIcon, TrophyIcon } from "lucide-react";
+import { DURATION, popStep } from "@/lib/motion";
 import type { Result } from "@/stores/progress";
 import { formatTime } from "@/lib/utils";
 import { getWorld, levelKey } from "../data";
@@ -30,24 +32,18 @@ export function worldCelebration(levels: Record<string, Result>, worldId: number
   };
 }
 
-// Chispas alrededor del ícono; con movimiento reducido quedan quietas.
-const SPARKS = [
-  "left-[18%] top-3 delay-100",
-  "right-[20%] top-5 delay-200",
-  "left-[28%] bottom-4 delay-300",
-  "right-[26%] bottom-3 delay-150",
-  "left-[10%] top-1/2 delay-250",
-  "right-[12%] top-1/2 delay-75",
-];
+// Chispas alrededor del ícono (`pop` escalonado, ≤ 600 ms); con movimiento reducido quedan quietas.
+const SPARKS = ["left-[18%] top-3", "right-[20%] top-5", "left-[28%] bottom-4", "right-[26%] bottom-3", "left-[10%] top-1/2", "right-[12%] top-1/2"];
+const SPARK_STYLE = (i: number) => ({ "--base": `${DURATION.base}ms`, "--i": i, "--step": popStep(SPARKS.length) }) as CSSProperties;
 
 export function CelebrationBanner({ celebration }: { celebration: Celebration }) {
   const world = celebration.kind === "world";
   return (
-    <div className="relative overflow-hidden rounded-xl bg-clue-exact-bg px-4 pt-5 pb-4 text-center text-clue-exact motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-500">
+    <div className="relative overflow-hidden rounded-xl bg-clue-exact-bg px-4 pt-5 pb-4 text-center text-clue-exact anim-appear">
       {SPARKS.map((c, i) => (
-        <span key={i} aria-hidden className={`absolute size-1.5 rounded-full bg-current opacity-60 motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-0 motion-safe:slide-in-from-bottom-3 motion-safe:duration-700 motion-safe:fill-mode-both ${c}`} />
+        <span key={i} aria-hidden className={`anim-pop absolute size-1.5 rounded-full bg-current opacity-60 ${c}`} style={SPARK_STYLE(i)} />
       ))}
-      <span className="mx-auto mb-2 flex size-11 items-center justify-center rounded-full bg-card shadow-[0_2px_0_0_var(--clue-exact)] motion-safe:animate-in motion-safe:spin-in-12 motion-safe:zoom-in-50 motion-safe:duration-700">
+      <span className="mx-auto mb-2 flex size-11 items-center justify-center rounded-full bg-card shadow-[0_2px_0_0_var(--clue-exact)] anim-pop [--base:var(--dur-fast)]">
         {world ? <TrophyIcon className="size-5" /> : <FlameIcon className="size-5" />}
       </span>
       {celebration.kind === "world" ? (

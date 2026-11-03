@@ -65,7 +65,7 @@ export function PlusNudge({ gameId, levels, mode, won = true, onLeave }: { gameI
   };
 
   return (
-    <aside aria-label="Craneá Plus" className="relative flex items-start gap-3 rounded-xl border border-border bg-clue-present-bg/70 p-3 pr-11 motion-safe:animate-in motion-safe:fade-in-0">
+    <aside aria-label="Craneá Plus" className="relative flex items-start gap-3 rounded-xl border border-border bg-clue-present-bg/70 p-3 pr-11 anim-appear">
       <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-full bg-card text-clue-present">
         <SparklesIcon className="size-4" />
       </span>

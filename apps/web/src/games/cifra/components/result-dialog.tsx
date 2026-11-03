@@ -14,6 +14,10 @@ import { CelebrationBanner, type Celebration } from "./celebration";
 import { DigitTile } from "./digit-tile";
 import { Walkthrough } from "./walkthrough";
 import { displayWorld } from "../data";
+import { popStep } from "@/lib/motion";
+
+/** La solución entra con `pop` escalonado después del diálogo (hasta 7 cifras, ≤ 600 ms). */
+const SOLUTION_STEP = popStep(7);
 
 export type GameMode =
   | { kind: "level"; world: number; level: number; nextHref: string | null }
@@ -64,7 +68,7 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry, celebration }:
         </DialogHeader>
         <div className="flex gap-1.5" aria-label="Solución">
           {puzzle.solution.map((d, i) => (
-            <DigitTile key={i} digit={d} tone="solution" className="anim-pop-in [--base:140ms]" style={{ "--i": i } as CSSProperties} />
+            <DigitTile key={i} digit={d} tone="solution" className="anim-pop [--base:var(--dur-base)]" style={{ "--i": i, "--step": SOLUTION_STEP } as CSSProperties} />
           ))}
         </div>
         <div className="flex flex-wrap items-center justify-between gap-2 text-sm">

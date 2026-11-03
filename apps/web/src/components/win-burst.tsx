@@ -13,7 +13,8 @@ const SPECKS = Array.from({ length: COUNT }, (_, i) => {
     dx: `calc(${Math.cos(angle).toFixed(3)} * max(${dist}cqmin, ${Math.round(dist * 1.5)}px))`,
     dy: `calc(${Math.sin(angle).toFixed(3)} * max(${dist}cqmin, ${Math.round(dist * 1.5)}px))`,
     rot: `${(i % 3 ? 1 : -1) * (90 + i * 23)}deg`,
-    delay: (i % 4) * 40,
+    // Escalonado corto: con la duración de `anim-speck` (480 ms) todo termina antes de los 600 ms.
+    delay: (i % 4) * 30,
     dash: i % 3 === 0,
     color: COLORS[i % COLORS.length],
   };

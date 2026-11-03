@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 /* Movimiento reducido del sistema o elegido en Ajustes (data-motion en <html>). */
@@ -162,11 +161,80 @@ html[data-text="large"] body {
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  --animate-shake: shake 0.38s ease-in-out;
-  --animate-pop: pop 0.2s var(--ease-spring);
-  --animate-dialog-in: dialog-in 0.34s var(--ease-spring);
+  /* Transiciones (hover, colores, press): por defecto, `fast` con la curva de salida. */
+  --default-transition-duration: var(--dur-fast);
+  --default-transition-timing-function: var(--ease-out);
+  /* Esqueletos de carga: el único movimiento que se repite. */
+  --animate-pulse: pulse var(--dur-loop) var(--ease-out) infinite;
 }
 
+/*
+ * Movimiento: el mismo sistema que la app (docs/motion.md). Los números salen de
+ * packages/core/src/motion.ts; un test comprueba que estos coincidan.
+ *
+ * - Tres duraciones y una curva para entrar (`--ease-out`) y otra para salir (`--ease-in`).
+ * - Sin resortes ni rebotes: nada pasa de largo.
+ * - Solo transform y opacity (salvo el color al dar vuelta una ficha).
+ * - Las secuencias usan `--i` (lugar) y `--step` (paso, lo calcula lib/motion.ts) y duran ≤ 600 ms.
+ * - Con movimiento reducido todo queda en su estado final al instante (ver @layer base).
+ */
+:root {
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 280ms;
+  --dur-loop: 1600ms;
+  --ease-out: cubic-bezier(0.33, 1, 0.68, 1);
+  --ease-in: cubic-bezier(0.32, 0, 0.67, 0);
+  --rise: 8px;
+  /* `celebrate`: subida `fast` + bajada `base`. `shake`: 280 ms. */
+  --dur-hop: calc(var(--dur-fast) + var(--dur-base));
+  --dur-shake: 280ms;
+}
+
+@keyframes appear {
+  from { opacity: 0; transform: translateY(var(--rise)); }
+}
+@keyframes fade {
+  from { opacity: 0; }
+}
+@keyframes fade-out {
+  to { opacity: 0; }
+}
+@keyframes pop {
+  from { opacity: 0; transform: scale(0.9); }
+}
+@keyframes dialog-in {
+  from { opacity: 0; transform: translateY(var(--rise)) scale(0.96); }
+}
+@keyframes sheet-in {
+  from { transform: translateY(100%); }
+}
+@keyframes sheet-out {
+  to { transform: translateY(100%); }
+}
+/* Una ficha que se revela: entra dada vuelta. */
+@keyframes reveal {
+  from { opacity: 0; transform: perspective(400px) rotateX(-90deg); }
+}
+/* Ficha que se da vuelta: hasta la mitad conserva el aspecto de lo tipeado; después muestra su color. */
+@keyframes flip {
+  0% { transform: perspective(400px) rotateX(0); background-color: var(--tile); border-color: var(--ink); color: var(--ink); }
+  50% { transform: perspective(400px) rotateX(-90deg); background-color: var(--tile); border-color: var(--ink); color: var(--ink); }
+  100% { transform: perspective(400px) rotateX(0); }
+}
+/* `celebrate`: sube en `fast` (37,5 % de 320 ms) y baja en `base`, sin pasarse. */
+@keyframes hop {
+  0%, 100% { transform: translateY(0); }
+  37.5% { transform: translateY(-20%); }
+}
+@keyframes pulse-up {
+  0%, 100% { transform: scale(1); }
+  37.5% { transform: scale(1.08); }
+}
+@keyframes dip {
+  0%, 100% { transform: scale(1); }
+  37.5% { transform: scale(0.85); background-color: var(--ok); }
+}
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   20% { transform: translateX(-6px); }
@@ -174,90 +242,40 @@ html[data-text="large"] body {
   60% { transform: translateX(-4px); }
   80% { transform: translateX(4px); }
 }
-@keyframes pop {
-  0% { transform: scale(0.8); }
-  60% { transform: scale(1.08); }
-  100% { transform: scale(1); }
+@keyframes shake-sm {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-3px); }
+  40% { transform: translateX(3px); }
+  60% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
 }
-
-/*
- * Movimiento: transform y opacity (salvo el color al dar vuelta una ficha), duraciones cortas.
- * Las clases `anim-*` usan `--i` (lugar en una secuencia) para escalonar.
- * Con movimiento reducido todo queda en su estado final al instante (ver @layer base).
- */
-:root {
-  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-@keyframes dialog-in {
-  0% { opacity: 0; transform: translateY(14px) scale(0.94); }
-  60% { opacity: 1; }
-  100% { opacity: 1; transform: none; }
-}
-@keyframes fade-up {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: none; }
-}
-@keyframes pop-in {
-  0% { opacity: 0; transform: scale(0.6); }
-  60% { opacity: 1; transform: scale(1.08); }
-  100% { opacity: 1; transform: scale(1); }
-}
-@keyframes bump {
-  0%, 100% { transform: scale(1); }
-  45% { transform: scale(1.12); }
-}
-@keyframes bounce-up {
-  0%, 100% { transform: translateY(0); }
-  40% { transform: translateY(-28%); }
-  70% { transform: translateY(4%); }
-}
-/* Ficha que se da vuelta: hasta la mitad conserva el aspecto de lo tipeado; después muestra su color. */
-@keyframes tile-flip {
-  0% { transform: perspective(400px) rotateX(0); background-color: var(--tile); border-color: var(--ink); color: var(--ink); }
-  50% { transform: perspective(400px) rotateX(-90deg); background-color: var(--tile); border-color: var(--ink); color: var(--ink); }
-  100% { transform: perspective(400px) rotateX(0); }
-}
-@keyframes tile-in {
-  0% { opacity: 0; transform: perspective(400px) rotateX(-90deg); }
-  100% { opacity: 1; transform: perspective(400px) rotateX(0); }
-}
-@keyframes rise {
-  0% { opacity: 0; transform: translateY(40%) scaleY(0.6); }
-  60% { opacity: 1; transform: translateY(-6%) scaleY(1.06); }
-  100% { opacity: 1; transform: none; }
+@keyframes stamp {
+  from { opacity: 0.4; transform: scale(0.6); }
 }
 @keyframes draw {
   from { stroke-dashoffset: 1; }
   to { stroke-dashoffset: 0; }
 }
-@keyframes grow-x {
+@keyframes draw-x {
   from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
+}
+/* El segundo puente sale del primero: va desde el centro hasta su lugar (el transform del elemento). */
+@keyframes split {
+  from { transform: translate(0px, 0px); }
 }
 @keyframes ring-out {
   0% { opacity: 0.7; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.6); }
-}
-@keyframes flash {
-  0%, 100% { opacity: 1; }
-  30% { opacity: 0.25; }
-  60% { opacity: 1; }
-  80% { opacity: 0.55; }
-}
-@keyframes ink-in {
-  0% { opacity: 0.4; transform: scale(0.35); }
-  100% { opacity: 1; transform: scale(1); }
 }
 @keyframes sweep {
   0% { opacity: 0.9; transform: scaleX(0); }
   55% { opacity: 0.9; transform: scaleX(1); }
   100% { opacity: 0; transform: scaleX(1); }
 }
-@keyframes wave {
-  0%, 100% { transform: scale(1); }
-  40% { transform: scale(0.7); background-color: var(--ok); }
+@keyframes sweep-y {
+  0% { opacity: 0.9; transform: scaleY(0); }
+  55% { opacity: 0.9; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1); }
 }
 @keyframes speck {
   0% { opacity: 0; transform: translate(0, 0) scale(0.4) rotate(0deg); }
@@ -265,98 +283,103 @@ html[data-text="large"] body {
   100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1) rotate(var(--rot, 90deg)); }
 }
 
-@utility anim-fade-up {
-  animation: fade-up 0.36s var(--ease-out) both;
-  animation-delay: calc(var(--i, 0) * 60ms);
+/* appear: pantallas, tarjetas y avisos que entran. Las secuencias se escalonan con `--base` + `--i` × `--step`. */
+@utility anim-appear {
+  animation: appear var(--dur-base) var(--ease-out) both;
+  animation-delay: calc(var(--base, 0ms) + var(--i, 0) * var(--step, 0ms));
 }
-@utility anim-pop-in {
-  animation: pop-in 0.32s var(--ease-spring) both;
-  animation-delay: calc(var(--base, 0ms) + var(--i, 0) * 70ms);
+@utility anim-fade {
+  animation: fade var(--dur-base) var(--ease-out) both;
 }
-@utility anim-bump {
-  animation: bump 0.28s var(--ease-out);
+@utility anim-fade-out {
+  animation: fade-out var(--dur-fast) var(--ease-in) both;
 }
-@utility anim-tile-in {
-  animation: tile-in 0.3s var(--ease-out) both;
-  animation-delay: calc(var(--i, 0) * 70ms);
+/* pop: lo que se tipea o se coloca. */
+@utility anim-pop {
+  animation: pop var(--dur-fast) var(--ease-out) both;
+  animation-delay: calc(var(--base, 0ms) + var(--i, 0) * var(--step, 0ms));
+}
+/* dialog / sheet: diálogos centrados y hojas desde abajo (salen con `data-[state=closed]:anim-*-out`). */
+@utility anim-dialog-in {
+  animation: dialog-in var(--dur-base) var(--ease-out) both;
+}
+@utility anim-dialog-out {
+  animation: fade-out var(--dur-fast) var(--ease-in) both;
+}
+@utility anim-sheet-in {
+  animation: sheet-in var(--dur-slow) var(--ease-out) both;
+}
+@utility anim-sheet-out {
+  animation: sheet-out var(--dur-base) var(--ease-in) both;
+}
+/* reveal: fichas de una fila que se revelan una por una (Cifra) o se dan vuelta (Palabra). */
+@utility anim-reveal {
+  animation: reveal var(--dur-base) var(--ease-out) both;
+  animation-delay: calc(var(--base, 0ms) + var(--i, 0) * var(--step, 0ms));
 }
 @utility anim-flip {
-  animation: tile-flip 0.34s ease-in-out both;
-  animation-delay: calc(var(--i, 0) * 90ms);
+  animation: flip var(--dur-base) var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * var(--step, 0ms));
 }
-/*
- * Festejos al ganar: cortos y sin rebotes que se queden. Todo entra en ~0,8 s, que es
- * cuando aparece el resultado (WIN_RESULT_MS en lib/motion.ts).
- */
-/* Fila ganadora: se da vuelta y después salta, ficha por ficha. */
+/* Fila ganadora de Palabra: se da vuelta y, justo después, salta letra por letra (`--hop-base`, `--hop-step`). */
 @utility anim-flip-win {
-  animation: tile-flip 0.3s ease-in-out both, bounce-up 0.28s var(--ease-out);
-  animation-delay: calc(var(--i, 0) * 60ms), calc(480ms + var(--i, 0) * 40ms);
+  animation: flip var(--dur-base) var(--ease-out) both, hop var(--dur-hop) var(--ease-out);
+  animation-delay: calc(var(--i, 0) * var(--step, 0ms)), calc(var(--hop-base, 0ms) + var(--i, 0) * var(--hop-step, 0ms));
 }
+/* celebrate: una ola de saltos (`hop`), latidos (`pulse`) o, en una grilla apretada, `dip`. */
 @utility anim-hop {
-  animation: bounce-up 0.3s var(--ease-out);
-  animation-delay: calc(var(--base, 0ms) + var(--i, 0) * 50ms);
+  animation: hop var(--dur-hop) var(--ease-out);
+  animation-delay: calc(var(--base, 0ms) + var(--i, 0) * var(--step, 0ms));
 }
-@utility anim-rise {
-  animation: rise 0.36s var(--ease-spring) both;
-  animation-delay: calc(var(--i, 0) * var(--step, 45ms));
+@utility anim-pulse {
+  animation: pulse-up var(--dur-hop) var(--ease-out);
+  animation-delay: calc(var(--base, 0ms) + var(--i, 0) * var(--step, 0ms));
 }
-@utility anim-draw {
-  stroke-dasharray: 1;
-  animation: draw 0.24s var(--ease-out) both;
+@utility anim-dip {
+  animation: dip var(--dur-hop) var(--ease-out);
+  animation-delay: calc(var(--base, 0ms) + var(--i, 0) * var(--step, 0ms));
 }
-/* El segundo puente sale del primero: va desde el centro hasta su lugar (el transform del elemento). */
-@keyframes split {
-  from { transform: translate(0px, 0px); }
-}
-@utility anim-split {
-  animation: split 0.22s var(--ease-out) both;
-}
-@keyframes nudge {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-2px); }
-  75% { transform: translateX(2px); }
-}
-@utility anim-nudge {
-  animation: nudge 0.22s ease-in-out 2;
-}
-/* `--step` lo pone el tablero para que la ola dure lo mismo en 5×5 que en 11×11. */
-@utility anim-ripple {
-  animation: bump 0.3s var(--ease-out);
-  animation-delay: calc(var(--i, 0) * var(--step, 55ms));
-}
-@utility anim-grow-x {
-  animation: grow-x 0.2s var(--ease-out) both;
+/* confirm: algo que quedó bien late una vez; una isla suelta un anillo; una línea, una pasada. */
+@utility anim-bump {
+  animation: pulse-up var(--dur-hop) var(--ease-out);
 }
 @utility anim-ring-out {
-  animation: ring-out 0.5s var(--ease-out) both;
-}
-@utility anim-flash {
-  animation: flash 0.6s ease-in-out;
-}
-@utility anim-ink-in {
-  animation: ink-in 0.16s var(--ease-out) both;
-  animation-delay: calc(var(--i, 0) * var(--step, 0ms));
+  animation: ring-out var(--dur-slow) var(--ease-out) both;
 }
 @utility anim-sweep {
   transform-origin: left;
-  animation: sweep 0.5s var(--ease-out) both;
-}
-@keyframes sweep-y {
-  0% { opacity: 0.9; transform: scaleY(0); }
-  55% { opacity: 0.9; transform: scaleY(1); }
-  100% { opacity: 0; transform: scaleY(1); }
+  animation: sweep var(--dur-slow) var(--ease-out) both;
 }
 @utility anim-sweep-y {
   transform-origin: top;
-  animation: sweep-y 0.5s var(--ease-out) both;
+  animation: sweep-y var(--dur-slow) var(--ease-out) both;
 }
-@utility anim-wave {
-  animation: wave 0.34s ease-in-out;
-  animation-delay: calc(var(--i, 0) * var(--step, 30ms));
+/* shake: error. La chica, para una sola pieza. */
+@utility anim-shake {
+  animation: shake var(--dur-shake) var(--ease-out);
 }
+@utility anim-shake-sm {
+  animation: shake-sm var(--dur-shake) var(--ease-out);
+}
+/* stamp: casilla que se pinta (Nonograma). */
+@utility anim-stamp {
+  animation: stamp var(--dur-fast) var(--ease-out) both;
+  animation-delay: calc(var(--base, 0ms) + var(--i, 0) * var(--step, 0ms));
+}
+/* draw: trazos (puentes, cruces, tachados). */
+@utility anim-draw {
+  stroke-dasharray: 1;
+  animation: draw var(--dur-base) var(--ease-out) both;
+}
+@utility anim-draw-x {
+  animation: draw-x var(--dur-base) var(--ease-out) both;
+}
+@utility anim-split {
+  animation: split var(--dur-base) var(--ease-out) both;
+}
+/* Salpicadura de la victoria (parte de `celebrate`): con su escalonado termina antes de los 600 ms. */
 @utility anim-speck {
-  animation: speck 0.6s var(--ease-out) both;
+  animation: speck calc(var(--dur-slow) + var(--dur-base)) var(--ease-out) both;
   animation-delay: var(--delay, 0ms);
 }
 
@@ -430,9 +453,8 @@ html[data-text="large"] body {
   --tutorial-dim: rgb(0 0 0 / 0.72);
 }
 @keyframes tutorial-pulse {
-  0%, 100% { stroke-opacity: 1; }
   50% { stroke-opacity: 0.35; }
 }
 .tutorial-ring {
-  animation: tutorial-pulse 1.6s ease-in-out infinite;
+  animation: tutorial-pulse var(--dur-loop) var(--ease-out) infinite;
 }

@@ -116,7 +116,7 @@ export function TorresGame({ puzzle, mode }: { puzzle: TorresPuzzle; mode: GameM
         </div>
       </div>
 
-      <section aria-label="Ciudad" className="anim-fade-up relative mb-2">
+      <section aria-label="Ciudad" className="anim-appear relative mb-2">
         <Board
           size={puzzle.size}
           clues={puzzle.clues}
@@ -130,7 +130,7 @@ export function TorresGame({ puzzle, mode }: { puzzle: TorresPuzzle; mode: GameM
           wave={status === "won"}
           gridRef={gridRef}
         />
-        {status === "won" && <WinBurst delay={150} />}
+        {status === "won" && <WinBurst />}
       </section>
 
       <CheckMessage />

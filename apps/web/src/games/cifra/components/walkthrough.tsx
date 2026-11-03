@@ -26,7 +26,7 @@ export function Walkthrough({ puzzle, onBack }: { puzzle: CifraPuzzle; onBack: (
           <ClueRow key={r} clue={c} size="sm" highlight={rows.includes(r)} dim={step !== undefined && !rows.includes(r)} />
         ))}
       </ol>
-      <p key={i} aria-live="polite" className="min-h-18 text-sm leading-relaxed motion-safe:animate-in motion-safe:fade-in">
+      <p key={i} aria-live="polite" className="min-h-18 text-sm leading-relaxed anim-fade">
         {step ? step.text : `Queda un solo código posible: ${codeToString(puzzle.solution)}.`}
       </p>
       <DialogFooter>

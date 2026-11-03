@@ -6,7 +6,7 @@ export function TryTutorial({ href }: { href: string }) {
   return (
     <Link
       href={href}
-      className="flex min-h-11 items-center gap-3 rounded-xl border-2 border-ink bg-card p-4 shadow-[0_3px_0_0_var(--shadow-ink)] transition-[translate,background-color] duration-150 outline-none hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 active:translate-y-px"
+      className="flex min-h-11 items-center gap-3 rounded-xl border-2 border-ink bg-card p-4 shadow-[0_3px_0_0_var(--shadow-ink)] transition-[translate,background-color] duration-(--dur-fast) outline-none hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 active:translate-y-px"
     >
       <GraduationCapIcon aria-hidden className="size-6 shrink-0 text-ring" />
       <span className="min-w-0 flex-1 leading-snug">

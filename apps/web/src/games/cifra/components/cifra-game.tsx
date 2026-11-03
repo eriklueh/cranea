@@ -145,7 +145,7 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
       </div>
 
       <DrawingBoard key={`${puzzle.id}:${drawingSession}`} active={drawing} onActiveChange={setDrawing} storageKey={status === "playing" && !tutorial ? puzzle.id : null} tools={<><HintButton /><ClearMarks /></>}>
-      <section aria-label="Pistas" data-tutorial="clues" className="anim-fade-up mb-4">
+      <section aria-label="Pistas" data-tutorial="clues" className="anim-appear mb-4">
         <ol className="space-y-2.5">
           {puzzle.clues.map((c, i) => (
             <ClueRow key={i} clue={c} marks={marks} row={i} highlight={hintRows.includes(i)} interactive disabled={status !== "playing"} onCycleMark={cycleMark} />
@@ -161,7 +161,7 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
       <section aria-label="Tu código" className="space-y-3">
         <div className="relative flex flex-col items-center gap-3">
           <InputSlots />
-          {status === "won" && <WinBurst delay={100} />}
+          {status === "won" && <WinBurst />}
         </div>
         {/* Al terminar, "Ver resultado" ocupa el lugar del teclado: nada se corre de lugar. */}
         <FinishSlot

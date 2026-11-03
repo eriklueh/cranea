@@ -15,8 +15,8 @@ App nativa con **Expo SDK 58** + **expo-router**, para Google Play y App Store. 
 | Torres | ✅ Niveles (4 mundos, 4×4 a 7×7) + diario, notas, comprobar con 3 intentos, partida en curso guardada |
 
 También: inicio con los diarios de hoy, pantalla de cada juego (diario, «Seguir jugando», mundos y niveles),
-ranking del día, estadísticas, cuenta (Apple / Google / código por mail), tema cuaderno/pizarrón, vibraciones,
-**Craneá Plus** (RevenueCat) y anuncios con recompensa opcionales (AdMob). Ver [Monetización](#monetización).
+ranking del día, estadísticas, cuenta (Apple / Google / código por mail), **Ajustes** (como la hoja de Ajustes
+de la web), **Craneá Plus** (RevenueCat) y anuncios con recompensa opcionales (AdMob). Ver [Monetización](#monetización).
 
 ## Cómo está armado
 
@@ -35,7 +35,9 @@ apps/mobile/
    ├─ stores/progress.ts  Zustand + AsyncStorage, clave y formato idénticos a la web
    ├─ entitlements/       ¿Tiene Plus? (RevenueCat o Convex, guardado para jugar sin red) y qué es gratis
    ├─ monetization/       RevenueCat (purchases.ts), AdMob (ads.ts), intento extra, guardas de Expo Go (native.ts)
-   ├─ theme/              Tokens de color de globals.css y fuentes
+   ├─ lib/                motion.tsx (sistema de movimiento, ver docs/motion.md), prefs.ts (Ajustes),
+   │                      sound.ts (expo-audio), haptics.ts, hooks.ts, storage.ts
+   ├─ theme/              Tokens de color de globals.css (también la paleta para daltonismo) y fuentes
    └─ config.ts           URL pública y de privacidad (a confirmar)
 ```
 
@@ -47,6 +49,20 @@ apps/mobile/
   La sincronización (`account/progress-sync.tsx`) es la de la web, con AppState en lugar de `online`.
 - **Diario**: misma semántica que la web. Espera el progreso del dispositivo y de la cuenta (máximo 4 s), la
   primera partida con sesión abre el intento oficial (`ranking.startDaily`) y las repeticiones son práctica.
+- **Ajustes** (`src/app/ajustes.tsx`, engranaje del inicio y desde Tu cuenta): los mismos que la web.
+  *Pantalla*: tema (Cuaderno / Pizarrón / Sistema), colores de las pistas (Clásicos / Daltonismo, con vista
+  previa), tamaño de letra (Normal / Grande: agranda el texto de lectura ~1,125×; los tableros usan Bricolage o
+  tamaños fijos y no cambian) y animaciones (Según el sistema / Reducidas). *Juego*: sonido (apagado por
+  defecto) y vibración. *Más*: estadísticas, Craneá Plus, Tu cuenta y el recordatorio. Se guardan en
+  `cranea-prefs` (AsyncStorage) y el layout raíz espera a leerlos antes del primer cuadro (el tema elegido antes
+  en `cranea-theme` se migra solo). Tu cuenta queda para la sesión, el ranking, Plus y borrar la cuenta.
+- **Movimiento**: un solo sistema para la web y la app, con los números en `@cranea/core/motion`. Ver
+  [docs/motion.md](motion.md). Nada de duraciones, resortes ni presets de Reanimated sueltos en los componentes.
+- **Sonido**: `src/lib/sound.ts` con expo-audio y cuatro WAV de pocos KB (`assets/sounds`, generados con
+  `node apps/mobile/scripts/build-sounds.mjs` con las mismas notas que la web). Respeta el modo silencio y no
+  corta la música. expo-audio es nativo: un development build anterior a este cambio no lo trae y la app queda
+  muda sin romperse; hace falta un build nuevo para oírlo. No se usa el plugin de expo-audio (agregaría el
+  permiso de micrófono).
 
 ## Correrlo en tu máquina
 

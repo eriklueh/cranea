@@ -44,6 +44,8 @@ export const STAGGER = { step: 60, max: 600 } as const;
 
 /** `shake` entero (5 tramos). */
 export const SHAKE_MS = 280;
+/** Lo único que se repite: esqueletos de carga y el resaltado del tutorial (una vuelta). */
+export const LOOP_MS = 1600;
 /** `celebrate`: subida `fast` + bajada `base` por elemento. */
 export const HOP_MS = DURATION.fast + DURATION.base;
 
