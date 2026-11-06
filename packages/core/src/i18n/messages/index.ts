@@ -5,6 +5,11 @@ import * as common from "./common";
 import * as games from "./games";
 import * as notifications from "./notifications";
 import * as tutorial from "./tutorial";
+import * as tutorialCifra from "./tutorials/cifra";
+import * as tutorialPuentes from "./tutorials/puentes";
+import * as tutorialTorres from "./tutorials/torres";
+import * as tutorialPalabra from "./tutorials/palabra";
+import * as tutorialNonograma from "./tutorials/nonograma";
 
 /** Espacios de nombres compartidos por la web y la app. Cada app suma los suyos (ver docs/i18n.md). */
 const es = {
@@ -13,6 +18,11 @@ const es = {
   achievements: achievements.es,
   notifications: notifications.es,
   tutorial: tutorial.es,
+  tutorialCifra: tutorialCifra.es,
+  tutorialPuentes: tutorialPuentes.es,
+  tutorialTorres: tutorialTorres.es,
+  tutorialPalabra: tutorialPalabra.es,
+  tutorialNonograma: tutorialNonograma.es,
 };
 
 const en: Shape<typeof es> = {
@@ -21,6 +31,11 @@ const en: Shape<typeof es> = {
   achievements: achievements.en,
   notifications: notifications.en,
   tutorial: tutorial.en,
+  tutorialCifra: tutorialCifra.en,
+  tutorialPuentes: tutorialPuentes.en,
+  tutorialTorres: tutorialTorres.en,
+  tutorialPalabra: tutorialPalabra.en,
+  tutorialNonograma: tutorialNonograma.en,
 };
 
 export type CoreMessages = typeof es;

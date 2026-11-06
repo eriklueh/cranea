@@ -1,8 +1,8 @@
 import type { NamespaceShape } from "../translate";
 
 /**
- * Tutoriales guiados (guiones de apps/web/src/games/<juego>/tutorial.tsx y el motor
- * apps/web/src/components/tutorial/machine.ts). Claves `<juego>.<paso>`.
+ * Motor y pantalla de los tutoriales guiados (apps/web/src/components/tutorial/*). Los guiones de
+ * cada juego van en `tutorials/<juego>.ts` (espacios `tutorialCifra`, `tutorialPuentes`…).
  */
 export const es = {};
 
