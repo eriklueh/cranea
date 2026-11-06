@@ -1,5 +1,14 @@
 import type { ReactNode } from "react";
+import type { Locale } from "@cranea/core/i18n";
 import type { Result } from "@/stores/progress";
+
+/**
+ * Texto que depende del idioma: fijo (español de siempre) o una función del idioma activo.
+ * GameHome lo resuelve con `localized(valor, locale)`. Nombre, bajada y mundos salen de
+ * `gameCopy` / `worldCopy` de `@cranea/core/i18n` según `id`.
+ */
+export type Localized = string | ((locale: Locale) => string);
+export const localized = (v: Localized, locale: Locale) => (typeof v === "function" ? v(locale) : v);
 
 /** Lo mínimo de un mundo que necesita el mapa. */
 export interface HomeWorld {
@@ -22,9 +31,9 @@ export interface GameHomeConfig {
   article: "el" | "la";
   daily: {
     /** "Cifra del día" */
-    title: string;
+    title: Localized;
     /** Una línea para quien todavía no lo jugó. */
-    blurb: string;
+    blurb: Localized;
     href: string;
     number: (date: string) => number;
     /** Si hay una partida del diario empezada en el dispositivo. */
@@ -38,15 +47,15 @@ export interface GameHomeConfig {
   /** Puntitos de un nivel ganado, de 1 a 3. */
   stars: (r: Result) => number;
   /** "en 2 intentos", "sin errores"… */
-  resultText: (r: Result) => string;
+  resultText: (r: Result, locale: Locale) => string;
   /** Dato principal de una partida terminada para la tarjeta del diario. */
-  resultStat: (r: Result) => { label: string; value: string };
+  resultStat: (r: Result, locale: Locale) => { label: string; value: string };
   /** Qué se completa en cada mundo. Por defecto, niveles. */
-  unit?: { one: string; many: string };
+  unit?: { one: Localized; many: Localized };
   /** Miniatura de un nivel ganado (los dibujos de Nonograma). */
   thumbnail?: (world: number, level: number) => ReactNode;
   /** Nombre corto de un nivel ganado para lectores de pantalla. */
-  levelTitle?: (world: number, level: number) => string;
+  levelTitle?: (world: number, level: number, locale: Locale) => string;
 }
 
 export const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;

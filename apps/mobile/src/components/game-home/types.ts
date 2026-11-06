@@ -1,7 +1,16 @@
 import type { Href } from "expo-router";
 import type { ReactNode } from "react";
+import type { Locale } from "@cranea/core/i18n";
 import { plural } from "@/lib/format";
 import type { GameProgress, Result } from "@/stores/progress";
+
+/**
+ * Texto que depende del idioma: fijo (español de siempre) o una función del idioma activo.
+ * GameHome lo resuelve con `localized(valor, locale)`. Nombre, bajada y mundos salen de
+ * `gameCopy` / `worldCopy` de `@cranea/core/i18n` según `id`.
+ */
+export type Localized = string | ((locale: Locale) => string);
+export const localized = (v: Localized, locale: Locale) => (typeof v === "function" ? v(locale) : v);
 
 /** Lo mínimo de un mundo que necesita el mapa. */
 export interface HomeWorld {
@@ -22,8 +31,8 @@ export interface GameHomeConfig {
   /** "la" para Palabra ("la de hoy", "Resuelta"); "el" para el resto. */
   article: "el" | "la";
   daily: {
-    title: string;
-    blurb: string;
+    title: Localized;
+    blurb: Localized;
     href: Href;
     number: (date: string) => number;
     /** Si hay una partida del diario empezada en el dispositivo. */
@@ -39,12 +48,12 @@ export interface GameHomeConfig {
   howToHref?: Href;
   /** Puntitos de un nivel ganado, de 1 a 3. */
   stars: (r: Result) => number;
-  resultText: (r: Result) => string;
-  resultStat: (r: Result) => { label: string; value: string };
+  resultText: (r: Result, locale: Locale) => string;
+  resultStat: (r: Result, locale: Locale) => { label: string; value: string };
   /** Miniatura de un nivel ganado en la grilla (el dibujo de Nonograma), en lugar del número. */
   thumbnail?: (world: number, level: number) => ReactNode;
   /** Nombre de un nivel ganado, para el lector de pantalla. */
-  levelTitle?: (world: number, level: number) => string;
+  levelTitle?: (world: number, level: number, locale: Locale) => string;
 }
 
 /** "en 2 intentos" */
