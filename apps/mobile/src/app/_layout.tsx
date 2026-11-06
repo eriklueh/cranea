@@ -12,6 +12,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { initialWindowMetrics, SafeAreaProvider } from "react-native-safe-area-context";
 import { AccountProvider } from "@/account/account-provider";
 import { MotionPreference, useMotionReduced } from "@/lib/motion";
+import { useT } from "@/lib/i18n";
 import { usePrefs } from "@/lib/prefs";
 import { ThemeProvider, useTheme } from "@/theme/theme";
 import { fonts } from "@/theme/tokens";
@@ -55,6 +56,7 @@ export default function RootLayout() {
 function Navigator() {
   const { colors, scheme } = useTheme();
   const reduced = useMotionReduced();
+  const t = useT();
   useEffect(() => {
     SystemUI.setBackgroundColorAsync(colors.paper).catch(() => {});
   }, [colors.paper]);
@@ -73,12 +75,12 @@ function Navigator() {
           animation: reduced ? "fade" : "slide_from_right",
         }}
       >
-        <Stack.Screen name="index" options={{ title: "Craneá" }} />
-        <Stack.Screen name="cuenta" options={{ title: "Tu cuenta", presentation: "modal" }} />
-        <Stack.Screen name="ajustes" options={{ title: "Ajustes" }} />
-        <Stack.Screen name="plus" options={{ title: "Craneá Plus", presentation: "modal" }} />
+        <Stack.Screen name="index" options={{ title: t("common.appName") }} />
+        <Stack.Screen name="cuenta" options={{ title: t("shell.accountTitle"), presentation: "modal" }} />
+        <Stack.Screen name="ajustes" options={{ title: t("common.settings") }} />
+        <Stack.Screen name="plus" options={{ title: t("common.plus"), presentation: "modal" }} />
         <Stack.Screen name="sso-callback" options={{ headerShown: false, animation: "none" }} />
-        <Stack.Screen name="+not-found" options={{ title: "Craneá" }} />
+        <Stack.Screen name="+not-found" options={{ title: t("common.appName") }} />
       </Stack>
     </>
   );

@@ -12,6 +12,7 @@ import { PuentesPreview } from "@/games/puentes/components/preview";
 import { NonogramaPreview } from "@/games/nonograma/components/examples";
 import { GAMES, type MobileGame } from "@/games/registry";
 import { useClock } from "@/lib/hooks";
+import { useGameCopy, useT, useVisibleGames } from "@/lib/i18n";
 import { motion, staggerStep } from "@/lib/motion";
 import { dailyStreak, useProgress } from "@/stores/progress";
 import { useTheme } from "@/theme/theme";
@@ -20,16 +21,19 @@ import { fonts, radius } from "@/theme/tokens";
 export default function Home() {
   const { colors } = useTheme();
   const router = useRouter();
+  const t = useT();
+  // Palabra (en castellano) no aparece en inglés.
+  const games = useVisibleGames(GAMES);
   return (
     <>
       <Stack.Screen
         options={{
-          headerTitle: () => <Text style={{ fontFamily: fonts.displayHeavy, fontSize: 24, color: colors.ink }}>Craneá</Text>,
+          headerTitle: () => <Text style={{ fontFamily: fonts.displayHeavy, fontSize: 24, color: colors.ink }}>{t("common.appName")}</Text>,
           headerRight: () => (
             <Row gap={4}>
-              <HeaderButton icon="stats-chart-outline" label="Estadísticas" onPress={() => router.push("/estadisticas")} />
-              <HeaderButton icon="settings-outline" label="Ajustes" onPress={() => router.push("/ajustes")} />
-              <HeaderButton icon="person-circle-outline" label="Tu cuenta" onPress={() => router.push("/cuenta")} />
+              <HeaderButton icon="stats-chart-outline" label={t("common.stats")} onPress={() => router.push("/estadisticas")} />
+              <HeaderButton icon="settings-outline" label={t("common.settings")} onPress={() => router.push("/ajustes")} />
+              <HeaderButton icon="person-circle-outline" label={t("shell.accountTitle")} onPress={() => router.push("/cuenta")} />
             </Row>
           ),
         }}
@@ -37,8 +41,8 @@ export default function Home() {
       <Screen>
         <TodayStrip />
         <ReminderOffer />
-        {GAMES.map((g, i) => (
-          <Animated.View key={g.id} entering={motion.appear(i * staggerStep(GAMES.length))}>
+        {games.map((g, i) => (
+          <Animated.View key={g.id} entering={motion.appear(i * staggerStep(games.length))}>
             <GameCard game={g} />
           </Animated.View>
         ))}
@@ -62,14 +66,15 @@ function TodayStrip() {
   const today = todayKey(new Date(now));
   const hydrated = useProgress((s) => s.hydrated);
   const games = useProgress((s) => s.games);
-  const live = GAMES.filter((g) => g.mobile === "live");
+  const t = useT();
+  const live = useVisibleGames(GAMES).filter((g) => g.mobile === "live");
   const done = live.filter((g) => games[g.id]?.daily[today]).length;
   if (!hydrated) return null;
   return (
     <Row gap={8} style={[styles.strip, { backgroundColor: colors.muted }]}>
       <Icon name={done === live.length ? "checkmark-circle" : "calendar-outline"} size={18} color={done === live.length ? colors.ok : colors.ink} />
       <Text variant="small" style={{ flex: 1, color: colors.ink }}>
-        {done === live.length ? "Jugaste todos los desafíos de hoy." : `Desafíos de hoy: ${done} de ${live.length}.`}
+        {done === live.length ? t("shell.todayAllDone") : t("shell.todayProgress", { done, total: live.length })}
       </Text>
       <ProtectorBadge />
     </Row>
@@ -79,10 +84,13 @@ function TodayStrip() {
 function GameCard({ game }: { game: MobileGame }) {
   const { colors } = useTheme();
   const router = useRouter();
+  const t = useT();
+  // En inglés, el nombre (marca) lleva su subtítulo: «Puentes · Bridges».
+  const copy = useGameCopy(game.id);
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${game.name}. ${game.tagline}${game.mobile === "soon" ? " Muy pronto en la app." : ""}`}
+      accessibilityLabel={`${copy.name}${copy.subtitle ? ` (${copy.subtitle})` : ""}. ${copy.tagline}${game.mobile === "soon" ? ` ${t("shell.soonInApp")}` : ""}`}
       onPress={() => router.push(game.href)}
       style={({ pressed }) => [
         styles.card,
@@ -92,10 +100,13 @@ function GameCard({ game }: { game: MobileGame }) {
       ]}
     >
       <Row style={{ justifyContent: "space-between", flexWrap: "wrap" }}>
-        <Text style={{ fontFamily: fonts.displayHeavy, fontSize: 28, color: colors.ink }}>{game.name}</Text>
+        <Text style={{ fontFamily: fonts.displayHeavy, fontSize: 28, color: colors.ink, flexShrink: 1 }}>
+          {copy.name}
+          {copy.subtitle ? <Text style={{ fontFamily: fonts.bodyBold, fontSize: 16, color: colors.mutedForeground }}> · {copy.subtitle}</Text> : null}
+        </Text>
         {game.mobile === "live" ? <DailyBadge gameId={game.id} /> : <SoonBadge />}
       </Row>
-      <Text variant="muted">{game.tagline}</Text>
+      <Text variant="muted">{copy.tagline}</Text>
       {game.id === "cifra" && <CifraPreview />}
       {game.id === "palabra" && <PalabraPreview />}
       {game.id === "torres" && <View style={styles.preview}><TorresPreview /></View>}
@@ -113,9 +124,10 @@ function DailyBadge({ gameId }: { gameId: string }) {
   const hydrated = useProgress((s) => s.hydrated);
   const played = useProgress((s) => s.games[gameId]?.daily[today]);
   const streak = useProgress((s) => dailyStreak(s.games[gameId]?.daily ?? {}, today));
+  const t = useT();
   if (!hydrated) return null;
   const tone = played ? (played.won ? { bg: colors.clueExactBg, fg: colors.clueExact } : { bg: colors.muted, fg: colors.pencil }) : { bg: colors.cluePresentBg, fg: colors.cluePresent };
-  const label = played ? (played.won ? "Hoy: resuelto" : "Hoy: no salió") : "Diario sin jugar";
+  const label = played ? (played.won ? t("shell.dailySolved") : t("shell.dailyMissed")) : t("shell.dailyUnplayed");
   return (
     <Row gap={4} style={[styles.badge, { backgroundColor: tone.bg }]}>
       <Icon name={played ? (played.won ? "checkmark" : "moon") : "sunny"} size={14} color={tone.fg} />
@@ -127,9 +139,10 @@ function DailyBadge({ gameId }: { gameId: string }) {
 
 function SoonBadge() {
   const { colors } = useTheme();
+  const t = useT();
   return (
     <View style={[styles.badge, { backgroundColor: colors.muted }]}>
-      <Text style={{ fontFamily: fonts.bodyBold, fontSize: 13, color: colors.mutedForeground }}>Muy pronto</Text>
+      <Text style={{ fontFamily: fonts.bodyBold, fontSize: 13, color: colors.mutedForeground }}>{t("shell.soon")}</Text>
     </View>
   );
 }

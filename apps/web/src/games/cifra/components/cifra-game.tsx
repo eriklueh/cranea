@@ -20,8 +20,10 @@ import { FinishSlot } from "@/components/finish-slot";
 import { LOSS_RESULT_MS, WIN_RESULT_MS } from "@/lib/motion";
 import { STREAK_MILESTONES, worldCelebration, type Celebration } from "./celebration";
 import type { TutorialMode } from "@/components/tutorial/mode";
+import { useT } from "@/lib/i18n";
 
 export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMode | TutorialMode }) {
+  const t = useT();
   const tutorial = mode.kind === "tutorial";
   const start = useCifra((s) => s.start);
   const current = useCifra((s) => s.puzzle);
@@ -122,12 +124,12 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
     }
     setCelebration(reached);
     clearSession(puzzle.id);
-    const t = setTimeout(() => setResultOpen(true), status === "won" ? WIN_RESULT_MS : LOSS_RESULT_MS);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setResultOpen(true), status === "won" ? WIN_RESULT_MS : LOSS_RESULT_MS);
+    return () => clearTimeout(timer);
   }, [status, current, puzzle, mode]);
 
-  const title = mode.kind === "tutorial" ? "Tutorial" : mode.kind === "daily" ? `Cifra del día #${mode.number}` : `Nivel ${mode.level}`;
-  const subtitle = mode.kind === "tutorial" ? "Cifra" : mode.kind === "daily" ? "Mismo tablero para todos" : `Mundo ${displayWorld(mode.world)}`;
+  const title = mode.kind === "tutorial" ? t("common.tutorial") : mode.kind === "daily" ? t("cifra.dailyTitle", { n: mode.number }) : t("common.level", { n: mode.level });
+  const subtitle = mode.kind === "tutorial" ? "Cifra" : mode.kind === "daily" ? t("cifra.sameBoard") : t("common.world", { n: displayWorld(mode.world) });
 
   return (
     <main className="mx-auto w-full max-w-md px-4 pb-10">
@@ -145,7 +147,7 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
       </div>
 
       <DrawingBoard key={`${puzzle.id}:${drawingSession}`} active={drawing} onActiveChange={setDrawing} storageKey={status === "playing" && !tutorial ? puzzle.id : null} tools={<><HintButton /><ClearMarks /></>}>
-      <section aria-label="Pistas" data-tutorial="clues" className="anim-appear mb-4">
+      <section aria-label={t("cifra.cluesLabel")} data-tutorial="clues" className="anim-appear mb-4">
         <ol className="space-y-2.5">
           {puzzle.clues.map((c, i) => (
             <ClueRow key={i} clue={c} marks={marks} row={i} highlight={hintRows.includes(i)} interactive disabled={status !== "playing"} onCycleMark={cycleMark} />
@@ -158,7 +160,7 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
 
       <HintPanel />
 
-      <section aria-label="Tu código" className="space-y-3">
+      <section aria-label={t("cifra.codeLabel")} className="space-y-3">
         <div className="relative flex flex-col items-center gap-3">
           <InputSlots />
           {status === "won" && <WinBurst />}
@@ -168,7 +170,7 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
           finished={status !== "playing"}
           done={
             <button className="min-h-11 text-sm font-semibold underline decoration-margin decoration-2 underline-offset-4" onClick={() => setResultOpen(true)}>
-              Ver resultado
+              {t("cifra.seeResult")}
             </button>
           }
         >

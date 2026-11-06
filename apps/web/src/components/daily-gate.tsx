@@ -14,6 +14,7 @@ import { PlusGate } from "@/components/plus/paywall";
 import { PlusNudge } from "@/components/plus/plus-nudge";
 import { Button } from "@/components/ui/button";
 import { useHydrated } from "@/hooks/use-hydrated";
+import { translator, useLocale, useT, type Locale } from "@/lib/i18n";
 import { cn, formatTime } from "@/lib/utils";
 import { dailyStreak, useProgress, type Result } from "@/stores/progress";
 
@@ -51,6 +52,8 @@ export function DailyGate({ gameId, game, home, launch, title, reveal, plusLevel
   const [waited, setWaited] = useState(false);
   const [entry, setEntry] = useState<{ date: string; played: Result | null; archive: boolean; requested: string | null } | null>(null);
   const [practice, setPractice] = useState(false);
+  const t = useT();
+  const locale = useLocale();
   const ready = hydrated && (!accountsEnabled || accountReady || waited);
 
   useEffect(() => {
@@ -69,7 +72,7 @@ export function DailyGate({ gameId, game, home, launch, title, reveal, plusLevel
   if (!entry) {
     return (
       <main className="mx-auto w-full max-w-md px-4 pt-4 text-muted-foreground" aria-busy>
-        {hydrated && !ready ? "Buscando tus partidas…" : "Preparando el tablero…"}
+        {hydrated && !ready ? t("hub.findingGames") : t("hub.preparingBoard")}
       </main>
     );
   }
@@ -81,13 +84,13 @@ export function DailyGate({ gameId, game, home, launch, title, reveal, plusLevel
           <p role="status" className="flex min-w-0 items-start gap-2 pt-0.5">
             <ArchiveIcon className="mt-0.5 size-4 shrink-0" aria-hidden />
             <span>
-              <span className="font-semibold text-foreground">Diario del {shortDate(entry.date)}</span>
-              {played && <> · {played.won ? "lo resolviste" : "no salió"}</>}
-              <span className="block">Práctica: no se guarda ni cuenta.</span>
+              <span className="font-semibold text-foreground">{t("hub.dailyOf", { date: shortDate(entry.date, locale) })}</span>
+              {played && <> · {played.won ? t("hub.youSolvedIt") : t("hub.missed")}</>}
+              <span className="block">{t("hub.practiceShort")}</span>
             </span>
           </p>
           <Link href={`${home}/archivo`} className="-my-2.5 inline-flex min-h-11 shrink-0 items-center rounded-md px-2 font-semibold text-foreground underline decoration-border decoration-2 underline-offset-4 hover:decoration-current">
-            Archivo
+            {t("common.archive")}
           </Link>
         </div>
         {/* Los diarios anteriores son de Craneá Plus. */}
@@ -107,7 +110,7 @@ export function DailyGate({ gameId, game, home, launch, title, reveal, plusLevel
     return (
       <>
         <p className="mx-auto mb-2 flex w-full max-w-md items-center gap-2 px-4 text-sm text-muted-foreground" role="status">
-          <RotateCcwIcon className="size-4 shrink-0" aria-hidden /> Práctica: no se guarda ni cuenta para el ranking.
+          <RotateCcwIcon className="size-4 shrink-0" aria-hidden /> {t("hub.practiceNote")}
         </p>
         {children(entry.date, true)}
       </>
@@ -124,6 +127,7 @@ function OfficialStart({ gameId, date }: { gameId: string; date: string }) {
   const { isLoading, isAuthenticated } = useConvexAuth();
   const start = useMutation(api.ranking.startDaily);
   const sent = useRef(false);
+  const t = useT();
   useEffect(() => {
     if (!isAuthenticated || sent.current) return;
     sent.current = true;
@@ -132,17 +136,18 @@ function OfficialStart({ gameId, date }: { gameId: string; date: string }) {
   if (isLoading || isAuthenticated) return null;
   return (
     <p className="mx-auto mb-2 w-full max-w-md px-4 text-xs text-muted-foreground">
-      Jugás sin sesión: este diario no va a entrar al ranking.
+      {t("hub.noSession")}
     </p>
   );
 }
 
-function untilTomorrow(now: number) {
+function untilTomorrow(now: number, locale: Locale) {
+  const t = translator(locale);
   const next = new Date(now);
   next.setUTCHours(24, 0, 0, 0);
   const min = Math.max(1, Math.ceil((next.getTime() - now) / 60_000));
   const h = Math.floor(min / 60);
-  return h ? `${h} h ${min % 60} min` : `${min} min`;
+  return h ? t("hub.hoursMinutes", { h, m: min % 60 }) : t("hub.minutes", { m: min });
 }
 
 function DailyDone({ gameId, game, home, date, title, result, reveal, plusLevels, onPractice }: {
@@ -156,7 +161,9 @@ function DailyDone({ gameId, game, home, date, title, result, reveal, plusLevels
   }, []);
   const tomorrow = todayKey(new Date(now)) !== date;
   const games = useProgress((s) => s.games);
-  const dailies = dailiesFor(games, date);
+  const t = useT();
+  const locale = useLocale();
+  const dailies = dailiesFor(games, date, locale);
   const next = dailies.find((d) => !d.result);
 
   return (
@@ -168,72 +175,72 @@ function DailyDone({ gameId, game, home, date, title, result, reveal, plusLevels
         <h1 className="font-display text-3xl font-extrabold tracking-tight">{title}</h1>
       </div>
 
-      <section className="rounded-xl border-2 border-ink bg-card p-5 shadow-[0_4px_0_0_var(--shadow-ink)]" aria-label="Tu resultado de hoy">
+      <section className="rounded-xl border-2 border-ink bg-card p-5 shadow-[0_4px_0_0_var(--shadow-ink)]" aria-label={t("hub.yourResult")}>
         <div className="flex items-center gap-3">
           <span className={cn("flex size-11 shrink-0 items-center justify-center rounded-full", result.won ? "bg-clue-exact-bg text-clue-exact" : "bg-muted text-margin")}>
             {result.won ? <CheckIcon className="size-6" /> : <XIcon className="size-6" />}
           </span>
           <div className="min-w-0">
-            <p className="font-display text-xl font-extrabold">{result.won ? "Ya lo resolviste" : "Hoy no salió"}</p>
+            <p className="font-display text-xl font-extrabold">{result.won ? t("hub.alreadySolved") : t("hub.notToday")}</p>
             <p className="text-sm text-muted-foreground tabular-nums">
-              {result.won ? `${result.attempts} ${result.attempts === 1 ? "intento" : "intentos"} · ${formatTime(result.timeMs)}` : "Para el ranking cuenta la primera partida."}
+              {result.won ? `${t("common.attempts", { count: result.attempts })} · ${formatTime(result.timeMs)}` : t("hub.firstCounts")}
             </p>
           </div>
         </div>
         {reveal && <div className="mt-5 flex justify-center">{reveal}</div>}
         <dl className="mt-5 grid grid-cols-2 gap-3 border-t border-border pt-4 text-sm">
           <div>
-            <dt className="text-muted-foreground">Racha</dt>
+            <dt className="text-muted-foreground">{t("common.streak")}</dt>
             <dd className="flex items-center gap-1 font-display text-lg font-extrabold">
-              <FlameIcon className="size-4 text-margin" aria-hidden /> {streak} {streak === 1 ? "día" : "días"}
+              <FlameIcon className="size-4 text-margin" aria-hidden /> {t("common.days", { count: streak })}
             </dd>
           </div>
           <div>
-            <dt className="text-muted-foreground">Próximo diario</dt>
-            <dd className="font-display text-lg font-extrabold tabular-nums">{tomorrow ? "¡Ya está!" : `en ${untilTomorrow(now)}`}</dd>
+            <dt className="text-muted-foreground">{t("hub.nextDailyLabel")}</dt>
+            <dd className="font-display text-lg font-extrabold tabular-nums">{tomorrow ? t("hub.readyNow") : t("hub.inTime", { time: untilTomorrow(now, locale) })}</dd>
           </div>
         </dl>
       </section>
 
       <div className="flex flex-col gap-2">
         {tomorrow ? (
-          <Button size="lg" className="h-12 w-full" onClick={() => location.reload()}>Jugar el de hoy</Button>
+          <Button size="lg" className="h-12 w-full" onClick={() => location.reload()}>{t("hub.playToday")}</Button>
         ) : next ? (
           <>
             <Button asChild size="lg" className="h-12 w-full">
               <Link href={next.href}>
-                <span className="truncate">Siguiente diario: <span className="font-extrabold">{next.name}</span></span>
+                <span className="truncate">{t("hub.nextDaily")}: <span className="font-extrabold">{next.name}</span></span>
                 <ChevronRightIcon aria-hidden className="size-5" />
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="h-12 w-full">
-              <Link href={`/ranking?juego=${gameId}`}>Ver ranking del día</Link>
+              <Link href={`/ranking?juego=${gameId}`}>{t("hub.seeRanking")}</Link>
             </Button>
           </>
         ) : (
           <>
             <p className="py-1 text-center text-sm font-semibold">
               <PartyPopperIcon aria-hidden className="mr-1.5 inline size-4 align-[-3px] text-ok" />
-              Jugaste los {dailies.length} diarios de hoy.{" "}
-              <Link href="/" className="underline decoration-border decoration-2 underline-offset-4 hover:decoration-current">Compartir el día</Link>
+              {t("hub.playedAll", { count: dailies.length })}{" "}
+              <Link href="/" className="underline decoration-border decoration-2 underline-offset-4 hover:decoration-current">{t("hub.shareDay")}</Link>
             </p>
             <Button asChild size="lg" className="h-12 w-full">
-              <Link href={`/ranking?juego=${gameId}`}>Ver ranking del día</Link>
+              <Link href={`/ranking?juego=${gameId}`}>{t("hub.seeRanking")}</Link>
             </Button>
           </>
         )}
         {!tomorrow && (
           <Button size="lg" variant="outline" className="h-12 w-full" onClick={onPractice}>
-            <RotateCcwIcon /> Jugar de nuevo (práctica)
+            <RotateCcwIcon /> {t("hub.playAgainPractice")}
           </Button>
         )}
         <PlusNudge gameId={gameId} levels={plusLevels} mode={{ kind: "daily", date }} />
         <div className="mt-1 flex items-center justify-between gap-2 text-sm font-semibold text-muted-foreground">
           <Link href={home} className="-ml-2 inline-flex min-h-11 items-center gap-0.5 rounded-md px-2 hover:text-foreground">
-            <ChevronLeftIcon aria-hidden className="size-4" /> Volver a {game}
+            <ChevronLeftIcon aria-hidden className="size-4" /> {t("hub.backTo", { game })}
           </Link>
           <Link href={`${home}/archivo`} className="-mr-2 inline-flex min-h-11 items-center gap-1.5 rounded-md px-2 hover:text-foreground">
-            <ArchiveIcon aria-hidden className="size-4" /> Diarios anteriores
+            <ArchiveIcon aria-hidden className="size-4" /> {t("hub.archiveTitle")}
           </Link>
         </div>
       </div>

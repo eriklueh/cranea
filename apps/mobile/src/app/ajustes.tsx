@@ -26,7 +26,7 @@ export default function SettingsScreen() {
   const locale = useLocale();
   return (
     <Screen contentStyle={{ gap: 24 }}>
-      <Section title="Pantalla">
+      <Section title={t("shell.sectionDisplay")}>
         {/* Idioma: Automático (el del teléfono), Español o English; cada opción en su idioma. */}
         <Choice
           legend={t("common.language")}
@@ -40,43 +40,43 @@ export default function SettingsScreen() {
           hint={prefs.language === "auto" ? `${t("common.languageAutoHint")} (${locale === "en" ? t("common.languageEn") : t("common.languageEs")})` : undefined}
         />
         <Choice
-          legend="Tema"
+          legend={t("shell.theme")}
           value={preference}
           options={[
-            { value: "light", label: "Cuaderno", icon: "sunny-outline" },
-            { value: "dark", label: "Pizarrón", icon: "moon-outline" },
-            { value: "system", label: "Sistema", icon: "phone-portrait-outline" },
+            { value: "light", label: t("shell.themeLight"), icon: "sunny-outline" },
+            { value: "dark", label: t("shell.themeDark"), icon: "moon-outline" },
+            { value: "system", label: t("shell.themeSystem"), icon: "phone-portrait-outline" },
           ]}
           onChange={setPreference}
         />
         <Choice
-          legend="Colores de las pistas"
+          legend={t("shell.clueColors")}
           value={prefs.palette}
-          options={[{ value: "classic", label: "Clásicos" }, { value: "colorblind", label: "Daltonismo" }]}
+          options={[{ value: "classic", label: t("shell.paletteClassic") }, { value: "colorblind", label: t("shell.paletteColorblind") }]}
           onChange={(palette) => prefs.set({ palette })}
-          hint={prefs.palette === "colorblind" ? "Azul y naranja, con más contraste." : "Verde y amarillo."}
+          hint={prefs.palette === "colorblind" ? t("shell.paletteColorblindHint") : t("shell.paletteClassicHint")}
         />
         <TilePreview />
         <Choice
-          legend="Tamaño de letra"
+          legend={t("shell.textSize")}
           value={prefs.text}
-          options={[{ value: "normal", label: "Normal" }, { value: "large", label: "Grande" }]}
+          options={[{ value: "normal", label: t("shell.textNormal") }, { value: "large", label: t("shell.textLarge") }]}
           onChange={(text) => prefs.set({ text })}
         />
         <Choice
-          legend="Animaciones"
+          legend={t("shell.motion")}
           value={prefs.motion}
-          options={[{ value: "system", label: "Según el sistema" }, { value: "reduced", label: "Reducidas" }]}
+          options={[{ value: "system", label: t("shell.motionSystem") }, { value: "reduced", label: t("shell.motionReduced") }]}
           onChange={(motion) => prefs.set({ motion })}
-          hint={prefs.motion === "reduced" ? "Todo aparece en su lugar, sin moverse." : "Cortas y suaves; si el teléfono pide menos movimiento, se apagan."}
+          hint={prefs.motion === "reduced" ? t("shell.motionReducedHint") : t("shell.motionSystemHint")}
         />
       </Section>
 
-      <Section title="Juego">
+      <Section title={t("shell.sectionGame")}>
         <Card style={{ gap: 4, paddingVertical: 8 }}>
           <Toggle
-            label="Sonido"
-            hint="Toques, aciertos y errores, bajito."
+            label={t("shell.sound")}
+            hint={t("shell.soundHint")}
             value={prefs.sound}
             onChange={(on) => {
               prefs.set({ sound: on });
@@ -84,8 +84,8 @@ export default function SettingsScreen() {
             }}
           />
           <Toggle
-            label="Vibración"
-            hint="Al tocar, al ganar o al equivocarte."
+            label={t("shell.vibration")}
+            hint={t("shell.vibrationHint")}
             value={prefs.vibration}
             onChange={(on) => {
               prefs.set({ vibration: on });
@@ -95,7 +95,7 @@ export default function SettingsScreen() {
         </Card>
       </Section>
 
-      <Section title="Más">
+      <Section title={t("shell.sectionMore")}>
         <MoreRows />
         <ReminderSettings />
       </Section>
@@ -107,17 +107,18 @@ function MoreRows() {
   const router = useRouter();
   const plus = usePlus();
   const paywall = usePlusPaywall();
+  const t = useT();
   return (
     <Card style={{ paddingVertical: 4, paddingHorizontal: 4 }}>
-      <LinkRow icon="stats-chart-outline" label="Estadísticas" hint="Rachas y resultados de cada juego." onPress={() => router.push("/estadisticas")} />
+      <LinkRow icon="stats-chart-outline" label={t("common.stats")} hint={t("shell.statsHint")} onPress={() => router.push("/estadisticas")} />
       <LinkRow
         icon="star-outline"
-        label="Craneá Plus"
+        label={t("common.plus")}
         badge={plus ? <PlusBadge /> : undefined}
-        hint={plus ? "Activo en tu cuenta. ¡Gracias!" : "Todos los niveles, el archivo y pistas sin límite."}
+        hint={plus ? t("shell.plusActiveHint") : t("shell.plusHint")}
         onPress={() => paywall()}
       />
-      <LinkRow icon="person-circle-outline" label="Tu cuenta" hint="Sesión, ranking y borrar la cuenta." onPress={() => router.push("/cuenta")} />
+      <LinkRow icon="person-circle-outline" label={t("shell.accountTitle")} hint={t("shell.accountHint")} onPress={() => router.push("/cuenta")} />
     </Card>
   );
 }
@@ -224,10 +225,11 @@ const WORD = [
 /** Cómo se ven las pistas con la paleta, el tema y la letra elegidos (usa las fichas reales). */
 function TilePreview() {
   const { colors } = useTheme();
+  const t = useT();
   return (
     <View
       accessible
-      accessibilityLabel="Vista previa de las pistas"
+      accessibilityLabel={t("shell.tilePreview")}
       style={[styles.preview, { borderColor: colors.pencil, backgroundColor: colors.paper }]}
     >
       <Row gap={5} importantForAccessibility="no-hide-descendants">
@@ -238,11 +240,11 @@ function TilePreview() {
       <Row gap={14} style={{ flexWrap: "wrap", justifyContent: "center" }} importantForAccessibility="no-hide-descendants">
         <Row gap={6}>
           <Indicator kind="exact" value={2} />
-          <Text variant="small" style={{ color: colors.clueExact }}>en su lugar</Text>
+          <Text variant="small" style={{ color: colors.clueExact }}>{t("shell.clueExact")}</Text>
         </Row>
         <Row gap={6}>
           <Indicator kind="present" value={2} />
-          <Text variant="small" style={{ color: colors.cluePresent }}>en otro lugar</Text>
+          <Text variant="small" style={{ color: colors.cluePresent }}>{t("shell.cluePresent")}</Text>
         </Row>
       </Row>
     </View>

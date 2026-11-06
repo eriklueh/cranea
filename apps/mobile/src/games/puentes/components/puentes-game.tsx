@@ -15,6 +15,7 @@ import { PlusNudge } from "@/components/plus-nudge";
 import { Button, Row, Text } from "@/components/ui";
 import { SHARE_URL } from "@/config";
 import { formatTime } from "@/lib/format";
+import { useLocale, useT, type T } from "@/lib/i18n";
 import { WIN_RESULT_MS } from "@/lib/motion";
 import { useProgress } from "@/stores/progress";
 import { useTheme } from "@/theme/theme";
@@ -31,12 +32,12 @@ export type GameMode =
 /** El tablero puede usar casi todo el ancho: 12 pt de margen a cada lado (11 × 11 en 360 pt = celdas de 30 pt). */
 const BOARD_GUTTER = 24;
 
-function noticeText(n: Notice, status: string) {
-  if (status === "won") return "Todas las islas quedaron conectadas.";
+function noticeText(n: Notice, status: string, t: T) {
+  if (status === "won") return t("puentes.allConnected");
   if (!n) return "";
-  if (n.kind === "blocked") return "Ese puente cruzaría otro.";
-  if (n.kind === "wrong") return n.count === 1 ? "Hay un puente de más. Quedó marcado en rojo." : `Hay ${n.count} puentes de más. Quedaron marcados en rojo.`;
-  return n.missing === 1 ? "Vas bien. Falta un puente." : `Vas bien. Faltan ${n.missing} puentes.`;
+  if (n.kind === "blocked") return t("puentes.blocked");
+  if (n.kind === "wrong") return t("puentes.wrong", { count: n.count });
+  return t("puentes.missing", { count: n.missing });
 }
 
 export function PuentesGame({ puzzle, mode }: { puzzle: PuentesPuzzle; mode: GameMode }) {
@@ -56,6 +57,8 @@ export function PuentesGame({ puzzle, mode }: { puzzle: PuentesPuzzle; mode: Gam
   const playing = ready && status === "playing";
   const board = useBoardGesture(playing);
   const width = useBoardWidth(puzzle.width, BOARD_GUTTER);
+  const t = useT();
+  const locale = useLocale();
 
   useEffect(() => {
     start(puzzle);
@@ -76,12 +79,12 @@ export function PuentesGame({ puzzle, mode }: { puzzle: PuentesPuzzle; mode: Gam
     return () => clearTimeout(t);
   }, [status, current, puzzle, mode]);
 
-  const context = mode.kind === "daily" ? "Mismo tablero para todos" : `${puzzle.width}×${puzzle.height} · ${puzzle.islands.length} islas`;
-  const message = ready ? noticeText(notice, status) : "";
+  const context = mode.kind === "daily" ? t("puentes.contextDaily") : t("puentes.contextLevel", { size: `${puzzle.width}×${puzzle.height}`, count: puzzle.islands.length });
+  const message = ready ? noticeText(notice, status, t) : "";
 
   return (
     <>
-      <Stack.Screen options={{ title: gameTitle("Puentes", mode) }} />
+      <Stack.Screen options={{ title: gameTitle("Puentes", mode, locale) }} />
       {/* ScrollView de gesture-handler: espera al arrastre del tablero, así deslizar entre islas no mueve la pantalla. */}
       <ScrollView
         requireToFail={board.pan}
@@ -93,7 +96,7 @@ export function PuentesGame({ puzzle, mode }: { puzzle: PuentesPuzzle; mode: Gam
           right={
             <>
               <Text variant="bodyBold" style={mistakes ? { color: colors.margin } : undefined}>
-                {mistakes === 0 ? "Sin errores" : mistakes === 1 ? "1 error" : `${mistakes} errores`}
+                {mistakes === 0 ? t("puentes.noMistakesCap") : t("common.errors", { count: mistakes })}
               </Text>
               <Timer />
             </>
@@ -111,17 +114,17 @@ export function PuentesGame({ puzzle, mode }: { puzzle: PuentesPuzzle; mode: Gam
           {message}
         </Text>
         {/* Al ganar, "Ver resultado" ocupa el lugar de los controles: la pantalla no cambia de alto. */}
-        <FinishSlot finished={status === "won" && ready} done={<ResultLink label={`Ver resultado (${mistakesText(mistakes)})`} onPress={() => setResultOpen(true)} />}>
+        <FinishSlot finished={status === "won" && ready} done={<ResultLink label={t("puentes.seeResult", { mistakes: mistakesText(mistakes, t) })} onPress={() => setResultOpen(true)} />}>
           <View style={{ gap: 12 }}>
             <View style={{ gap: 8 }}>
               <Row gap={8}>
-                <Button title="Deshacer" icon="arrow-undo" variant="outline" onPress={undo} disabled={!canUndo} style={{ flex: 1, paddingHorizontal: 8 }} />
-                <Button title="Empezar de nuevo" icon="refresh" variant="outline" onPress={reset} disabled={!hasBridges} style={{ flex: 1.5, paddingHorizontal: 8 }} />
+                <Button title={t("puentes.undo")} icon="arrow-undo" variant="outline" onPress={undo} disabled={!canUndo} style={{ flex: 1, paddingHorizontal: 8 }} />
+                <Button title={t("puentes.restart")} icon="refresh" variant="outline" onPress={reset} disabled={!hasBridges} style={{ flex: 1.5, paddingHorizontal: 8 }} />
               </Row>
-              <Button title="Revisar" icon="checkmark" size="lg" onPress={check} disabled={!hasBridges || !playing} />
+              <Button title={t("puentes.check")} icon="checkmark" size="lg" onPress={check} disabled={!hasBridges || !playing} />
             </View>
             <Text variant="small" style={{ textAlign: "center" }}>
-              Deslizá desde una isla o tocá dos islas para tender un puente. Tocá el puente para sumar el segundo o sacarlo.
+              {t("puentes.gestureHelp")}
             </Text>
           </View>
         </FinishSlot>
@@ -152,25 +155,27 @@ function PuentesResult({ open, onClose, mode }: { open: boolean; onClose: () => 
   const mistakes = usePuentes((s) => s.mistakes);
   const startedAt = usePuentes((s) => s.startedAt);
   const finishedAt = usePuentes((s) => s.finishedAt);
+  const t = useT();
+  const locale = useLocale();
   if (!puzzle || status !== "won") return null;
   const time = formatTime((finishedAt ?? Date.now()) - startedAt);
-  const title = mode.kind === "daily" ? `Puentes del día #${mode.number}` : `Puentes ${mode.world}-${mode.level}`;
-  const shareMessage = `Craneá · ${title}\n🌉 ${mistakesText(mistakes)} en ${time}\n${SHARE_URL}/puentes`;
+  const title = mode.kind === "daily" ? gameTitle("Puentes", mode, locale) : t("puentes.levelShort", { world: mode.world, level: mode.level });
+  const shareMessage = t("puentes.share", { title, mistakes: mistakesText(mistakes, t), time, url: `${SHARE_URL}/puentes` });
   // Solo dónde están las islas: sin números ni puentes, no se puede copiar la solución.
   const card: ResultCard = {
     game: "Puentes",
-    label: resultLabel(mode),
+    label: resultLabel(mode, locale),
     won: true,
-    headline: mistakes === 0 ? "Sin errores" : mistakes === 1 ? "1 error" : `${mistakes} errores`,
-    detail: `${puzzle.islands.length} islas · ${time}`,
+    headline: mistakes === 0 ? t("puentes.noMistakesCap") : t("common.errors", { count: mistakes }),
+    detail: t("puentes.cardDetail", { count: puzzle.islands.length, time }),
     visual: { kind: "board", width: puzzle.width, height: puzzle.height, dots: puzzle.islands.map(({ r, c }) => ({ r, c })) },
   };
   return (
-    <ResultSheet visible={open} onClose={onClose} title={mistakes === 0 ? "Todo conectado, sin errores" : "Todo conectado"} description={`${title}, ${mistakesText(mistakes)} y en ${time}.`}>
+    <ResultSheet visible={open} onClose={onClose} title={mistakes === 0 ? t("puentes.wonClean") : t("puentes.won")} description={t("puentes.resultDesc", { title, mistakes: mistakesText(mistakes, t), time })}>
       <View style={{ gap: 8 }}>
         {mode.kind === "level" && mode.next ? (
           <Button
-            title="Siguiente nivel"
+            title={t("puentes.nextLevel")}
             size="lg"
             onPress={() => {
               onClose();
@@ -178,10 +183,10 @@ function PuentesResult({ open, onClose, mode }: { open: boolean; onClose: () => 
             }}
           />
         ) : (
-          <Button title="Volver a los mundos" size="lg" onPress={() => { onClose(); router.navigate("/puentes"); }} />
+          <Button title={t("puentes.backToWorlds")} size="lg" onPress={() => { onClose(); router.navigate("/puentes"); }} />
         )}
         {mode.kind === "daily" && !mode.practice && (
-          <Button title="Ver ranking" variant="outline" icon="trophy-outline" onPress={() => { onClose(); router.push({ pathname: "/ranking", params: { juego: GAME_ID, fecha: mode.date } }); }} />
+          <Button title={t("puentes.seeRanking")} variant="outline" icon="trophy-outline" onPress={() => { onClose(); router.push({ pathname: "/ranking", params: { juego: GAME_ID, fecha: mode.date } }); }} />
         )}
         <ResultShareButton text={shareMessage} card={card} />
       </View>

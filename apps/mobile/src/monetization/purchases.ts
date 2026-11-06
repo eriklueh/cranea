@@ -1,6 +1,7 @@
 import { Linking, Platform } from "react-native";
 import type { CustomerInfo, PurchasesPackage } from "react-native-purchases";
 import { usePlusState } from "@/entitlements";
+import { getT, type T } from "@/lib/i18n";
 import { purchasesModule } from "./native";
 
 /**
@@ -91,11 +92,13 @@ export function freeTrialOf(pkg: PurchasesPackage): FreeTrial | null {
   return null;
 }
 
-/** "2 días", "1 semana" */
-export function trialText({ count, unit }: FreeTrial) {
-  const names: Record<string, [string, string]> = { DAY: ["día", "días"], WEEK: ["semana", "semanas"], MONTH: ["mes", "meses"], YEAR: ["año", "años"] };
-  const [one, many] = names[unit] ?? ["", ""];
-  return `${count} ${count === 1 ? one : many}`.trim();
+/** "2 días", "1 semana" / "2 days", "1 week" */
+export function trialText({ count, unit }: FreeTrial, t: T) {
+  if (unit === "DAY") return t("plus.trialDay", { count });
+  if (unit === "WEEK") return t("plus.trialWeek", { count });
+  if (unit === "MONTH") return t("plus.trialMonth", { count });
+  if (unit === "YEAR") return t("plus.trialYear", { count });
+  return String(count);
 }
 
 /**
@@ -134,14 +137,15 @@ export async function bestFreeTrial(): Promise<FreeTrial | null> {
 export type PurchaseOutcome = { ok: true } | { ok: false; cancelled: boolean; message: string };
 
 const errorText = (e: unknown) => {
+  const t = getT();
   const x = e as { userCancelled?: boolean | null; code?: string; message?: string } | null;
   const P = purchasesModule();
   const codes = P?.PURCHASES_ERROR_CODE;
   if (x?.userCancelled || (codes && x?.code === codes.PURCHASE_CANCELLED_ERROR)) return { cancelled: true, message: "" };
-  if (codes && x?.code === codes.NETWORK_ERROR) return { cancelled: false, message: "No hay conexión. Probá de nuevo en un rato." };
-  if (codes && x?.code === codes.PAYMENT_PENDING_ERROR) return { cancelled: false, message: "El pago quedó pendiente. Cuando se confirme, Plus se activa solo." };
-  if (codes && x?.code === codes.PURCHASE_NOT_ALLOWED_ERROR) return { cancelled: false, message: "Este dispositivo no permite compras." };
-  return { cancelled: false, message: "No se pudo completar la compra. Probá de nuevo más tarde." };
+  if (codes && x?.code === codes.NETWORK_ERROR) return { cancelled: false, message: t("plus.errNetwork") };
+  if (codes && x?.code === codes.PAYMENT_PENDING_ERROR) return { cancelled: false, message: t("plus.errPending") };
+  if (codes && x?.code === codes.PURCHASE_NOT_ALLOWED_ERROR) return { cancelled: false, message: t("plus.errNotAllowed") };
+  return { cancelled: false, message: t("plus.errPurchase") };
 };
 
 export async function purchase(pkg: PurchasesPackage): Promise<PurchaseOutcome> {
@@ -161,7 +165,7 @@ export async function restore(): Promise<{ plus: boolean } | { error: string }> 
     apply(info);
     return { plus: Boolean(info.entitlements.active[PLUS_ENTITLEMENT]) };
   } catch (e) {
-    return { error: errorText(e).message || "No se pudo restaurar. Probá de nuevo más tarde." };
+    return { error: errorText(e).message || getT()("plus.errRestore") };
   }
 }
 

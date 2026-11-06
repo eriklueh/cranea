@@ -1,7 +1,9 @@
 "use client";
 import { TUTORIAL_PUZZLE as P } from "@cranea/core/cifra";
+import { useMemo } from "react";
 import { TutorialOverlay } from "@/components/tutorial/tutorial-overlay";
 import type { TutorialScript } from "@/components/tutorial/types";
+import { useT, type T } from "@/lib/i18n";
 import { CifraGame } from "./components/cifra-game";
 import { useCifra } from "./store";
 
@@ -12,7 +14,7 @@ const row0Out = (s: S) => ROW0.every((k) => s.marks[k] === "out");
 const untouchedCode = (s: S) => s.input.length === 0 && s.misses.length === 0;
 
 /** Tablero 147 · 318 · 593 → 358 (ver packages/core/src/cifra/tutorial.ts). */
-const SCRIPT: TutorialScript<S> = {
+const script = (t: T): TutorialScript<S> => ({
   game: "cifra",
   name: "Cifra",
   levelHref: "/cifra/nivel/2/1",
@@ -23,12 +25,12 @@ const SCRIPT: TutorialScript<S> = {
   snapshot: (s) => ({ input: s.input, misses: s.misses, marks: s.marks, status: s.status, clearedMarks: null }),
   reset: () => useCifra.getState().start(P),
   steps: [
-    { targets: ["clues"], text: "Hay un código secreto de tres cifras distintas. Estas filas son intentos que ya tienen puntaje." },
-    { targets: ["clue-0"], text: "El círculo lleno cuenta las cifras que están en su lugar. El aro, las que están en otro lugar." },
+    { targets: ["clues"], text: t("tutorialCifra.intro") },
+    { targets: ["clue-0"], text: t("tutorialCifra.pegs") },
     {
       targets: ["clue-0"],
-      text: "Esta fila tiene 0 y 0: ni el 1, ni el 4, ni el 7 están. Tocá las tres para tacharlas.",
-      nudge: "Un toque por ficha: así queda tachada.",
+      text: t("tutorialCifra.row0"),
+      nudge: t("tutorialCifra.row0Nudge"),
       check: (s) => {
         if (!untouchedCode(s)) return "wrong";
         const keys = Object.keys(s.marks);
@@ -36,11 +38,11 @@ const SCRIPT: TutorialScript<S> = {
         return keys.length === 3 ? "done" : "progress";
       },
     },
-    { targets: ["clue-1"], text: "Acá hay dos en su lugar. El 1 ya sabés que no está. Entonces el 3 y el 8 van justo ahí." },
+    { targets: ["clue-1"], text: t("tutorialCifra.row1") },
     {
       targets: ["clue-1"],
-      text: "Tocá el 3 hasta que quede verde: tachada, aro, verde. Después lo mismo con el 8.",
-      nudge: "Marcá el 3 y el 8 de esta fila.",
+      text: t("tutorialCifra.row1Mark"),
+      nudge: t("tutorialCifra.row1MarkNudge"),
       check: (s) => {
         if (!untouchedCode(s) || !row0Out(s)) return "wrong";
         for (const [k, v] of Object.entries(s.marks)) {
@@ -50,13 +52,13 @@ const SCRIPT: TutorialScript<S> = {
         return s.marks["1:0"] === "here" && s.marks["1:2"] === "here" ? "done" : "progress";
       },
     },
-    { targets: ["clue-2"], text: "Aro 2: dos están, pero corridas. Una es el 3, que va primero. La otra es el 5 o el 9." },
-    { targets: ["clue-2"], text: "El 9 está en el medio, y ahí no puede ir. El medio es el único lugar libre: va el 5." },
+    { targets: ["clue-2"], text: t("tutorialCifra.row2") },
+    { targets: ["clue-2"], text: t("tutorialCifra.row2Middle") },
     {
       targets: ["code", "keypad"],
       anchor: ["code", "keypad"],
-      text: "Escribí el código 358 y tocá Probar código.",
-      nudge: "El código es 3, 5 y 8.",
+      text: t("tutorialCifra.code"),
+      nudge: t("tutorialCifra.codeNudge"),
       delay: 700,
       check: (s) => {
         if (s.status === "won") return "done";
@@ -65,10 +67,12 @@ const SCRIPT: TutorialScript<S> = {
       },
     },
   ],
-  outro: "Ya sabés leer las filas y cruzarlas. El nivel 1 tiene cuatro cifras.",
-};
+  outro: t("tutorialCifra.outro"),
+});
 
 export function CifraTutorial() {
+  const t = useT();
+  const SCRIPT = useMemo(() => script(t), [t]);
   return (
     <>
       <CifraGame puzzle={P} mode={{ kind: "tutorial" }} />

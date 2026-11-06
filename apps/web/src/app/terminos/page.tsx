@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Términos y condiciones", descriptio
 
 export default function Terms() {
   return (
-    <LegalPage title="Términos y condiciones">
+    <LegalPage title="Términos y condiciones" lang="es" page="terms">
       <p>
         Estos términos rigen el uso de Craneá (la web cranea.app y la app para Android e iOS), a cargo de {LEGAL.owner}. Al usar
         Craneá los aceptás. También aplica nuestra <Link href="/privacidad" className="underline underline-offset-4">política de privacidad</Link>.

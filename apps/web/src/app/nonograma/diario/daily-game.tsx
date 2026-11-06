@@ -6,21 +6,23 @@ import { plusLevelCount } from "@/lib/free-levels";
 import { NonogramaGame } from "@/games/nonograma/components/nonograma-game";
 import { PixelArt, solutionRows } from "@/games/nonograma/components/pixel-art";
 import { dailyNumber, GAME_ID, LAUNCH_DATE } from "@/games/nonograma/data";
+import { useT } from "@/lib/i18n";
 
 /** El diario se genera en el cliente con la fecha UTC como semilla: todos ven el mismo tablero. Cuenta la primera partida. */
 export function DailyGame() {
+  const t = useT();
   return (
     <DailyGate plusLevels={plusLevelCount(WORLDS)}
       gameId={GAME_ID}
       game="Nonograma"
       home="/nonograma"
       launch={LAUNCH_DATE}
-      title={(date) => `Nonograma del día #${dailyNumber(date)}`}
+      title={(date) => t("nonograma.dailyTitle", { n: dailyNumber(date) })}
       reveal={(date) => {
         const puzzle = generateDaily(date);
         return (
           <div className="rounded-xl border-2 border-ink bg-tile p-3">
-            <PixelArt rows={solutionRows(puzzle.solution, puzzle.width)} className="size-36" label="Dibujo del día" />
+            <PixelArt rows={solutionRows(puzzle.solution, puzzle.width)} className="size-36" label={t("nonograma.dailyPicture")} />
           </div>
         );
       }}

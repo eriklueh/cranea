@@ -1,6 +1,7 @@
 "use client";
 import { useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from "react";
 import { bridgeCounts, type PuentesPuzzle } from "@cranea/core/puentes";
+import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { celebrateStep, haptic, play, SHAKE, SHAKE_SMALL, useOnChange } from "@/lib/motion";
 import { sound } from "@/lib/sound";
@@ -39,6 +40,7 @@ function nearestToward(p: PuentesPuzzle, from: number, dir: Dir) {
 }
 
 export function PuentesBoard({ puzzle }: { puzzle: PuentesPuzzle }) {
+  const t = useT();
   // Hasta que el juego arranca este tablero, el store puede tener el anterior: se dibuja vacío.
   const live = usePuentes((s) => s.puzzle === puzzle);
   const storeBridges = usePuentes((s) => s.bridges);
@@ -216,7 +218,7 @@ export function PuentesBoard({ puzzle }: { puzzle: PuentesPuzzle }) {
           })}
       </svg>
 
-      <div role="group" aria-label="Islas" className="pointer-events-none absolute inset-0">
+      <div role="group" aria-label={t("puentes.islandsLabel")} className="pointer-events-none absolute inset-0">
         {islands.map((isl, i) => {
           const have = counts[i];
           const complete = have === isl.n;
@@ -233,7 +235,7 @@ export function PuentesBoard({ puzzle }: { puzzle: PuentesPuzzle }) {
               tabIndex={focus === i ? 0 : -1}
               aria-pressed={playing ? isSelected : undefined}
               aria-disabled={!playing || undefined}
-              aria-label={`Isla ${isl.n}, fila ${isl.r + 1}, columna ${isl.c + 1}: ${have} de ${isl.n} puentes${complete ? ", completa" : over ? ", sobran puentes" : ""}.`}
+              aria-label={t("puentes.islandLabel", { n: isl.n, r: isl.r + 1, c: isl.c + 1, have, state: complete ? t("puentes.islandComplete") : over ? t("puentes.islandOver") : "" })}
               onFocus={() => setFocus(i)}
               onPointerDown={(e) => onPointerDown(i, e)}
               onPointerMove={onPointerMove}

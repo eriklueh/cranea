@@ -14,8 +14,11 @@ import { attemptsOf, MAX_ATTEMPTS, MAX_CHECKS, useNonograma } from "../store";
 import { Board } from "./board";
 import { ResultDialog, type GameMode } from "./result-dialog";
 import type { TutorialMode } from "@/components/tutorial/mode";
+import { pictureTitle } from "@cranea/core/i18n";
+import { useLocale, useT } from "@/lib/i18n";
 
 export function NonogramaGame({ puzzle, mode }: { puzzle: NonogramaPuzzle; mode: GameMode | TutorialMode }) {
+  const t = useT();
   const start = useNonograma((s) => s.start);
   const current = useNonograma((s) => s.puzzle);
   const status = useNonograma((s) => s.status);
@@ -51,12 +54,13 @@ export function NonogramaGame({ puzzle, mode }: { puzzle: NonogramaPuzzle; mode:
     const p = useProgress.getState();
     if (mode.kind === "level") p.recordLevel(GAME_ID, levelKey(mode.world, mode.level), result);
     else if (!mode.practice) p.recordDaily(GAME_ID, mode.date, result);
-    const t = setTimeout(() => setResultOpen(true), status === "won" ? WIN_RESULT_MS : STAGGER.max); // al perder, el dibujo aparece en diagonal (≤ 600 ms)
-    return () => clearTimeout(t);
+    const id = setTimeout(() => setResultOpen(true), status === "won" ? WIN_RESULT_MS : STAGGER.max); // al perder, el dibujo aparece en diagonal (≤ 600 ms)
+    return () => clearTimeout(id);
   }, [status, current, puzzle, mode]);
 
-  const title = mode.kind === "tutorial" ? "Tutorial" : mode.kind === "daily" ? `Nonograma del día #${mode.number}` : `Nivel ${mode.level}`;
-  const subtitle = mode.kind === "tutorial" ? "Nonograma" : mode.kind === "daily" ? "Mismo tablero para todos" : `Mundo ${mode.world} · ${puzzle.width}×${puzzle.height}`;
+  const title = mode.kind === "tutorial" ? t("common.tutorial") : mode.kind === "daily" ? t("nonograma.dailyTitle", { n: mode.number }) : t("common.level", { n: mode.level });
+  const subtitle =
+    mode.kind === "tutorial" ? "Nonograma" : mode.kind === "daily" ? t("nonograma.sameBoard") : t("nonograma.levelSubtitle", { world: mode.world, size: `${puzzle.width}×${puzzle.height}` });
 
   return (
     <main className={cn("mx-auto w-full px-2 pb-10 sm:px-4", puzzle.width >= 15 ? "max-w-xl" : "max-w-md")}>
@@ -81,7 +85,7 @@ export function NonogramaGame({ puzzle, mode }: { puzzle: NonogramaPuzzle; mode:
         finished={status !== "playing"}
         done={
           <button className="mt-4 min-h-11 text-sm font-semibold underline decoration-margin decoration-2 underline-offset-4" onClick={() => setResultOpen(true)}>
-            Ver resultado
+            {t("nonograma.seeResult")}
           </button>
         }
       >
@@ -103,13 +107,15 @@ export function NonogramaGame({ puzzle, mode }: { puzzle: NonogramaPuzzle; mode:
 }
 
 function Reveal({ mode }: { mode: GameMode["kind"] }) {
+  const t = useT();
+  const locale = useLocale();
   const status = useNonograma((s) => s.status);
-  const title = useNonograma((s) => s.puzzle?.title);
+  const title = pictureTitle(useNonograma((s) => s.puzzle?.title) ?? "", locale);
   const lastCheck = useNonograma((s) => s.lastCheck);
   let text = "";
-  if (status === "won") text = mode === "daily" ? "Dibujo completo." : `Dibujo completo: ${title}.`;
-  else if (status === "lost") text = mode === "daily" ? "Esta era la solución." : `Era: ${title}.`;
-  else if (lastCheck !== null) text = lastCheck === 0 ? "Todo bien hasta acá." : `${lastCheck} ${lastCheck === 1 ? "casilla no va" : "casillas no van"} así. Están marcadas en rojo.`;
+  if (status === "won") text = mode === "daily" ? t("nonograma.wonDaily") : t("nonograma.wonLevel", { title });
+  else if (status === "lost") text = mode === "daily" ? t("nonograma.lostDaily") : t("nonograma.lostLevel", { title });
+  else if (lastCheck !== null) text = lastCheck === 0 ? t("nonograma.checkOk") : t("nonograma.checkWrong", { count: lastCheck });
   return (
     // Alto fijo (el del texto grande): al ganar el texto crece sin empujar lo de abajo.
     <p aria-live="polite" className={cn("mt-3 min-h-7 text-center leading-7 font-semibold", status === "won" ? "font-display text-xl text-ok" : lastCheck ? "text-margin" : "text-muted-foreground")}>
@@ -119,6 +125,7 @@ function Reveal({ mode }: { mode: GameMode["kind"] }) {
 }
 
 function Controls() {
+  const t = useT();
   const tool = useNonograma((s) => s.tool);
   const setTool = useNonograma((s) => s.setTool);
   const canUndo = useNonograma((s) => s.history.length > 0);
@@ -129,49 +136,49 @@ function Controls() {
 
   useEffect(() => {
     if (!confirmGiveUp) return;
-    const t = setTimeout(() => setConfirmGiveUp(false), 4000);
-    return () => clearTimeout(t);
+    const id = setTimeout(() => setConfirmGiveUp(false), 4000);
+    return () => clearTimeout(id);
   }, [confirmGiveUp]);
 
   return (
     <div className="mt-2 space-y-4 px-2">
-      <div role="group" aria-label="Herramienta" data-tutorial="tools" className="mx-auto grid max-w-xs grid-cols-2 rounded-lg border-2 border-ink bg-card p-1 shadow-[0_3px_0_0_var(--shadow-ink)]">
-        {(["fill", "cross"] as const).map((t) => (
+      <div role="group" aria-label={t("nonograma.tool")} data-tutorial="tools" className="mx-auto grid max-w-xs grid-cols-2 rounded-lg border-2 border-ink bg-card p-1 shadow-[0_3px_0_0_var(--shadow-ink)]">
+        {(["fill", "cross"] as const).map((k) => (
           <button
-            key={t}
-            data-tutorial={`tool-${t}`}
-            aria-pressed={tool === t}
-            onClick={() => setTool(t)}
+            key={k}
+            data-tutorial={`tool-${k}`}
+            aria-pressed={tool === k}
+            onClick={() => setTool(k)}
             className={cn(
               "inline-flex min-h-11 items-center justify-center gap-2 rounded-md font-semibold transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
-              tool === t ? "bg-ink text-paper" : "hover:bg-accent",
+              tool === k ? "bg-ink text-paper" : "hover:bg-accent",
             )}
           >
-            {t === "fill" ? <PaintBucketIcon className="size-4" /> : <XIcon className="size-4" />}
-            {t === "fill" ? "Pintar" : "Cruz"}
+            {k === "fill" ? <PaintBucketIcon className="size-4" /> : <XIcon className="size-4" />}
+            {k === "fill" ? t("nonograma.fill") : t("nonograma.cross")}
           </button>
         ))}
       </div>
 
       <div className="flex flex-wrap items-center justify-center gap-2">
         <Button variant="outline" className="min-h-11" onClick={undo} disabled={!canUndo}>
-          <Undo2Icon /> Deshacer
+          <Undo2Icon /> {t("nonograma.undo")}
         </Button>
         <Button variant="outline" className="min-h-11" onClick={reset} disabled={!canReset}>
-          <EraserIcon /> Borrar todo
+          <EraserIcon /> {t("nonograma.clearAll")}
         </Button>
         <Button variant="outline" className="min-h-11" onClick={check} disabled={checks >= MAX_CHECKS || !canReset}>
-          <SearchCheckIcon /> Revisar ({MAX_CHECKS - checks})
+          <SearchCheckIcon /> {t("nonograma.check", { n: MAX_CHECKS - checks })}
         </Button>
       </div>
 
       <p className="text-center text-sm text-muted-foreground">
-        Revisar marca lo que está mal y suma un intento.{" "}
+        {t("nonograma.checkHelp")}{" "}
         <button
           className="min-h-11 font-semibold underline decoration-margin decoration-2 underline-offset-4"
           onClick={() => (confirmGiveUp ? giveUp() : setConfirmGiveUp(true))}
         >
-          {confirmGiveUp ? "¿Seguro? Ver solución" : "Me rindo"}
+          {confirmGiveUp ? t("nonograma.giveUpConfirm") : t("nonograma.giveUp")}
         </button>
       </p>
     </div>
@@ -179,12 +186,13 @@ function Controls() {
 }
 
 function ChecksLeft() {
+  const t = useT();
   const status = useNonograma((s) => s.status);
   const checks = useNonograma((s) => s.checks);
   const attempts = attemptsOf({ status, checks });
   const left = status === "lost" ? 0 : MAX_ATTEMPTS - checks;
   return (
-    <span className="inline-flex items-center gap-1" role="img" aria-label={`Intento ${attempts} de ${MAX_ATTEMPTS}`}>
+    <span className="inline-flex items-center gap-1" role="img" aria-label={t("nonograma.attemptOf", { n: attempts, max: MAX_ATTEMPTS })}>
       {Array.from({ length: MAX_ATTEMPTS }, (_, i) => (
         <span key={i} className={cn("h-4 w-1.5 rounded-full transition-[background-color,scale] duration-(--dur-slow) ease-out", i < left ? "bg-ink" : "scale-y-60 bg-margin/40")} />
       ))}

@@ -3,6 +3,7 @@ import { Modal, Pressable, ScrollView, Share, StyleSheet, View } from "react-nat
 import Animated from "react-native-reanimated";
 import { initialWindowMetrics, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/ui";
+import { useT } from "@/lib/i18n";
 import { motion } from "@/lib/motion";
 import { useTheme } from "@/theme/theme";
 import { alpha, radius } from "@/theme/tokens";
@@ -29,12 +30,13 @@ function useStableBottomInset(visible: boolean) {
 /** Hoja de resultado que sube desde abajo (el diálogo de resultado de la web). */
 export function ResultSheet({ visible, onClose, title, description, children }: { visible: boolean; onClose: () => void; title: string; description: string; children: ReactNode }) {
   const { colors } = useTheme();
+  const t = useT();
   const bottom = useStableBottomInset(visible);
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
       {visible && (
         <Animated.View entering={BACKDROP_IN} style={[StyleSheet.absoluteFill, { backgroundColor: alpha("#000000", 0.45) }]}>
-          <Pressable style={{ flex: 1 }} onPress={onClose} accessibilityLabel="Cerrar" accessibilityRole="button" />
+          <Pressable style={{ flex: 1 }} onPress={onClose} accessibilityLabel={t("common.close")} accessibilityRole="button" />
         </Animated.View>
       )}
       {visible && (

@@ -2,6 +2,7 @@
 
 import { EraserIcon, Undo2Icon } from "lucide-react";
 import { useEffect } from "react";
+import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { useCifra } from "../store";
 
@@ -9,6 +10,7 @@ const UNDO_MS = 5000;
 
 /** Borra todas las marcas del tablero, con unos segundos para deshacerlo. */
 export function ClearMarks({ className }: { className?: string }) {
+  const t = useT();
   const count = useCifra((s) => Object.keys(s.marks).length);
   const cleared = useCifra((s) => s.clearedMarks);
   const status = useCifra((s) => s.status);
@@ -18,8 +20,8 @@ export function ClearMarks({ className }: { className?: string }) {
 
   useEffect(() => {
     if (!cleared) return;
-    const t = setTimeout(forget, UNDO_MS);
-    return () => clearTimeout(t);
+    const timer = setTimeout(forget, UNDO_MS);
+    return () => clearTimeout(timer);
   }, [cleared, forget]);
 
   if (status !== "playing" || (!cleared && count === 0)) return null;
@@ -28,18 +30,18 @@ export function ClearMarks({ className }: { className?: string }) {
 
   if (cleared) {
     return (
-      <button type="button" className={cn(base, "bg-ink/10")} onClick={restoreMarks} title="Recuperar las marcas borradas">
+      <button type="button" className={cn(base, "bg-ink/10")} onClick={restoreMarks} title={t("cifra.restoreMarksTitle")}>
         <Undo2Icon className="size-4" />
-        Deshacer
-        <span role="status" className="sr-only">Marcas borradas</span>
+        {t("cifra.undo")}
+        <span role="status" className="sr-only">{t("cifra.marksCleared")}</span>
       </button>
     );
   }
 
   return (
-    <button type="button" className={base} onClick={clearMarks} title="Quitar todas las marcas de las cifras" aria-label={`Limpiar marcas (${count})`}>
+    <button type="button" className={base} onClick={clearMarks} title={t("cifra.clearMarksTitle")} aria-label={t("cifra.clearMarksLabel", { count })}>
       <EraserIcon className="size-4" />
-      Limpiar<span className="max-sm:hidden"> marcas</span>
+      {t("cifra.clear")}<span className="max-sm:hidden">{t("cifra.clearMarksSuffix")}</span>
       <span aria-hidden className="rounded-full bg-ink/10 px-1.5 text-xs tabular-nums">{count}</span>
     </button>
   );

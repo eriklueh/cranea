@@ -2,6 +2,7 @@ import { dailySeed, unpack, WORLDS, type PackedLevel } from "@cranea/core/torres
 import packed from "@cranea/core/levels/torres.json";
 import { attemptsText, levelKey, unlockRules, type GameHomeConfig } from "@/components/game-home/types";
 import { dayNumber } from "@/lib/format";
+import { translator } from "@/lib/i18n";
 import { hasSession } from "./session";
 
 /** Mismo id, claves de nivel (`w2-l5`) y de diario (`2026-10-31`) que la web (apps/web/src/games/torres/data.ts). */
@@ -34,8 +35,8 @@ export const TORRES_HOME: GameHomeConfig = {
   pitch: "Levantá la ciudad: cada borde dice cuántas torres se ven.",
   article: "el",
   daily: {
-    title: "Torres del día",
-    blurb: "Una ciudad de 5×5, la misma para todos.",
+    title: (locale) => translator(locale)("torres.dailyTitle"),
+    blurb: (locale) => translator(locale)("torres.dailyBlurb"),
     href: "/torres/diario",
     number: dailyNumber,
     inProgress: (date) => hasSession(dailySeed(date)),
@@ -48,5 +49,5 @@ export const TORRES_HOME: GameHomeConfig = {
   howToHref: "/torres/como-jugar",
   stars: (r) => Math.max(1, MAX_ATTEMPTS + 1 - r.attempts),
   resultText: attemptsText,
-  resultStat: (r) => ({ label: "Intentos", value: `${r.attempts}/${MAX_ATTEMPTS}` }),
+  resultStat: (r, locale) => ({ label: translator(locale)("torres.statAttempts"), value: `${r.attempts}/${MAX_ATTEMPTS}` }),
 };

@@ -6,8 +6,10 @@ import { useLocalSearchParams } from "expo-router";
 import { useMemo } from "react";
 import { NotFound } from "@/components/not-found";
 import { PlusGate } from "@/components/plus";
+import { SpanishOnly } from "@/components/spanish-only";
 import { Loading } from "@/components/ui";
 import { usePlus, usePlusReady } from "@/entitlements";
+import { useT } from "@/lib/i18n";
 import { ARCHIVE, isArchiveDate } from "@/games/archive";
 import { CifraGame } from "@/games/cifra/components/cifra-game";
 import { PalabraGame } from "@/games/palabra/components/palabra-game";
@@ -19,12 +21,22 @@ import { NonogramaArchivePlay } from "@/games/nonograma/components/archive-play"
 /** Un diario de otro día, como práctica (Craneá Plus): no se guarda ni cuenta para el ranking. */
 export default function ArchiveDaily() {
   const { game, fecha } = useLocalSearchParams<{ game: string; fecha: string }>();
+  // Palabra (en castellano): en inglés, el aviso con el atajo a español.
+  return (
+    <SpanishOnly gameId={game}>
+      <ArchiveDailyScreen game={game} fecha={fecha} />
+    </SpanishOnly>
+  );
+}
+
+function ArchiveDailyScreen({ game, fecha }: { game: string; fecha: string }) {
   const info = ARCHIVE[game];
   const plus = usePlus();
   const ready = usePlusReady();
-  if (!info || !isArchiveDate(info.launch, fecha, todayKey())) return <NotFound title="Diario inexistente" />;
-  if (!ready) return <Loading label="Preparando el tablero…" />;
-  if (!plus) return <PlusGate title="Diarios anteriores" message="Con Craneá Plus podés jugar los desafíos de días anteriores para practicar." reason="archivo" />;
+  const t = useT();
+  if (!info || !isArchiveDate(info.launch, fecha, todayKey())) return <NotFound title={t("shell.noDaily")} />;
+  if (!ready) return <Loading label={t("shell.preparing")} />;
+  if (!plus) return <PlusGate title={t("shell.archiveGateTitle")} message={t("shell.archiveGateBodyShort")} reason="archivo" />;
   if (game === "torres") return <Torres date={fecha} />;
   if (game === "puentes") return <PuentesArchive date={fecha} />;
   if (game === "nonograma") return <NonogramaArchivePlay date={fecha} />;

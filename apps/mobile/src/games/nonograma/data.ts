@@ -1,8 +1,10 @@
 import { unpack, WORLDS, type PackedLevel } from "@cranea/core/nonograma";
+import { pictureTitle } from "@cranea/core/i18n";
 import packed from "@cranea/core/levels/nonograma.json";
 import { createElement } from "react";
 import { attemptsText, levelKey, unlockRules, type GameHomeConfig } from "@/components/game-home/types";
 import { dayNumber } from "@/lib/format";
+import { translator } from "@/lib/i18n";
 import { PixelArtThumb } from "./components/pixel-art";
 
 /** Mismas claves que la web (apps/web/src/games/nonograma/data.ts): `nonograma`, `w2-l5`, `2026-10-31`. */
@@ -46,8 +48,8 @@ export const NONOGRAMA_HOME: GameHomeConfig = {
   pitch: "Pintá casillas siguiendo los números hasta que aparezca el dibujo.",
   article: "el",
   daily: {
-    title: "Nonograma del día",
-    blurb: "Un 10×10 nuevo, el mismo para todos.",
+    title: (locale) => translator(locale)("nonograma.dailyTitle"),
+    blurb: (locale) => translator(locale)("nonograma.dailyBlurb"),
     href: "/nonograma/diario",
     number: dailyNumber,
   },
@@ -59,11 +61,11 @@ export const NONOGRAMA_HOME: GameHomeConfig = {
   howToHref: "/nonograma/como-jugar",
   stars: (r) => Math.max(1, MAX_ATTEMPTS + 1 - r.attempts),
   resultText: attemptsText,
-  resultStat: (r) => ({ label: "Intentos", value: `${r.attempts}/${MAX_ATTEMPTS}` }),
+  resultStat: (r, locale) => ({ label: translator(locale)("nonograma.statAttempts"), value: `${r.attempts}/${MAX_ATTEMPTS}` }),
   // Los niveles resueltos muestran su dibujo en el mapa, como en la web.
   thumbnail: (w, l) => {
     const rows = levelRows(w, l);
     return rows ? createElement(PixelArtThumb, { rows }) : null;
   },
-  levelTitle,
+  levelTitle: (w, l, locale) => pictureTitle(levelTitle(w, l), locale),
 };

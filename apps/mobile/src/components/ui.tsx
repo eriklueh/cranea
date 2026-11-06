@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { haptic } from "@/lib/haptics";
+import { useT } from "@/lib/i18n";
 import { useTheme } from "@/theme/theme";
 import { fonts, radius } from "@/theme/tokens";
 
@@ -163,11 +164,13 @@ export function Row({ children, style, gap = 8, ...props }: ViewProps & { gap?: 
   );
 }
 
-export function Loading({ label }: { label: string }) {
+/** Sin `label`: «Cargando…» en el idioma activo. */
+export function Loading({ label }: { label?: string }) {
+  const t = useT();
   return (
     <Screen scroll={false} contentStyle={{ alignItems: "center", justifyContent: "center", gap: 12 }}>
       <ActivityIndicator />
-      <Text variant="muted">{label}</Text>
+      <Text variant="muted">{label ?? t("common.loading")}</Text>
     </Screen>
   );
 }

@@ -10,20 +10,22 @@ import { useProgress } from "@/stores/progress";
 import { GAME_ID, levelKey } from "../data";
 import { attemptsOf, usePuentes, type Notice } from "../store";
 import { PuentesBoard } from "./board";
-import { mistakesText, ResultDialog, type GameMode } from "./result-dialog";
+import { mistakesCount, mistakesText, ResultDialog, type GameMode } from "./result-dialog";
 import { Timer } from "./timer";
 import type { TutorialMode } from "@/components/tutorial/mode";
+import { useT, type T } from "@/lib/i18n";
 
-function noticeText(n: Notice, status: string) {
-  if (status === "won") return "Todas las islas quedaron conectadas.";
-  if (status === "review") return "Ya jugaste el de hoy. Esta es la solución; mañana hay otro.";
+function noticeText(n: Notice, status: string, t: T) {
+  if (status === "won") return t("puentes.noticeWon");
+  if (status === "review") return t("puentes.noticeReview");
   if (!n) return "";
-  if (n.kind === "blocked") return "Ese puente cruzaría otro.";
-  if (n.kind === "wrong") return n.count === 1 ? "Hay un puente de más. Quedó marcado en rojo." : `Hay ${n.count} puentes de más. Quedaron marcados en rojo.`;
-  return n.missing === 1 ? "Vas bien. Falta un puente." : `Vas bien. Faltan ${n.missing} puentes.`;
+  if (n.kind === "blocked") return t("puentes.noticeBlocked");
+  if (n.kind === "wrong") return t("puentes.noticeWrong", { count: n.count });
+  return t("puentes.noticeOk", { count: n.missing });
 }
 
 export function PuentesGame({ puzzle, mode, alreadyPlayed = false }: { puzzle: PuentesPuzzle; mode: GameMode | TutorialMode; alreadyPlayed?: boolean }) {
+  const t = useT();
   const start = usePuentes((s) => s.start);
   const review = usePuentes((s) => s.review);
   const current = usePuentes((s) => s.puzzle);
@@ -64,13 +66,13 @@ export function PuentesGame({ puzzle, mode, alreadyPlayed = false }: { puzzle: P
     const p = useProgress.getState();
     if (mode.kind === "level") p.recordLevel(GAME_ID, levelKey(mode.world, mode.level), result);
     else if (!mode.practice) p.recordDaily(GAME_ID, mode.date, result);
-    const t = setTimeout(() => setResultOpen(true), WIN_RESULT_MS);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setResultOpen(true), WIN_RESULT_MS);
+    return () => clearTimeout(timer);
   }, [status, current, puzzle, mode]);
 
-  const title = mode.kind === "tutorial" ? "Tutorial" : mode.kind === "daily" ? `Puentes del día #${mode.number}` : `Nivel ${mode.level}`;
-  const subtitle = mode.kind === "tutorial" ? "Puentes" : mode.kind === "daily" ? "Mismo tablero para todos" : `Mundo ${mode.world}`;
-  const message = noticeText(notice, status);
+  const title = mode.kind === "tutorial" ? t("common.tutorial") : mode.kind === "daily" ? t("puentes.dailyTitle", { n: mode.number }) : t("common.level", { n: mode.level });
+  const subtitle = mode.kind === "tutorial" ? "Puentes" : mode.kind === "daily" ? t("puentes.sameBoard") : t("common.world", { n: mode.world });
+  const message = noticeText(notice, status, t);
 
   return (
     <main className="mx-auto w-full max-w-xl px-4 pb-10">
@@ -83,13 +85,13 @@ export function PuentesGame({ puzzle, mode, alreadyPlayed = false }: { puzzle: P
         </div>
         {status !== "review" && (
           <div className="flex items-center gap-4 pb-1 text-sm font-semibold">
-            <span className={mistakes ? "text-margin" : undefined}>{mistakes === 0 ? "Sin errores" : mistakes === 1 ? "1 error" : `${mistakes} errores`}</span>
+            <span className={mistakes ? "text-margin" : undefined}>{mistakesCount(mistakes, t)}</span>
             <Timer />
           </div>
         )}
       </div>
 
-      <section aria-label="Tablero" className="anim-appear mb-3">
+      <section aria-label={t("puentes.boardLabel")} className="anim-appear mb-3">
         <PuentesBoard puzzle={puzzle} />
       </section>
 
@@ -100,7 +102,7 @@ export function PuentesGame({ puzzle, mode, alreadyPlayed = false }: { puzzle: P
       {status === "review" ? (
         <div className="flex justify-center">
           <Button asChild variant="outline" size="lg">
-            <Link href="/puentes">Volver a los mundos</Link>
+            <Link href="/puentes">{t("puentes.backToWorlds")}</Link>
           </Button>
         </div>
       ) : (
@@ -109,23 +111,23 @@ export function PuentesGame({ puzzle, mode, alreadyPlayed = false }: { puzzle: P
           finished={status === "won"}
           done={
             <button className="min-h-11 text-sm font-semibold underline decoration-margin decoration-2 underline-offset-4" onClick={() => setResultOpen(true)}>
-              Ver resultado ({mistakesText(mistakes)})
+              {t("puentes.seeResult", { result: mistakesText(mistakes, t), short: mistakesCount(mistakes, t).toLowerCase() })}
             </button>
           }
         >
           <div className="flex flex-wrap items-center justify-center gap-2">
             <Button variant="outline" size="lg" onClick={undo} disabled={!canUndo}>
-              <Undo2Icon /> Deshacer
+              <Undo2Icon /> {t("puentes.undo")}
             </Button>
             <Button variant="outline" size="lg" onClick={reset} disabled={!hasBridges}>
-              <RotateCcwIcon /> Empezar de nuevo
+              <RotateCcwIcon /> {t("puentes.reset")}
             </Button>
             <Button size="lg" onClick={check} disabled={!hasBridges}>
-              <CheckIcon /> Revisar
+              <CheckIcon /> {t("puentes.check")}
             </Button>
           </div>
           <p className="mt-6 text-center text-xs text-muted-foreground">
-            Deslizá desde una isla o tocá dos islas para tender un puente. Tocá el puente para sumar el segundo o sacarlo.
+            {t("puentes.controlsHelp")}
           </p>
         </FinishSlot>
       )}

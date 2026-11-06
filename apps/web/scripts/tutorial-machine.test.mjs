@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { initialState, NUDGE, progressLabel, reduce } from "../src/components/tutorial/machine.ts";
+import { initialState, isBuiltinNudge, NUDGE, progress, reduce } from "../src/components/tutorial/machine.ts";
 
 // Lectura, acción, acción con aviso propio.
 const steps = [{ action: false }, { action: true }, { action: true, nudge: "Tocá el 3." }];
@@ -64,6 +64,12 @@ test("saltar corta en cualquier paso", () => {
 });
 
 test("el avance se muestra como paso n de total", () => {
-  assert.equal(progressLabel(0, 7), "Paso 1 de 7");
-  assert.equal(progressLabel(9, 7), "Paso 7 de 7");
+  assert.deepEqual(progress(0, 7), { step: 1, total: 7 });
+  assert.deepEqual(progress(9, 7), { step: 7, total: 7 });
+});
+
+test("los avisos genéricos son ids para traducir; los propios del paso pasan tal cual", () => {
+  assert.ok(Object.values(NUDGE).every(isBuiltinNudge));
+  assert.equal(isBuiltinNudge("Tocá el 3."), false);
+  assert.equal(isBuiltinNudge(null), false);
 });

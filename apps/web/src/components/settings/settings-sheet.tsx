@@ -5,6 +5,7 @@ import { useAction, useConvexAuth, useQuery } from "convex/react";
 import { useClerk } from "@clerk/nextjs";
 import { api } from "../../../convex/_generated/api";
 import { accountsEnabled } from "@/components/account-provider";
+import { LEGAL_PATHS } from "@/components/legal-page";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { useEffect, useState, type ReactNode } from "react";
 import { DailyReminder } from "@/components/daily-reminder";
@@ -22,10 +23,11 @@ import { sound } from "@/lib/sound";
 
 /** Botón del encabezado: abre Ajustes (tema, pantalla, sonido, instalar, aviso y estadísticas). En el celular es una hoja desde abajo. */
 export function SettingsSheet() {
+  const t = useT();
   return (
     <DialogPrimitive.Root>
       <DialogPrimitive.Trigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Ajustes" title="Ajustes" className="size-11 [&_svg:not([class*='size-'])]:size-5">
+        <Button variant="ghost" size="icon" aria-label={t("common.settings")} title={t("common.settings")} className="size-11 [&_svg:not([class*='size-'])]:size-5">
           <SettingsIcon />
         </Button>
       </DialogPrimitive.Trigger>
@@ -37,11 +39,11 @@ export function SettingsSheet() {
         >
           <div className="flex items-center justify-between gap-2 border-b-2 border-border py-2 pr-2 pl-5">
             <div className="flex items-center gap-2">
-              <DialogPrimitive.Title className="font-display text-2xl font-bold">Ajustes</DialogPrimitive.Title>
+              <DialogPrimitive.Title className="font-display text-2xl font-bold">{t("common.settings")}</DialogPrimitive.Title>
               <PlusState badge />
             </div>
             <DialogPrimitive.Close asChild>
-              <Button variant="ghost" size="icon" aria-label="Cerrar" className="size-11 [&_svg:not([class*='size-'])]:size-5">
+              <Button variant="ghost" size="icon" aria-label={t("common.close")} className="size-11 [&_svg:not([class*='size-'])]:size-5">
                 <XIcon />
               </Button>
             </DialogPrimitive.Close>
@@ -58,10 +60,11 @@ export function SettingsSheet() {
 /** Craneá Plus: pastilla junto al título si está activo, y una fila que lleva a /plus. */
 function PlusState({ badge = false }: { badge?: boolean }) {
   const { plus } = usePlus();
+  const t = useT();
   if (!PLUS_ENABLED) return null;
   if (badge) return plus ? <PlusBadge /> : null;
   return (
-    <ActionRow label="Craneá Plus" hint={plus ? "Activo en tu cuenta. ¡Gracias!" : "Todos los niveles, el archivo y pistas sin límite."}>
+    <ActionRow label="Craneá Plus" hint={plus ? t("shell.plusActive") : t("shell.plusHint")}>
       <DialogPrimitive.Close asChild>
         <Button asChild variant="ghost" size="icon" className="size-11">
           <Link href="/plus" aria-label="Craneá Plus"><SparklesIcon /></Link>
@@ -75,12 +78,13 @@ function PlusState({ badge = false }: { badge?: boolean }) {
 function AdminRow() {
   const { isAuthenticated } = useConvexAuth();
   const isAdmin = useQuery(api.admin.isAdmin, isAuthenticated ? {} : "skip");
+  const t = useT();
   if (!isAdmin) return null;
   return (
-    <ActionRow label="Administración" hint="Regalar Craneá Plus por email.">
+    <ActionRow label={t("shell.admin")} hint={t("shell.adminHint")}>
       <DialogPrimitive.Close asChild>
         <Button asChild variant="ghost" size="icon" className="size-11">
-          <Link href="/admin" aria-label="Administración"><ShieldIcon /></Link>
+          <Link href="/admin" aria-label={t("shell.admin")}><ShieldIcon /></Link>
         </Button>
       </DialogPrimitive.Close>
     </ActionRow>
@@ -93,23 +97,24 @@ function DeleteAccountRow() {
   const deleteMyAccount = useAction(api.account.deleteMyAccount);
   const { signOut } = useClerk();
   const [busy, setBusy] = useState(false);
+  const t = useT();
   if (!isAuthenticated) return null;
   const remove = async () => {
-    if (!confirm("¿Borrar tu cuenta? Se borran tu progreso guardado en la cuenta, el ranking, los logros y Craneá Plus regalado. Lo que está en este dispositivo queda. Si pagaste Plus, cancelalo desde la tienda. No se puede deshacer.")) return;
+    if (!confirm(t("shell.deleteConfirm"))) return;
     setBusy(true);
     try {
       await deleteMyAccount({});
       await signOut();
     } catch {
-      alert("No se pudo borrar la cuenta. Probá de nuevo más tarde.");
+      alert(t("shell.deleteFailed"));
     } finally {
       setBusy(false);
     }
   };
   return (
-    <ActionRow label="Borrar mi cuenta" hint="Elimina la cuenta y sus datos.">
+    <ActionRow label={t("shell.deleteAccount")} hint={t("shell.deleteHint")}>
       <Button variant="ghost" className="min-h-11 text-destructive" disabled={busy} onClick={remove}>
-        {busy ? "Borrando…" : "Borrar"}
+        {busy ? t("shell.deleting") : t("shell.delete")}
       </Button>
     </ActionRow>
   );
@@ -148,45 +153,47 @@ function LanguageChoice() {
 
 function Preferences() {
   const { sound: soundOn, vibration, motion, palette, text, set } = usePrefs();
+  const t = useT();
+  const legal = LEGAL_PATHS[useLocale()];
   // Solo se monta con la hoja abierta (en el cliente), pero igual se evita leer `navigator` al renderizar en el servidor.
   const [vibrates, setVibrates] = useState(true);
   useEffect(() => setVibrates(canVibrate()), []);
 
   return (
     <>
-      <Section title="Pantalla">
+      <Section title={t("shell.sectionDisplay")}>
         <LanguageChoice />
         <ThemeChoice />
         <Choice
           name="palette"
-          legend="Colores de las pistas"
+          legend={t("shell.palette")}
           value={palette}
-          options={[{ value: "classic", label: "Clásicos" }, { value: "colorblind", label: "Daltonismo" }]}
+          options={[{ value: "classic", label: t("shell.paletteClassic") }, { value: "colorblind", label: t("shell.paletteColorblind") }]}
           onChange={(palette) => set({ palette })}
-          hint={palette === "colorblind" ? "Azul y naranja, con más contraste." : "Verde y amarillo."}
+          hint={palette === "colorblind" ? t("shell.paletteColorblindHint") : t("shell.paletteClassicHint")}
         />
         <TilePreview />
         <Choice
           name="text"
-          legend="Tamaño de letra"
+          legend={t("shell.textSize")}
           value={text}
-          options={[{ value: "normal", label: "Normal" }, { value: "large", label: "Grande" }]}
+          options={[{ value: "normal", label: t("shell.textNormal") }, { value: "large", label: t("shell.textLarge") }]}
           onChange={(text) => set({ text })}
         />
         <Choice
           name="motion"
-          legend="Animaciones"
+          legend={t("shell.motion")}
           value={motion}
-          options={[{ value: "system", label: "Según el sistema" }, { value: "reduced", label: "Reducidas" }]}
+          options={[{ value: "system", label: t("shell.motionSystem") }, { value: "reduced", label: t("shell.motionReduced") }]}
           onChange={(motion) => set({ motion })}
         />
       </Section>
 
-      <Section title="Juego">
+      <Section title={t("shell.sectionGame")}>
         <div className="space-y-2">
           <Toggle
-            label="Sonido"
-            hint="Toques, aciertos y errores, bajito."
+            label={t("shell.sound")}
+            hint={t("shell.soundHint")}
             checked={soundOn}
             onChange={(on) => {
               set({ sound: on });
@@ -194,8 +201,8 @@ function Preferences() {
             }}
           />
           <Toggle
-            label="Vibración"
-            hint={vibrates ? "Al ganar o al equivocarte." : "Este dispositivo no vibra."}
+            label={t("shell.vibration")}
+            hint={vibrates ? t("shell.vibrationHint") : t("shell.vibrationNone")}
             checked={vibrates && vibration}
             disabled={!vibrates}
             onChange={(on) => {
@@ -206,25 +213,33 @@ function Preferences() {
         </div>
       </Section>
 
-      <Section title="Más">
+      <Section title={t("shell.sectionMore")}>
         <div className="-mx-2 space-y-1">
           <PlusState />
           {accountsEnabled && <AdminRow />}
           {accountsEnabled && <DeleteAccountRow />}
-          <ActionRow label="Estadísticas" hint="Rachas y resultados de cada juego.">
+          <ActionRow label={t("common.stats")} hint={t("shell.statsHint")}>
             <DialogPrimitive.Close asChild>
               <Button asChild variant="ghost" size="icon" className="size-11">
-                <Link href="/estadisticas" aria-label="Estadísticas"><ChartColumnIcon /></Link>
+                <Link href="/estadisticas" aria-label={t("common.stats")}><ChartColumnIcon /></Link>
               </Button>
             </DialogPrimitive.Close>
           </ActionRow>
-          <ActionRow label="Instalar app" hint="Jugá sin conexión desde tu inicio.">
+          <ActionRow label={t("shell.installApp")} hint={t("shell.installAppHint")}>
             <InstallApp />
           </ActionRow>
-          <ActionRow label="Recordatorio" hint="Un aviso por día para el desafío.">
+          <ActionRow label={t("shell.reminder")} hint={t("shell.reminderHint")}>
             <DailyReminder />
           </ActionRow>
         </div>
+        <p className="flex gap-4 text-sm text-muted-foreground">
+          <DialogPrimitive.Close asChild>
+            <Link href={legal.privacy} className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">{t("common.privacy")}</Link>
+          </DialogPrimitive.Close>
+          <DialogPrimitive.Close asChild>
+            <Link href={legal.terms} className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">{t("common.terms")}</Link>
+          </DialogPrimitive.Close>
+        </p>
       </Section>
     </>
   );

@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "rea
 import Animated from "react-native-reanimated";
 import { motion } from "@/lib/motion";
 import { Text } from "@/components/ui";
+import { useT } from "@/lib/i18n";
 import { useTheme } from "@/theme/theme";
 
 /**
@@ -31,11 +32,12 @@ export function FinishSlot({ finished, done, children, style }: { finished: bool
 }
 
 /** El enlace "Ver resultado" que vuelve a abrir la hoja. */
-export function ResultLink({ label = "Ver resultado", onPress }: { label?: string; onPress: () => void }) {
+export function ResultLink({ label, onPress }: { label?: string; onPress: () => void }) {
   const { colors } = useTheme();
+  const t = useT();
   return (
     <Pressable onPress={onPress} accessibilityRole="button" style={{ minHeight: 48, alignSelf: "center", justifyContent: "center", paddingHorizontal: 12 }}>
-      <Text variant="bodyBold" style={{ textDecorationLine: "underline", textDecorationColor: colors.margin }}>{label}</Text>
+      <Text variant="bodyBold" style={{ textDecorationLine: "underline", textDecorationColor: colors.margin }}>{label ?? t("hub.seeResult")}</Text>
     </Pressable>
   );
 }

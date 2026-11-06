@@ -1,3 +1,4 @@
+import { pictureTitle, type Locale } from "@cranea/core/i18n";
 import type { NonogramaPuzzle } from "@cranea/core/nonograma";
 import { Stack, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
@@ -15,6 +16,7 @@ import { SHARE_URL } from "@/config";
 import { formatTime } from "@/lib/format";
 import { DURATION, motion, STAGGER, WIN_RESULT_MS } from "@/lib/motion";
 import { haptic } from "@/lib/haptics";
+import { useLocale, useT, type T } from "@/lib/i18n";
 import { useSettled } from "@/lib/hooks";
 import { useProgress } from "@/stores/progress";
 import { useTheme } from "@/theme/theme";
@@ -27,6 +29,9 @@ import { PixelArt, solutionRows } from "./pixel-art";
 export type GameMode =
   | { kind: "level"; world: number; level: number; next: { world: number; level: number } | null }
   | { kind: "daily"; date: string; number: number; practice: boolean };
+
+/** Título del dibujo en el idioma activo (el del diario no está entre los dibujos de @cranea/core). */
+const titleOf = (title: string, _t: T, locale: Locale) => pictureTitle(title, locale);
 
 /** Lo que tarda el dibujo en aparecer (o latir) en diagonal antes de la hoja de resultado. */
 const RESULT_DELAY = { won: WIN_RESULT_MS, lost: STAGGER.max } as const;
@@ -44,6 +49,8 @@ export function NonogramaGame({ puzzle, mode }: { puzzle: NonogramaPuzzle; mode:
   const layout = useBoardLayout(puzzle);
   const official = mode.kind === "daily" && !mode.practice;
   const offer = useExtraAttemptOffer(GAME_ID, official ? mode.date : null);
+  const t = useT();
+  const locale = useLocale();
 
   useEffect(() => {
     start(puzzle);
@@ -66,12 +73,12 @@ export function NonogramaGame({ puzzle, mode }: { puzzle: NonogramaPuzzle; mode:
     if (settled) setResultOpen(true);
   }, [settled]);
 
-  const context = mode.kind === "daily" ? "Mismo tablero para todos" : `${puzzle.width}×${puzzle.height}`;
+  const context = mode.kind === "daily" ? t("nonograma.contextDaily") : `${puzzle.width}×${puzzle.height}`;
   const ready = current === puzzle;
 
   return (
     <>
-      <Stack.Screen options={{ title: gameTitle("Nonograma", mode) }} />
+      <Stack.Screen options={{ title: gameTitle("Nonograma", mode, locale) }} />
       <Screen contentStyle={{ paddingHorizontal: GAME_PAD, gap: 10 }}>
         <View style={{ paddingHorizontal: 8 }}>
           <GameHeader context={context} right={ready ? <><ChecksLeft /><Timer /></> : null} />
@@ -121,17 +128,20 @@ function Message({ daily, zoomHint }: { daily: boolean; zoomHint: boolean }) {
   const lastCheck = useNonograma((s) => s.lastCheck);
   const conceal = useNonograma((s) => s.conceal);
   const extra = useNonograma((s) => s.extraAttempt);
+  const t = useT();
+  const locale = useLocale();
+  const name = title ? titleOf(title, t, locale) : "";
   let text = "";
   let tone: "ok" | "bad" | "muted" = "muted";
   if (status === "won") {
-    text = daily ? "Dibujo completo." : `Dibujo completo: ${title}.`;
+    text = daily ? t("nonograma.wonDaily") : t("nonograma.wonLevel", { title: name });
     tone = "ok";
-  } else if (status === "lost") text = conceal ? "Te rendiste." : daily ? "Esta era la solución." : `Era: ${title}.`;
+  } else if (status === "lost") text = conceal ? t("nonograma.gaveUp") : daily ? t("nonograma.lostDaily") : t("nonograma.lostLevel", { title: name });
   else if (lastCheck !== null) {
-    text = lastCheck === 0 ? "Todo bien hasta acá." : `${lastCheck} ${lastCheck === 1 ? "casilla no va" : "casillas no van"} así. Están marcadas en rojo.`;
+    text = lastCheck === 0 ? t("nonograma.checkOk") : t("nonograma.checkWrong", { count: lastCheck });
     tone = lastCheck === 0 ? "ok" : "bad";
-  } else if (extra) text = "Tenés un intento más: el tablero quedó como lo dejaste.";
-  else if (zoomHint) text = "Pellizcá con dos dedos para acercar; con un dedo pintás.";
+  } else if (extra) text = t("nonograma.extraTry");
+  else if (zoomHint) text = t("nonograma.zoomHint");
   return (
     <Text
       accessibilityLiveRegion="polite"
@@ -157,53 +167,54 @@ function Controls({ zoomable, zoomed, onZoom, canOfferExtra }: { zoomable: boole
   const canReset = useNonograma((s) => s.board.some((c) => c !== 0));
   const checksLeft = useNonograma((s) => checkLimit(s) - s.checks);
   const { undo, reset, check } = useNonograma.getState();
+  const t = useT();
 
   const giveUp = () =>
-    Alert.alert("¿Te rendís?", "Se muestra la solución y el tablero queda sin resolver.", [
-      { text: "Seguir jugando", style: "cancel" },
-      { text: "Ver la solución", style: "destructive", onPress: () => useNonograma.getState().giveUp(canOfferExtra && !useNonograma.getState().extraAttempt) },
+    Alert.alert(t("nonograma.giveUpTitle"), t("nonograma.giveUpBody"), [
+      { text: t("nonograma.keepPlaying"), style: "cancel" },
+      { text: t("nonograma.showSolution"), style: "destructive", onPress: () => useNonograma.getState().giveUp(canOfferExtra && !useNonograma.getState().extraAttempt) },
     ]);
 
   return (
     <View style={{ gap: 10, paddingHorizontal: 8 }}>
       <Row gap={8}>
-        <View accessibilityRole="radiogroup" accessibilityLabel="Herramienta" style={[styles.segment, { borderColor: colors.ink, backgroundColor: colors.card, ...shadow(colors.shadowInk, 2) }]}>
-          {(["fill", "cross"] as const).map((t) => {
-            const selected = tool === t;
+        <View accessibilityRole="radiogroup" accessibilityLabel={t("nonograma.tool")} style={[styles.segment, { borderColor: colors.ink, backgroundColor: colors.card, ...shadow(colors.shadowInk, 2) }]}>
+          {(["fill", "cross"] as const).map((k) => {
+            const selected = tool === k;
             return (
               <Pressable
-                key={t}
+                key={k}
                 accessibilityRole="radio"
                 accessibilityState={{ selected }}
-                accessibilityLabel={t === "fill" ? "Pintar" : "Cruz"}
+                accessibilityLabel={k === "fill" ? t("nonograma.fill") : t("nonograma.cross")}
                 onPress={() => {
                   if (selected) return;
                   haptic("tap");
-                  setTool(t);
+                  setTool(k);
                 }}
                 style={[styles.segmentItem, selected && { backgroundColor: colors.ink }]}
               >
-                {t === "fill" ? (
+                {k === "fill" ? (
                   <View style={{ width: 14, height: 14, borderRadius: 3, backgroundColor: selected ? colors.paper : colors.ink }} />
                 ) : (
                   <Icon name="close" size={18} color={selected ? colors.paper : colors.ink} />
                 )}
-                <Text style={{ fontFamily: fonts.bodyBold, fontSize: 16, color: selected ? colors.paper : colors.ink }}>{t === "fill" ? "Pintar" : "Cruz"}</Text>
+                <Text style={{ fontFamily: fonts.bodyBold, fontSize: 16, color: selected ? colors.paper : colors.ink }}>{k === "fill" ? t("nonograma.fill") : t("nonograma.cross")}</Text>
               </Pressable>
             );
           })}
         </View>
-        <IconButton icon="arrow-undo" label="Deshacer" disabled={!canUndo} onPress={undo} />
-        {zoomable && <IconButton icon={zoomed ? "contract-outline" : "search"} label={zoomed ? "Ver el tablero entero" : "Acercar"} onPress={onZoom} />}
+        <IconButton icon="arrow-undo" label={t("nonograma.undo")} disabled={!canUndo} onPress={undo} />
+        {zoomable && <IconButton icon={zoomed ? "contract-outline" : "search"} label={zoomed ? t("nonograma.zoomOut") : t("nonograma.zoomIn")} onPress={onZoom} />}
       </Row>
       <Row gap={8}>
-        <Button title="Borrar todo" icon="trash-outline" variant="outline" disabled={!canReset} onPress={reset} style={{ flex: 1, paddingHorizontal: 8 }} />
-        <Button title={`Revisar (${Math.max(0, checksLeft)})`} icon="search-circle-outline" variant="outline" disabled={checksLeft <= 0 || !canReset} onPress={check} style={{ flex: 1, paddingHorizontal: 8 }} accessibilityLabel={`Revisar, ${Math.max(0, checksLeft)} disponibles`} />
+        <Button title={t("nonograma.clearAll")} icon="trash-outline" variant="outline" disabled={!canReset} onPress={reset} style={{ flex: 1, paddingHorizontal: 8 }} />
+        <Button title={t("nonograma.check", { n: Math.max(0, checksLeft) })} icon="search-circle-outline" variant="outline" disabled={checksLeft <= 0 || !canReset} onPress={check} style={{ flex: 1, paddingHorizontal: 8 }} accessibilityLabel={t("nonograma.checkLabel", { n: Math.max(0, checksLeft) })} />
       </Row>
       <Text variant="small" style={{ textAlign: "center" }}>
-        Revisar marca lo que está mal y suma un intento.{" "}
+        {t("nonograma.checkHelp")}{" "}
         <Text variant="small" accessibilityRole="button" onPress={giveUp} style={{ fontFamily: fonts.bodyBold, color: colors.ink, textDecorationLine: "underline", textDecorationColor: colors.margin }}>
-          Me rindo
+          {t("nonograma.giveUp")}
         </Text>
       </Text>
     </View>
@@ -243,8 +254,9 @@ function ChecksLeft() {
   const total = MAX_ATTEMPTS + (extra ? 1 : 0);
   const left = status === "lost" ? 0 : total - checks;
   const attempt = Math.min(total, checks + 1);
+  const t = useT();
   return (
-    <Row gap={3} accessibilityRole="image" accessibilityLabel={`Intento ${attempt} de ${total}`}>
+    <Row gap={3} accessibilityRole="image" accessibilityLabel={t("nonograma.attemptOf", { attempt, total })}>
       {Array.from({ length: total }, (_, i) => (
         <View key={i} style={{ width: 6, height: i < left ? 16 : 10, borderRadius: 3, backgroundColor: i < left ? colors.ink : colors.margin, opacity: i < left ? 1 : 0.4 }} />
       ))}
@@ -268,9 +280,11 @@ function Timer() {
 /** El dibujo resuelto, en un marco de tinta. */
 export function Picture({ puzzle, size = 84 }: { puzzle: NonogramaPuzzle; size?: number }) {
   const { colors } = useTheme();
+  const t = useT();
+  const locale = useLocale();
   return (
     <View style={[styles.picture, { borderColor: colors.ink, backgroundColor: colors.tile, ...shadow(colors.shadowInk, 3) }]}>
-      <PixelArt rows={solutionRows(puzzle.solution, puzzle.width)} size={size} label={puzzle.title} />
+      <PixelArt rows={solutionRows(puzzle.solution, puzzle.width)} size={size} label={titleOf(puzzle.title, t, locale)} />
     </View>
   );
 }
@@ -289,25 +303,28 @@ function NonogramaResult({ open, onClose, mode, offerAvailable, onRetry, onExtra
   useEffect(() => {
     if (conceal && !offerAvailable) setConceal(false);
   }, [conceal, offerAvailable, setConceal]);
+  const t = useT();
+  const locale = useLocale();
   if (!puzzle || status === "playing") return null;
 
   const won = status === "won";
   const attempts = attemptsOf({ status, checks, extraAttempt });
   const time = formatTime((finishedAt ?? Date.now()) - startedAt);
-  const title = mode.kind === "daily" ? `Nonograma del día #${mode.number}` : `Nonograma ${mode.world}-${mode.level}`;
-  const picture = mode.kind === "daily" ? "el dibujo del día" : `«${puzzle.title}»`;
+  const title = mode.kind === "daily" ? gameTitle("Nonograma", mode, locale) : t("nonograma.levelShort", { world: mode.world, level: mode.level });
+  const name = titleOf(puzzle.title, t, locale);
+  const picture = mode.kind === "daily" ? t("nonograma.dailyPicture") : t("nonograma.quoted", { title: name });
   const offering = mode.kind === "daily" && !mode.practice && !won && conceal && offerAvailable;
 
   const marks = Array.from({ length: MAX_ATTEMPTS }, (_, i) => (won && !extraAttempt && i === attempts - 1 ? "🟩" : i < attempts - 1 || !won || extraAttempt ? "🟥" : "⬜")).join("");
-  const score = won ? (extraAttempt ? "con un intento extra" : `${attempts}/${MAX_ATTEMPTS}`) : "X";
-  const shareMessage = `Craneá · ${title}\n${marks} ${score} en ${time}\n${SHARE_URL}/nonograma`;
+  const score = won ? (extraAttempt ? t("nonograma.extraScore") : `${attempts}/${MAX_ATTEMPTS}`) : "X";
+  const shareMessage = t("nonograma.share", { title, marks, score, time, url: `${SHARE_URL}/nonograma` });
   // La silueta del tablero, sin una sola casilla pintada: el dibujo no se revela.
   const card: ResultCard = {
     game: "Nonograma",
-    label: resultLabel(mode),
+    label: resultLabel(mode, locale),
     won,
-    headline: won ? (extraAttempt ? "Con intento extra" : `${attempts}/${MAX_ATTEMPTS}`) : "No salió",
-    detail: won ? `${puzzle.width}×${puzzle.height} · ${attempts === 1 ? "sin revisar" : `${attempts} intentos`} · ${time}` : `Sin resolver · ${time}`,
+    headline: won ? (extraAttempt ? t("nonograma.cardExtra") : `${attempts}/${MAX_ATTEMPTS}`) : t("nonograma.cardLost"),
+    detail: won ? `${puzzle.width}×${puzzle.height} · ${attempts === 1 ? t("nonograma.noChecks") : t("common.attempts", { count: attempts })} · ${time}` : t("nonograma.unsolvedTime", { time }),
     visual: { kind: "board", width: puzzle.width, height: puzzle.height, blocks: 5 },
     marks: attemptMarks(MAX_ATTEMPTS, won && !extraAttempt ? attempts - 1 : MAX_ATTEMPTS, won && !extraAttempt),
   };
@@ -316,15 +333,15 @@ function NonogramaResult({ open, onClose, mode, offerAvailable, onRetry, onExtra
     <ResultSheet
       visible={open}
       onClose={onClose}
-      title={won ? (extraAttempt ? "¡Salió con el intento extra!" : attempts === 1 ? "Sin revisar ni una vez" : "Dibujo completo") : "Esta vez no salió"}
+      title={won ? (extraAttempt ? t("nonograma.wonExtraTitle") : attempts === 1 ? t("nonograma.wonCleanTitle") : t("nonograma.wonTitle")) : t("nonograma.lostTitle")}
       description={
         won
           ? extraAttempt
-            ? `${title}, en ${time}. Suma a tu racha; en el ranking queda como no resuelto.`
-            : `${title}: ${picture}, en ${attempts} de ${MAX_ATTEMPTS} intentos y ${time}.`
+            ? t("nonograma.wonExtraDesc", { title, time })
+            : t("nonograma.wonDesc", { title, picture, attempts, max: MAX_ATTEMPTS, time })
           : offering
-            ? `${title}, sin resolver por ahora.`
-            : `${title}, sin resolver. Era ${picture}.`
+            ? t("nonograma.pendingDesc", { title })
+            : t("nonograma.lostDesc", { title, picture })
       }
     >
       {offering && mode.kind === "daily" ? (
@@ -334,13 +351,13 @@ function NonogramaResult({ open, onClose, mode, offerAvailable, onRetry, onExtra
           <Animated.View entering={motion.pop(DURATION.slow)}>
             <Picture puzzle={puzzle} />
           </Animated.View>
-          {mode.kind === "level" && <Text variant="title" style={{ flex: 1 }}>{puzzle.title}</Text>}
+          {mode.kind === "level" && <Text variant="title" style={{ flex: 1 }}>{name}</Text>}
         </Row>
       )}
       <View style={{ gap: 8 }}>
         {mode.kind === "level" && mode.next ? (
           <Button
-            title="Siguiente nivel"
+            title={t("nonograma.nextLevel")}
             size="lg"
             onPress={() => {
               onClose();
@@ -348,11 +365,11 @@ function NonogramaResult({ open, onClose, mode, offerAvailable, onRetry, onExtra
             }}
           />
         ) : (
-          <Button title="Volver a los mundos" size="lg" onPress={() => { onClose(); router.navigate("/nonograma"); }} />
+          <Button title={t("nonograma.backToWorlds")} size="lg" onPress={() => { onClose(); router.navigate("/nonograma"); }} />
         )}
-        {mode.kind === "level" && (!won || attempts > 1) && <Button title="Reintentar" variant="outline" icon="refresh" onPress={onRetry} />}
+        {mode.kind === "level" && (!won || attempts > 1) && <Button title={t("common.retry")} variant="outline" icon="refresh" onPress={onRetry} />}
         {mode.kind === "daily" && (
-          <Button title="Ver ranking" variant="outline" icon="trophy-outline" onPress={() => { onClose(); router.push({ pathname: "/ranking", params: { juego: GAME_ID, fecha: mode.date } }); }} />
+          <Button title={t("nonograma.seeRanking")} variant="outline" icon="trophy-outline" onPress={() => { onClose(); router.push({ pathname: "/ranking", params: { juego: GAME_ID, fecha: mode.date } }); }} />
         )}
         <ResultShareButton text={shareMessage} card={card} />
       </View>

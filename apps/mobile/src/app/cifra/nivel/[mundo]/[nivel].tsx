@@ -6,9 +6,11 @@ import { FREE_LEVELS, isFreeLevel, usePlus, usePlusReady } from "@/entitlements"
 import { CifraGame } from "@/games/cifra/components/cifra-game";
 import { CIFRA_HOME, getLevel, isLevelUnlocked, levelKey, nextLevelOf } from "@/games/cifra/data";
 import { Loading } from "@/components/ui";
+import { useT } from "@/lib/i18n";
 import { useGameProgress, useProgress } from "@/stores/progress";
 
 export default function CifraLevel() {
+  const t = useT();
   const params = useLocalSearchParams<{ mundo: string; nivel: string }>();
   const world = Number(params.mundo);
   const level = Number(params.nivel);
@@ -23,12 +25,12 @@ export default function CifraLevel() {
   }, [world, level, plus]);
   const plusReady = usePlusReady();
   const open = isLevelUnlocked(world, level, (w, l) => Boolean(progress.levels[levelKey(w, l)]?.won));
-  if (!hydrated || !plusReady) return <Loading label="Preparando el tablero…" />;
-  if (!puzzle) return <NotFound title="Nivel inexistente" />;
+  if (!hydrated || !plusReady) return <Loading label={t("cifra.preparing")} />;
+  if (!puzzle) return <NotFound title={t("cifra.levelMissing")} />;
   if (!plus && !isFreeLevel(CIFRA_HOME.worlds, world, level)) {
-    return <PlusGate title="Nivel de Craneá Plus" message={`Los primeros ${FREE_LEVELS} niveles de Cifra son gratis. Este y todos los demás se abren con Craneá Plus, junto con los de los otros juegos.`} reason="mundos" />;
+    return <PlusGate title={t("cifra.plusLevel")} message={t("cifra.plusLevelMessage", { free: FREE_LEVELS })} reason="mundos" />;
   }
-  if (!open) return <NotFound title="Nivel bloqueado" message="Ganá el nivel anterior para abrirlo." />;
+  if (!open) return <NotFound title={t("cifra.levelLocked")} message={t("cifra.levelLockedMessage")} />;
   return (
     <>
       <Stack.Screen options={{ title: `Cifra · ${world}-${level}` }} />

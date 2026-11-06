@@ -8,6 +8,7 @@ import { accountsEnabled } from "@/components/account-provider";
 import { usePwa } from "@/components/pwa-provider";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { getLocale, useIntlLocale, useLocale, useT } from "@/lib/i18n";
 
 const VAPID_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 const STORAGE = "cranea-reminder";
@@ -15,7 +16,7 @@ const DEFAULT_TIME = "10:00";
 
 type Support = "checking" | "ok" | "dev" | "ios" | "unsupported" | "denied";
 
-/** Última combinación de cuenta y suscripción que ya se le informó al servidor en esta sesión. */
+/** Última combinación de cuenta, idioma y suscripción que ya se le informó al servidor en esta sesión. */
 let syncedFor: string | null = null;
 
 const toMinutes = (time: string) => { const [h, m] = time.split(":").map(Number); return h * 60 + m; };
@@ -25,6 +26,13 @@ function applicationServerKey(base64: string) {
   const raw = atob((base64 + "=".repeat((4 - (base64.length % 4)) % 4)).replace(/-/g, "+").replace(/_/g, "/"));
   return Uint8Array.from(raw, (c) => c.charCodeAt(0));
 }
+
+/** "10:00" en español; "10:00 AM" en inglés. */
+const showTime = (time: string, intl: string) => {
+  if (intl === "es-AR") return time;
+  const [h, m] = time.split(":").map(Number);
+  return new Intl.DateTimeFormat(intl, { hour: "numeric", minute: "2-digit", timeZone: "UTC" }).format(Date.UTC(2000, 0, 1, h, m));
+};
 
 const pushSupported = () => "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
 const registration = async () => (await navigator.serviceWorker.getRegistration("/")) ?? null;
@@ -45,6 +53,10 @@ function Reminder({ vapidKey }: { vapidKey: string }) {
   const [time, setTime] = useState(DEFAULT_TIME);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
+  const t = useT();
+  // El aviso llega en el idioma activo: al cambiarlo se vuelve a guardar la suscripción.
+  const locale = useLocale();
+  const intl = useIntlLocale();
 
   const save = (sub: PushSubscription, at: string) => {
     const json = sub.toJSON();
@@ -53,6 +65,7 @@ function Reminder({ vapidKey }: { vapidKey: string }) {
       minutes: toMinutes(at),
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC",
       offset: -new Date().getTimezoneOffset(),
+      locale: getLocale(),
     });
   };
 
@@ -68,11 +81,11 @@ function Reminder({ vapidKey }: { vapidKey: string }) {
   // Mantiene el servidor al día: asocia la cuenta al iniciar sesión y recupera suscripciones perdidas.
   useEffect(() => {
     if (!subscription || isLoading) return;
-    const key = `${isAuthenticated}:${subscription.endpoint}`;
+    const key = `${isAuthenticated}:${locale}:${subscription.endpoint}`;
     if (syncedFor === key) return;
     syncedFor = key;
     save(subscription, savedTime()).catch(() => { syncedFor = null; });
-  }, [subscription, isLoading, isAuthenticated]);
+  }, [subscription, isLoading, isAuthenticated, locale]);
 
   const enable = async () => {
     setBusy(true);
@@ -86,7 +99,7 @@ function Reminder({ vapidKey }: { vapidKey: string }) {
       const reg = await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.getSubscription() ?? await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: applicationServerKey(vapidKey) });
       await save(sub, time);
-      syncedFor = `${isAuthenticated}:${sub.endpoint}`;
+      syncedFor = `${isAuthenticated}:${getLocale()}:${sub.endpoint}`;
       localStorage.setItem(STORAGE, time);
       setSubscription(sub);
     } catch {
@@ -126,7 +139,8 @@ function Reminder({ vapidKey }: { vapidKey: string }) {
   };
 
   const on = !!subscription;
-  const label = on ? `Aviso diario a las ${time}` : "Recordatorio diario";
+  const shown = showTime(time, intl);
+  const label = on ? t("shell.reminderAt", { time: shown }) : t("shell.reminderTitle");
   return <Dialog>
     <DialogTrigger asChild>
       <Button variant="ghost" size="icon" aria-label={label} title={label}>
@@ -135,29 +149,29 @@ function Reminder({ vapidKey }: { vapidKey: string }) {
     </DialogTrigger>
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>Recordatorio diario</DialogTitle>
-        <DialogDescription>Te avisamos cuando esté el desafío de hoy.</DialogDescription>
+        <DialogTitle>{t("shell.reminderTitle")}</DialogTitle>
+        <DialogDescription>{t("shell.reminderBody")}</DialogDescription>
       </DialogHeader>
       {support === "ok" ? <>
         <label className="flex items-center justify-between gap-4 font-semibold">
-          Hora del aviso
+          {t("shell.reminderTime")}
           <input type="time" value={time} step={900} disabled={busy} onChange={(e) => void changeTime(e.target.value)}
             className="min-h-11 rounded-lg border-2 border-foreground/80 bg-card px-3 font-sans tabular-nums focus-visible:outline-2 focus-visible:outline-offset-2" />
         </label>
         <Button size="lg" variant={on ? "outline" : "default"} disabled={busy} onClick={() => void (on ? disable() : enable())}>
-          {on ? "Desactivar aviso" : "Activar aviso"}
+          {on ? t("shell.reminderTurnOff") : t("shell.reminderTurnOn")}
         </Button>
         <p role="status" className="text-sm text-muted-foreground">
-          {error ? "No se pudo guardar. Probá de nuevo con conexión."
-            : on ? `Te avisamos todos los días a las ${time}.${isAuthenticated ? " Si ya jugaste, no." : ""}`
-            : "Podés desactivarlo cuando quieras."}
+          {error ? t("shell.reminderError")
+            : on ? `${t("shell.reminderEveryDay", { time: shown })}${isAuthenticated ? t("shell.reminderSkipPlayed") : ""}`
+            : t("shell.reminderCanStop")}
         </p>
       </> : <p className="text-sm leading-relaxed">{{
-        checking: "Revisando si tu navegador permite avisos…",
-        dev: "Los avisos se activan en la versión publicada.",
-        ios: "En iPhone y iPad, los avisos funcionan con Craneá instalada. En Safari, tocá Compartir, elegí Agregar a pantalla de inicio y activalos desde ahí.",
-        unsupported: "Este navegador no permite avisos. Probá instalando Craneá o desde otro navegador.",
-        denied: "Los avisos de Craneá están bloqueados. Habilitalos en los ajustes del navegador y volvé a intentar.",
+        checking: t("shell.reminderChecking"),
+        dev: t("shell.reminderDev"),
+        ios: t("shell.reminderIos"),
+        unsupported: t("shell.reminderUnsupported"),
+        denied: t("shell.reminderDenied"),
       }[support]}</p>}
     </DialogContent>
   </Dialog>;

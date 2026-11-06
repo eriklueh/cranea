@@ -6,9 +6,11 @@ import { Loading } from "@/components/ui";
 import { FREE_LEVELS, isFreeLevel, usePlus, usePlusReady } from "@/entitlements";
 import { TorresGame } from "@/games/torres/components/torres-game";
 import { getLevel, isLevelUnlocked, levelKey, nextLevelOf, TORRES_HOME } from "@/games/torres/data";
+import { useT } from "@/lib/i18n";
 import { useGameProgress, useProgress } from "@/stores/progress";
 
 export default function TorresLevel() {
+  const t = useT();
   const params = useLocalSearchParams<{ mundo: string; nivel: string }>();
   const world = Number(params.mundo);
   const level = Number(params.nivel);
@@ -23,12 +25,12 @@ export default function TorresLevel() {
   }, [world, level, plus]);
   const plusReady = usePlusReady();
   const open = isLevelUnlocked(world, level, (w, l) => Boolean(progress.levels[levelKey(w, l)]?.won));
-  if (!hydrated || !plusReady) return <Loading label="Preparando la ciudad…" />;
-  if (!puzzle) return <NotFound title="Nivel inexistente" />;
+  if (!hydrated || !plusReady) return <Loading label={t("torres.preparing")} />;
+  if (!puzzle) return <NotFound title={t("torres.levelMissing")} />;
   if (!plus && !isFreeLevel(TORRES_HOME.worlds, world, level)) {
-    return <PlusGate title="Nivel de Craneá Plus" message={`Los primeros ${FREE_LEVELS} niveles de Torres son gratis. Este y todos los demás se abren con Craneá Plus, junto con los de los otros juegos.`} reason="mundos" />;
+    return <PlusGate title={t("torres.plusLevel")} message={t("torres.plusLevelMessage", { free: FREE_LEVELS })} reason="mundos" />;
   }
-  if (!open) return <NotFound title="Nivel bloqueado" message="Ganá el nivel anterior para abrirlo." />;
+  if (!open) return <NotFound title={t("torres.levelLocked")} message={t("torres.levelLockedMessage")} />;
   return (
     <>
       <Stack.Screen options={{ title: `Torres · ${world}-${level}` }} />

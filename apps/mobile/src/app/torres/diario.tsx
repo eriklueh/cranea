@@ -1,6 +1,8 @@
 import { generateDaily } from "@cranea/core/torres";
 import { Stack } from "expo-router";
 import { useMemo } from "react";
+import { gameTitle } from "@/components/game-header";
+import { useLocale, useT } from "@/lib/i18n";
 import { DailyGate } from "@/components/daily-gate";
 import { Board } from "@/games/torres/components/board";
 import { TorresGame } from "@/games/torres/components/torres-game";
@@ -8,14 +10,16 @@ import { dailyNumber, GAME_ID } from "@/games/torres/data";
 
 /** El diario se genera en el dispositivo con la fecha UTC como semilla: todos ven el mismo tablero. Cuenta la primera partida. */
 export default function TorresDaily() {
+  const t = useT();
+  const locale = useLocale();
   return (
     <>
-      <Stack.Screen options={{ title: "Torres del día" }} />
+      <Stack.Screen options={{ title: t("torres.dailyTitle") }} />
       <DailyGate
         gameId={GAME_ID}
         game="Torres"
         home="/torres"
-        title={(date) => `Torres del día #${dailyNumber(date)}`}
+        title={(date) => gameTitle("Torres", { kind: "daily", number: dailyNumber(date) }, locale)}
         reveal={(date) => <Solution date={date} />}
       >
         {(date, practice) => <Play key={`${date}-${practice}`} date={date} practice={practice} />}

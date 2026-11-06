@@ -4,10 +4,12 @@ import { useRef, useState } from "react";
 import { LockIcon } from "lucide-react";
 import { PlusBadge, openPaywall } from "@/components/plus/paywall";
 import { FREE_LEVELS, isFreeLevel } from "@/lib/free-levels";
+import { worldCopy } from "@cranea/core/i18n";
+import { useLocale, useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type { GameProgress } from "@/stores/progress";
 import { doneFor, wonIn } from "./progress";
-import { plural, type GameHomeConfig } from "./types";
+import { localized, plural, type GameHomeConfig } from "./types";
 
 /**
  * Mundos como pestañas y la grilla de niveles del mundo elegido: en el celular entra
@@ -39,7 +41,12 @@ export function WorldMap({
   const selectedId = picked ?? initialWorld;
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
   const done = hydrated ? doneFor(config, progress) : () => false;
-  const unit = config.unit ?? { one: "nivel", many: "niveles" };
+  const t = useT();
+  const locale = useLocale();
+  const unit = config.unit
+    ? { one: localized(config.unit.one, locale), many: localized(config.unit.many, locale) }
+    : { one: t("hub.unitOne"), many: t("hub.unitMany") };
+  const worldName = (w: { id: number; name: string; description: string }) => worldCopy(config.id, w, locale).name;
   const idBase = `${config.id}-mundo`;
 
   const onKeyDown = (e: React.KeyboardEvent, i: number) => {
@@ -64,7 +71,7 @@ export function WorldMap({
     <section aria-labelledby={`${idBase}s`}>
       <div className="mb-1.5 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <h2 id={`${idBase}s`} className="text-xs font-bold tracking-wider text-muted-foreground uppercase">Niveles</h2>
+          <h2 id={`${idBase}s`} className="text-xs font-bold tracking-wider text-muted-foreground uppercase">{t("common.levels")}</h2>
           {needsPlus && <PlusBadge />}
         </div>
         {aside}
@@ -72,7 +79,7 @@ export function WorldMap({
 
       <div
         role="tablist"
-        aria-label="Mundos"
+        aria-label={t("hub.worlds")}
         className="grid gap-1 rounded-xl bg-muted p-1"
         style={{ gridTemplateColumns: `repeat(${worlds.length}, minmax(0, 1fr))` }}
       >
@@ -92,7 +99,7 @@ export function WorldMap({
               aria-selected={selected}
               aria-controls={`${idBase}-panel`}
               tabIndex={selected ? 0 : -1}
-              aria-label={`Mundo ${i + 1}: ${w.name}. ${hydrated ? (wOpen ? `${wWon} de ${w.levels}` : "bloqueado") : ""}`}
+              aria-label={t("hub.worldTab", { n: i + 1, name: worldName(w), state: hydrated ? (wOpen ? t("hub.wonOf", { won: wWon, total: w.levels }) : t("hub.locked")) : "" })}
               onClick={() => setPicked(w.id)}
               onKeyDown={(e) => onKeyDown(e, i)}
               className={cn(
@@ -115,7 +122,7 @@ export function WorldMap({
       <div role="tabpanel" id={`${idBase}-panel`} aria-labelledby={`${idBase}-tab-${world.id}`} className="mt-3">
         <div className="mb-2.5 flex items-baseline justify-between gap-3">
           <h3 className="min-w-0 truncate font-display text-lg font-extrabold">
-            {world.name}
+            {worldName(world)}
           </h3>
           <span className="shrink-0 text-sm text-muted-foreground tabular-nums">
             <span className="font-semibold text-foreground">{hydrated ? won : "–"}</span>/{world.levels}
@@ -123,9 +130,9 @@ export function WorldMap({
         </div>
         {hydrated && needsPlus && (
           <p className="mb-3 flex items-center gap-1.5 rounded-lg bg-clue-present-bg px-3 py-1 text-sm text-clue-present">
-            <span className="min-w-0 flex-1 py-1">{paidWorld ? "Este mundo es parte de Craneá Plus." : `Los primeros ${FREE_LEVELS} ${unit.many} son gratis. El resto, con Plus.`}</span>
+            <span className="min-w-0 flex-1 py-1">{paidWorld ? t("hub.paidWorld") : t("hub.freeFirst", { count: FREE_LEVELS, unit: unit.many })}</span>
             <button type="button" onClick={() => openPaywall("levels")} aria-haspopup="dialog" className="-mr-1 inline-flex min-h-11 shrink-0 items-center rounded-md px-1 font-semibold underline decoration-2 underline-offset-4 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
-              Ver Plus
+              {t("hub.seePlus")}
             </button>
           </p>
         )}
@@ -133,8 +140,8 @@ export function WorldMap({
           <p className="mb-3 flex items-start gap-1.5 rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">
             <LockIcon aria-hidden className="mt-0.5 size-3.5 shrink-0" />
             <span>
-              Se abre con {plural(world.unlockAfter, unit.one, unit.many)} de «{previous?.name}».{" "}
-              <span className="font-semibold text-foreground">Te {missing === 1 ? "falta" : "faltan"} {missing}.</span>
+              {t("hub.unlockRule", { need: plural(world.unlockAfter, unit.one, unit.many), world: previous ? worldName(previous) : "" })}{" "}
+              <span className="font-semibold text-foreground">{t("hub.missing", { count: missing })}</span>
             </span>
           </p>
         )}
@@ -175,6 +182,8 @@ function LevelCell({
   const thumb = won ? config.thumbnail?.(worldId, n) : null;
   const stars = won ? config.stars(result!) : 0;
   const paid = needsPlus && !isFreeLevel(config.worlds, worldId, n);
+  const t = useT();
+  const locale = useLocale();
 
   const cls = cn(
     "relative grid aspect-square min-h-11 w-full place-items-center rounded-md font-display text-base font-bold tabular-nums outline-none transition-[background-color,transform] focus-visible:ring-[3px] focus-visible:ring-ring/50",
@@ -189,15 +198,15 @@ function LevelCell({
   if (!unlocked && !(paid && hydrated)) {
     return (
       <li>
-        <span className={cls} aria-label={hydrated ? `Nivel ${n}, bloqueado` : `Nivel ${n}`}>
+        <span className={cls} aria-label={hydrated ? t("hub.levelLocked", { n }) : t("common.level", { n })}>
           {n}
         </span>
       </li>
     );
   }
 
-  const title = won ? config.levelTitle?.(worldId, n) : "";
-  const label = `Nivel ${n}${title ? `, ${title}` : ""}${won ? `, resuelto ${config.resultText(result!)}` : tried ? ", sin resolver" : ""}${next ? ", el próximo" : ""}`;
+  const title = won ? config.levelTitle?.(worldId, n, locale) : "";
+  const label = `${t("common.level", { n })}${title ? `, ${title}` : ""}${won ? t("hub.levelSolved", { result: config.resultText(result!, locale) }) : tried ? t("hub.levelUnsolved") : ""}${next ? t("hub.levelNext") : ""}`;
   const content = (
     <>
       {thumb ?? n}
@@ -213,7 +222,7 @@ function LevelCell({
   if (paid) {
     return (
       <li>
-        <button type="button" onClick={() => openPaywall("levels")} className={cls} aria-label={`${label}. Con Craneá Plus`} aria-haspopup="dialog">
+        <button type="button" onClick={() => openPaywall("levels")} className={cls} aria-label={`${label}${t("hub.withPlus")}`} aria-haspopup="dialog">
           {content}
           <span aria-hidden className="absolute -top-1 -right-1 grid size-4 place-items-center rounded-full border border-border bg-card text-muted-foreground">
             <LockIcon className="size-2.5" strokeWidth={2.75} />

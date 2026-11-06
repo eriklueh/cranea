@@ -2,6 +2,7 @@
 import type { CSSProperties } from "react";
 import { DeleteIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { celebrateStep, haptic, useOnChange } from "@/lib/motion";
 import { sound } from "@/lib/sound";
@@ -32,6 +33,7 @@ export function InputSlots() {
 }
 
 export function Keypad() {
+  const t = useT();
   const { puzzle, input, status, press, backspace, submit } = useCifra();
   const playing = status === "playing";
   const full = puzzle ? input.length === puzzle.length : false;
@@ -54,10 +56,10 @@ export function Keypad() {
       </div>
       <div className="grid grid-cols-[1fr_2fr] gap-1.5">
         <Button variant="outline" size="lg" onClick={backspace} disabled={!playing || input.length === 0}>
-          <DeleteIcon /> Borrar
+          <DeleteIcon /> {t("cifra.delete")}
         </Button>
         <Button size="lg" onClick={submit} disabled={!playing || !full}>
-          Probar código
+          {t("cifra.tryCode")}
         </Button>
       </div>
     </div>

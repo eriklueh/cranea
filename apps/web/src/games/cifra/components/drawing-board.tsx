@@ -2,6 +2,7 @@
 
 import { CheckIcon, HandIcon, PencilIcon, Trash2Icon, Undo2Icon } from "lucide-react";
 import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
+import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { loadDrawing, saveDrawing, type Point, type Stroke } from "../session";
 
@@ -20,6 +21,7 @@ export function DrawingBoard({ active, onActiveChange, tools, storageKey, childr
   tools?: ReactNode;
   children: ReactNode;
 }) {
+  const t = useT();
   const surface = useRef<HTMLDivElement>(null);
   const current = useRef<{ pointer: number; points: Stroke } | null>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -67,29 +69,29 @@ export function DrawingBoard({ active, onActiveChange, tools, storageKey, childr
   const buttonClass = "inline-flex h-11 min-w-11 items-center justify-center gap-2 rounded-lg px-3 text-sm font-semibold transition-colors hover:bg-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-35 disabled:pointer-events-none";
 
   return <>
-    <div data-drawing-controls className="sticky top-2 z-20 mb-2 flex min-h-11 items-center justify-end gap-1 rounded-xl bg-paper/95 p-1 shadow-sm backdrop-blur-sm" role="group" aria-label="Herramientas del tablero">
+    <div data-drawing-controls className="sticky top-2 z-20 mb-2 flex min-h-11 items-center justify-end gap-1 rounded-xl bg-paper/95 p-1 shadow-sm backdrop-blur-sm" role="group" aria-label={t("cifra.boardTools")}>
       {!active && tools && <div className="mr-auto flex items-center">{tools}</div>}
       {(active || strokes.length > 0) && <>
-        {active && <button type="button" className={cn(buttonClass, panning && "bg-ink/10")} aria-pressed={panning} onClick={() => setPanning((value) => !value)} aria-label="Mover la página sin dibujar" title="Mover la página sin dibujar">
+        {active && <button type="button" className={cn(buttonClass, panning && "bg-ink/10")} aria-pressed={panning} onClick={() => setPanning((value) => !value)} aria-label={t("cifra.pan")} title={t("cifra.pan")}>
           <HandIcon className="size-4" />
         </button>}
-        <button type="button" className={buttonClass} disabled={strokes.length === 0} onClick={() => setStrokes((previous) => previous.slice(0, -1))} aria-label="Deshacer último trazo" title="Deshacer último trazo">
+        <button type="button" className={buttonClass} disabled={strokes.length === 0} onClick={() => setStrokes((previous) => previous.slice(0, -1))} aria-label={t("cifra.undoStroke")} title={t("cifra.undoStroke")}>
           <Undo2Icon className="size-4" />
         </button>
-        <button type="button" className={buttonClass} disabled={strokes.length === 0} onClick={() => setStrokes([])} aria-label="Borrar dibujo" title="Borrar dibujo">
+        <button type="button" className={buttonClass} disabled={strokes.length === 0} onClick={() => setStrokes([])} aria-label={t("cifra.clearDrawing")} title={t("cifra.clearDrawing")}>
           <Trash2Icon className="size-4" />
         </button>
       </>}
-      <button type="button" className={cn(buttonClass, active && "bg-ink text-paper hover:bg-ink/90")} aria-pressed={active} aria-label={active ? "Terminar de dibujar" : "Dibujar sobre el tablero"} title={active ? "Terminar de dibujar (Escape)" : "Dibujar sobre el tablero"} onClick={() => { setPanning(false); onActiveChange(!active); }}>
+      <button type="button" className={cn(buttonClass, active && "bg-ink text-paper hover:bg-ink/90")} aria-pressed={active} aria-label={active ? t("cifra.stopDrawing") : t("cifra.startDrawing")} title={active ? t("cifra.stopDrawingTitle") : t("cifra.startDrawing")} onClick={() => { setPanning(false); onActiveChange(!active); }}>
         {active ? <CheckIcon className="size-4" /> : <PencilIcon className="size-4" />}
-        {active ? "Listo" : "Lápiz"}
+        {active ? t("cifra.pencilDone") : t("cifra.pencil")}
       </button>
     </div>
     <div ref={surface} className={cn("relative left-1/2 isolate min-h-[calc(100svh-12rem)] w-[calc(100vw-1rem)] max-w-5xl -translate-x-1/2 rounded-2xl", active && "outline-1 -outline-offset-1 outline-dashed outline-pencil/30", active && panning && "cursor-grab")} data-drawing-board>
       <div className="mx-auto w-full max-w-md px-2 pt-10 pb-56 sm:px-4" inert={active || undefined}>{children}</div>
       <svg
         role="img"
-        aria-label={canDraw ? "Superficie para dibujar sobre el juego" : "Dibujo de esta partida"}
+        aria-label={canDraw ? t("cifra.drawingSurface") : t("cifra.drawing")}
         className={cn("absolute inset-0 z-10 size-full overflow-hidden rounded-2xl text-ink", canDraw ? "cursor-crosshair touch-none" : "pointer-events-none")}
         viewBox={size.width && size.height ? `${-size.width / 2} 0 ${size.width} ${size.height}` : undefined}
         onPointerDown={(event) => {

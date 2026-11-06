@@ -1,5 +1,101 @@
 import type { NamespaceShape } from "@cranea/core/i18n";
 
-export const es = {};
+/** Craneá Plus: la hoja, la tarjeta "¿Querés seguir?" y la página /plus. */
+export const es = {
+  price: "desde USD 1,99/mes",
+  reasonLevels: "Los primeros {count} niveles de cada juego son gratis; el resto es parte de Plus. Los desafíos del día siguen gratis.",
+  reasonArchive: "Los diarios anteriores son parte de Plus. Los de hoy siguen gratis.",
+  reasonHints: "Ya usaste la pista gratis de este tablero.",
+  reasonGeneral: "Más para jugar, a tu ritmo. Los desafíos del día siguen gratis.",
+  downloadApp: "Descargá la app",
+  getInApp: "Conseguilo en la app",
+  havePlus: "Ya tengo Plus",
+  notOnAccount:
+    "Con esta cuenta todavía no aparece Plus. Entrá con la misma cuenta que usás en la app; si recién lo compraste, puede tardar unos minutos.",
+  includes: "Qué incluye",
+  cancelAnytime: " · se cancela cuando quieras desde la tienda.",
+  accountNote: "La suscripción va con tu cuenta: si la sacás en la app, iniciá sesión acá con la misma cuenta y listo.",
+  more: "Más sobre Plus",
+  playToday: "Jugar el desafío de hoy",
+  benefitLevels: "Todos los niveles y mundos de los cinco juegos",
+  benefitArchive: "El archivo: jugá los diarios que te perdiste",
+  benefitHints: "Pistas sin límite",
+  benefitNoAds: "Sin publicidad en la app",
+  active: "Ya lo tenés activo. ¡Gracias por bancar Craneá!",
+  letsPlay: "A jugar",
 
-export const en: NamespaceShape<typeof es> = {};
+  // "¿Querés seguir?"
+  nudgeTitle: "¿Querés seguir?",
+  nudgeBody: "Tenés {count} niveles más de {game} con Craneá Plus.",
+  thisGame: "este juego",
+  trial: "Probá gratis 3 días en la app",
+  seePlus: "Ver Craneá Plus",
+  notNow: "Ahora no",
+
+  // /plus
+  faqTitle: "Preguntas",
+  faqIncludesQ: "¿Qué incluye?",
+  faqIncludesA:
+    "Todos los niveles y mundos de Cifra, Puentes, Nonograma, Torres y Palabra; el archivo para jugar los diarios que te perdiste; pistas sin límite; y la app sin publicidad.",
+  faqPriceQ: "¿Cuánto sale?",
+  faqPriceA: "Hay plan mensual y anual, {price}. El precio final lo ves en la tienda antes de confirmar, en tu moneda.",
+  faqFreeQ: "¿Los diarios siguen siendo gratis?",
+  faqFreeA: "Sí, siempre. Los cinco desafíos de cada día, los tutoriales, el ranking, las estadísticas y los logros son gratis, con o sin Plus.",
+  faqGetQ: "¿Cómo lo consigo?",
+  faqGetA: "Desde la app de Craneá, en App Store o Google Play. Iniciá sesión en la app y después acá con la misma cuenta: Plus se activa en los dos lados.",
+  faqCancelQ: "¿Cómo lo cancelo?",
+  faqCancelA:
+    "Desde la tienda donde lo sacaste: en iPhone, Ajustes → tu nombre → Suscripciones; en Android, Google Play → Pagos y suscripciones. Seguís con Plus hasta que termine el período que pagaste.",
+  faqMissingQ: "Ya lo compré y acá no aparece",
+  faqMissingA: "Revisá que hayas iniciado sesión con la misma cuenta que en la app. Si recién lo compraste, puede tardar unos minutos.",
+  appTitle: "La app",
+  appBody: "Craneá para iPhone y Android llega pronto a App Store y Google Play. Mientras tanto, los diarios se juegan gratis acá, también sin conexión.",
+};
+
+export const en: NamespaceShape<typeof es> = {
+  price: "from US$1.99/month",
+  reasonLevels: "The first {count} levels of each game are free; the rest are part of Plus. Daily puzzles stay free.",
+  reasonArchive: "Past dailies are part of Plus. Today's stay free.",
+  reasonHints: "You've already used this board's free hint.",
+  reasonGeneral: "More to play, at your own pace. Daily puzzles stay free.",
+  downloadApp: "Get the app",
+  getInApp: "Get it in the app",
+  havePlus: "I already have Plus",
+  notOnAccount:
+    "Plus doesn't show up on this account yet. Sign in with the same account you use in the app; if you just bought it, it can take a few minutes.",
+  includes: "What's included",
+  cancelAnytime: " · cancel anytime from the store.",
+  accountNote: "Your subscription goes with your account: if you get it in the app, just sign in here with the same account.",
+  more: "More about Plus",
+  playToday: "Play today's puzzle",
+  benefitLevels: "Every level and world in every game",
+  benefitArchive: "The archive: play the dailies you missed",
+  benefitHints: "Unlimited hints",
+  benefitNoAds: "No ads in the app",
+  active: "It's active. Thanks for supporting Craneá!",
+  letsPlay: "Let's play",
+
+  nudgeTitle: "Want to keep going?",
+  nudgeBody: "There are {count} more {game} levels with Craneá Plus.",
+  thisGame: "this game",
+  trial: "Try it free for 3 days in the app",
+  seePlus: "See Craneá Plus",
+  notNow: "Not now",
+
+  faqTitle: "Questions",
+  faqIncludesQ: "What's included?",
+  faqIncludesA: "Every level and world of Cifra, Puentes, Nonograma and Torres; the archive to play the dailies you missed; unlimited hints; and no ads in the app.",
+  faqPriceQ: "How much is it?",
+  faqPriceA: "There's a monthly and a yearly plan, {price}. You'll see the final price in your currency in the store before you confirm.",
+  faqFreeQ: "Are the dailies still free?",
+  faqFreeA: "Yes, always. Each day's puzzles, the tutorials, the leaderboard, stats and achievements are free, with or without Plus.",
+  faqGetQ: "How do I get it?",
+  faqGetA: "From the Craneá app, on the App Store or Google Play. Sign in on the app and then here with the same account: Plus turns on in both places.",
+  faqCancelQ: "How do I cancel?",
+  faqCancelA:
+    "From the store where you got it: on iPhone, Settings → your name → Subscriptions; on Android, Google Play → Payments & subscriptions. You keep Plus until the period you paid for ends.",
+  faqMissingQ: "I bought it and it doesn't show up here",
+  faqMissingA: "Make sure you're signed in with the same account as in the app. If you just bought it, it can take a few minutes.",
+  appTitle: "The app",
+  appBody: "Craneá for iPhone and Android is coming soon to the App Store and Google Play. Meanwhile, the dailies are free to play here, even offline.",
+};

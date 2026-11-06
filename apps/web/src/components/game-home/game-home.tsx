@@ -4,13 +4,15 @@ import { ArchiveIcon, ChevronRightIcon, CircleHelpIcon, PartyPopperIcon, Sparkle
 import { todayKey } from "@cranea/core";
 import { openPaywall } from "@/components/plus/paywall";
 import { useHydrated } from "@/hooks/use-hydrated";
-import { isFreeLevel, PLUS_PRICE, plusLevelCount, usePlus } from "@/lib/plus";
+import { gameCopy } from "@cranea/core/i18n";
+import { useLocale, useT } from "@/lib/i18n";
+import { isFreeLevel, plusLevelCount, usePlus } from "@/lib/plus";
 import { cn } from "@/lib/utils";
 import { useMemo } from "react";
 import { useGameProgress } from "@/stores/progress";
 import { DailyCard } from "./daily-card";
 import { nextLevel } from "./progress";
-import type { GameHomeConfig } from "./types";
+import { localized, type GameHomeConfig } from "./types";
 import { useClock } from "./use-clock";
 import { WorldMap } from "./world-map";
 
@@ -24,6 +26,8 @@ export function GameHome({ config }: { config: GameHomeConfig }) {
   const now = useClock();
   const progress = useGameProgress(config.id);
   const { plus, ready } = usePlus();
+  const t = useT();
+  const locale = useLocale();
   // Sin Plus, "Seguir jugando" apunta solo a los niveles gratis; terminados, aparece la tarjeta de Plus.
   const playable = useMemo(() => (plus ? config : freeOnly(config)), [config, plus]);
   const next = hydrated && ready ? nextLevel(playable, progress) : null;
@@ -31,7 +35,7 @@ export function GameHome({ config }: { config: GameHomeConfig }) {
   const dailyDone = Boolean(today && progress.daily[today]);
   const worldIndex = next ? config.worlds.indexOf(next.world) : -1;
   const fresh = Object.keys(progress.levels).length === 0;
-  const unit = config.unit ?? { one: "nivel", many: "niveles" };
+  const unitMany = config.unit ? localized(config.unit.many, locale) : t("hub.unitMany");
   const plusLevels = plusLevelCount(config.worlds);
 
   const upsell = (
@@ -45,9 +49,9 @@ export function GameHome({ config }: { config: GameHomeConfig }) {
         <SparklesIcon className="size-5" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block font-bold">Completaste los {unit.many} gratis</span>
+        <span className="block font-bold">{t("hub.freeDone", { unit: unitMany })}</span>
         <span className="block text-sm text-muted-foreground">
-          {plusLevels} más con Plus, <span className="whitespace-nowrap">{PLUS_PRICE}</span>
+          {t("hub.morePlus", { count: plusLevels })} <span className="whitespace-nowrap">{t("plus.price")}</span>
         </span>
       </span>
       <ChevronRightIcon aria-hidden className="size-5 shrink-0 text-pencil transition-transform group-hover:translate-x-0.5" />
@@ -76,9 +80,9 @@ export function GameHome({ config }: { config: GameHomeConfig }) {
         {next.level}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block font-bold">{fresh ? "Empezar los niveles" : "Seguir jugando"}</span>
+        <span className="block font-bold">{fresh ? t("hub.startLevels") : t("hub.keepPlaying")}</span>
         <span className="block truncate text-sm text-muted-foreground">
-          Mundo {worldIndex + 1} · Nivel {next.level}
+          {t("common.worldLevel", { world: worldIndex + 1, level: next.level })}
         </span>
       </span>
       <ChevronRightIcon aria-hidden className="size-5 shrink-0 text-pencil transition-transform group-hover:translate-x-0.5" />
@@ -88,13 +92,13 @@ export function GameHome({ config }: { config: GameHomeConfig }) {
   ) : (
     <p className="flex items-center gap-2 rounded-xl bg-clue-exact-bg/60 px-4 py-3 font-semibold">
       <PartyPopperIcon aria-hidden className="size-5 text-ok" />
-      Completaste todos los mundos.
+      {t("hub.allWorlds")}
     </p>
   );
 
   return (
     <main className="mx-auto w-full max-w-3xl px-5 pt-1 pb-16 sm:pr-6 sm:pl-16">
-      <h1 className="sr-only">{config.name}</h1>
+      <h1 className="sr-only">{gameCopy(config.id, locale).name}</h1>
 
       {/* Lo pendiente va primero: el diario sin jugar, o seguir con los niveles si ya está hecho. Si no quedan niveles para jugar, el diario siempre arriba. */}
       <div className="grid gap-3">
@@ -116,7 +120,7 @@ export function GameHome({ config }: { config: GameHomeConfig }) {
           className="-mr-2 inline-flex min-h-11 items-center gap-1.5 rounded-md px-2 text-sm font-semibold text-muted-foreground outline-none hover:bg-accent hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
         >
           <ArchiveIcon aria-hidden className="size-4" />
-          Diarios anteriores
+          {t("hub.archiveTitle")}
         </Link>
       </div>
 
@@ -134,7 +138,7 @@ export function GameHome({ config }: { config: GameHomeConfig }) {
               className="-mr-2 inline-flex min-h-11 items-center gap-1.5 rounded-md px-2 text-sm font-semibold text-muted-foreground outline-none hover:bg-accent hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
             >
               <CircleHelpIcon aria-hidden className="size-4" />
-              Cómo se juega
+              {t("hub.howItWorks")}
             </Link>
           }
         />

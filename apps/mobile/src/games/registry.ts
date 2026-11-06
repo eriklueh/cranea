@@ -3,6 +3,8 @@ import type { Href } from "expo-router";
 /**
  * Los cinco juegos, en el mismo orden y con los mismos textos que la web (apps/web/src/games/registry.ts).
  * `mobile`: "live" si el juego ya está portado a la app nativa; "soon" muestra "Muy pronto".
+ * `name`/`tagline` quedan en español por compatibilidad: en pantalla usá `useGameCopy(id)` (idioma activo)
+ * y `useVisibleGames(GAMES)` (en inglés no aparece Palabra).
  */
 export interface MobileGame {
   id: string;

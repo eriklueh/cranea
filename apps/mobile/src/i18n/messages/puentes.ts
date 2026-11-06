@@ -1,5 +1,157 @@
 import type { NamespaceShape } from "@cranea/core/i18n";
 
-export const es = {};
+/** Pantallas de Puentes en la app (games/puentes, app/puentes). */
+export const es = {
+  // Inicio y diario
+  dailyTitle: "Puentes del día",
+  dailyBlurb: "Un mapa nuevo, el mismo para todos.",
+  levelShort: "Puentes {world}-{level}",
+  statMistakes: "Errores",
+  noMistakes: "sin errores",
+  withMistakes: { one: "con {count} error", other: "con {count} errores" },
+  noMistakesCap: "Sin errores",
+  solutionLabel: "La solución del mapa de hoy",
 
-export const en: NamespaceShape<typeof es> = {};
+  // Nivel
+  preparing: "Preparando el tablero…",
+  levelMissing: "Nivel inexistente",
+  plusLevel: "Nivel de Craneá Plus",
+  plusLevelMessage: "Los primeros {free} niveles de Puentes son gratis. Este y todos los demás se abren con Craneá Plus, junto con los de los otros juegos.",
+  levelLocked: "Nivel bloqueado",
+  levelLockedMessage: "Ganá el nivel anterior para abrirlo.",
+
+  // Partida
+  contextDaily: "Mismo tablero para todos",
+  contextLevel: "{size} · {count} islas",
+  allConnected: "Todas las islas quedaron conectadas.",
+  blocked: "Ese puente cruzaría otro.",
+  wrong: { one: "Hay un puente de más. Quedó marcado en rojo.", other: "Hay {count} puentes de más. Quedaron marcados en rojo." },
+  missing: { one: "Vas bien. Falta un puente.", other: "Vas bien. Faltan {count} puentes." },
+  seeResult: "Ver resultado ({mistakes})",
+  undo: "Deshacer",
+  restart: "Empezar de nuevo",
+  check: "Revisar",
+  gestureHelp: "Deslizá desde una isla o tocá dos islas para tender un puente. Tocá el puente para sumar el segundo o sacarlo.",
+  board: "Tablero",
+  dirUp: "Puente arriba",
+  dirDown: "Puente abajo",
+  dirLeft: "Puente a la izquierda",
+  dirRight: "Puente a la derecha",
+  pick: "Elegir",
+  join: "Unir",
+  island: "Isla {n}, fila {row}, columna {col}: {have} de {n} puentes{state}.",
+  islandComplete: ", completa",
+  islandOver: ", sobran puentes",
+
+  // Resultado
+  share: "Craneá · {title}\n🌉 {mistakes} en {time}\n{url}",
+  cardDetail: "{count} islas · {time}",
+  wonClean: "Todo conectado, sin errores",
+  won: "Todo conectado",
+  resultDesc: "{title}, {mistakes} y en {time}.",
+  nextLevel: "Siguiente nivel",
+  backToWorlds: "Volver a los mundos",
+  seeRanking: "Ver ranking",
+
+  // Cómo se juega
+  howToTitle: "Cómo se juega",
+  howToHeading: "Cómo se juega Puentes",
+  howToIntro:
+    "Cada círculo es una isla y su número dice cuántos puentes salen de ella. Uní las islas con puentes rectos, en horizontal o en vertical, hasta que todas queden conectadas en un solo grupo.",
+  rule1: "Entre dos islas puede haber uno o dos puentes, nunca más.",
+  rule2: "Los puentes no se cruzan ni pasan por encima de otra isla.",
+  rule3: "Cada isla tiene que tener exactamente los puentes que pide su número.",
+  rule4: "Todas las islas tienen que quedar unidas: desde cualquiera se llega a cualquier otra.",
+  exampleTitle: "Un ejemplo",
+  exampleEmpty: "Tablero de ejemplo sin puentes",
+  exampleSolved: "El mismo tablero resuelto",
+  example:
+    "El 4 de la esquina solo ve dos islas, y a cada una le puede tender dos puentes como máximo: necesita los dos dobles. Con eso el 2 ya está completo y no puede bajar hacia el 1. Entonces el 1 se une con el 3, que llega a sus tres puentes. Cuando una isla está completa se pinta de verde.",
+  buildTitle: "Cómo se tienden",
+  build1: "Deslizá el dedo desde una isla hacia una vecina, o tocá una isla y después la otra. Tocar un puente suma el segundo, y un tercer toque lo saca. ",
+  build2: " vuelve un paso atrás y ",
+  build3: " saca todos los puentes (también se puede deshacer).",
+  checkTitle: "Revisar y errores",
+  check1:
+    " marca en rojo los puentes que sobran. Si encuentra alguno, suma un error; si todo lo que tendiste está bien, te dice cuántos faltan sin sumar nada. Un puente que cruzaría a otro no se tiende y no cuenta como error. El tablero se resuelve solo cuando todo encaja. Tus intentos son 1 más los errores: resolverlo sin errores vale tres puntitos en el mapa.",
+  worldsTitle: "Los mundos",
+  worlds:
+    "Primero alcanza con contar lo que le falta a cada isla. Después hay que cuidar que ningún grupo quede aislado: por ejemplo, dos islas con un 1 no pueden unirse entre sí. Al final, en mapas grandes, conviene suponer un puente y ver si todo se contradice. Cada tablero tiene una sola solución y ninguno necesita adivinar.",
+  dailyNote: "El mapa del día es el mismo para todos y se juega una vez.",
+  startPlaying: "Empezar a jugar",
+};
+
+export const en: NamespaceShape<typeof es> = {
+  dailyTitle: "Daily Puentes",
+  dailyBlurb: "A new map, the same for everyone.",
+  levelShort: "Puentes {world}-{level}",
+  statMistakes: "Mistakes",
+  noMistakes: "no mistakes",
+  withMistakes: { one: "{count} mistake", other: "{count} mistakes" },
+  noMistakesCap: "No mistakes",
+  solutionLabel: "Solution to today's map",
+
+  preparing: "Setting up the board…",
+  levelMissing: "Level not found",
+  plusLevel: "Craneá Plus level",
+  plusLevelMessage: "The first {free} Puentes levels are free. This one and all the rest unlock with Craneá Plus, along with every other game's.",
+  levelLocked: "Level locked",
+  levelLockedMessage: "Win the previous level to unlock it.",
+
+  contextDaily: "Same board for everyone",
+  contextLevel: "{size} · {count} islands",
+  allConnected: "Every island is connected.",
+  blocked: "That bridge would cross another one.",
+  wrong: { one: "One bridge too many. It's marked in red.", other: "{count} bridges too many. They're marked in red." },
+  missing: { one: "Looking good. One bridge to go.", other: "Looking good. {count} bridges to go." },
+  seeResult: "See result ({mistakes})",
+  undo: "Undo",
+  restart: "Start over",
+  check: "Check",
+  gestureHelp: "Swipe from an island or tap two islands to build a bridge. Tap a bridge to double it or remove it.",
+  board: "Board",
+  dirUp: "Bridge up",
+  dirDown: "Bridge down",
+  dirLeft: "Bridge left",
+  dirRight: "Bridge right",
+  pick: "Select",
+  join: "Connect",
+  island: "Island {n}, row {row}, column {col}: {have} of {n} bridges{state}.",
+  islandComplete: ", complete",
+  islandOver: ", too many bridges",
+
+  share: "Craneá · {title}\n🌉 {mistakes} in {time}\n{url}",
+  cardDetail: "{count} islands · {time}",
+  wonClean: "All connected, no mistakes",
+  won: "All connected",
+  resultDesc: "{title}, {mistakes}, in {time}.",
+  nextLevel: "Next level",
+  backToWorlds: "Back to worlds",
+  seeRanking: "See leaderboard",
+
+  howToTitle: "How to play",
+  howToHeading: "How to play Puentes",
+  howToIntro:
+    "Each circle is an island, and its number says how many bridges leave it. Connect the islands with straight bridges, horizontal or vertical, until they're all linked into a single group.",
+  rule1: "Two islands can share one or two bridges, never more.",
+  rule2: "Bridges can't cross each other or pass over another island.",
+  rule3: "Each island needs exactly as many bridges as its number.",
+  rule4: "Every island must be connected: you can get from any island to any other.",
+  exampleTitle: "An example",
+  exampleEmpty: "Example board with no bridges",
+  exampleSolved: "The same board, solved",
+  example:
+    "The 4 in the corner only sees two islands, and it can send at most two bridges to each: it needs both doubles. That completes the 2, so it can't connect down to the 1. So the 1 links to the 3, which reaches its three bridges. When an island is complete, it turns green.",
+  buildTitle: "Building bridges",
+  build1: "Swipe from an island toward a neighbor, or tap one island and then the other. Tapping a bridge doubles it, and a third tap removes it. ",
+  build2: " goes back one step and ",
+  build3: " clears every bridge (you can undo that too).",
+  checkTitle: "Checking and mistakes",
+  check1:
+    " marks extra bridges in red. If it finds any, that's one mistake; if everything you've built is right, it tells you how many are left without counting anything. A bridge that would cross another isn't built and doesn't count as a mistake. The board is solved once everything fits. Your tries are 1 plus your mistakes: solving it with no mistakes earns three dots on the map.",
+  worldsTitle: "The worlds",
+  worlds:
+    "At first, counting what each island still needs is enough. Then you'll have to make sure no group gets cut off: for example, two islands with a 1 can't connect to each other. Finally, on big maps, it pays to try a bridge and see if everything falls apart. Every board has exactly one solution, and none of them needs guessing.",
+  dailyNote: "The daily map is the same for everyone and can be played once.",
+  startPlaying: "Start playing",
+};

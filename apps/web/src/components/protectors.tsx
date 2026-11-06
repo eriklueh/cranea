@@ -13,6 +13,8 @@ import { useClock } from "@/components/game-home/use-clock";
 import { useAccountReady } from "@/components/progress-sync";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { GAMES } from "@/games/registry";
+import { getLocale, getT, useT } from "@/lib/i18n";
+import { gamesFor } from "@cranea/core/i18n";
 import { cn } from "@/lib/utils";
 import { usePlusStore } from "@/lib/plus";
 import { dailyStreak, protectorsOf, useProgress, type ProtectorState } from "@/stores/progress";
@@ -24,11 +26,12 @@ const TOAST_MS = 6000;
 
 const useProtectorsReady = create<{ ready: boolean }>(() => ({ ready: false }));
 
-/** La racha más larga que hoy sigue viva (de un juego o la Racha Craneá). */
+/** La racha más larga que hoy sigue viva (de un juego visible o la Racha Craneá). */
 function liveStreak(today: string) {
   const { games } = useProgress.getState();
-  const per = GAMES.filter((g) => g.status === "live").map((g) => dailyStreak(games[g.id]?.daily ?? {}, today));
-  return Math.max(0, craneaStreak(games, today), ...per);
+  const locale = getLocale();
+  const per = gamesFor(GAMES, locale).filter((g) => g.status === "live").map((g) => dailyStreak(games[g.id]?.daily ?? {}, today));
+  return Math.max(0, craneaStreak(games, today, locale), ...per);
 }
 
 /** Stock de protectores para hoy (null hasta montar en el cliente). */
@@ -98,13 +101,13 @@ function ProtectorsWatcher() {
 }
 
 /** "Usaste un protector: tu racha sigue en 12". */
-export const usedText = (used: number, streak: number) =>
-  `${used > 1 ? `Usaste ${used} protectores` : "Usaste un protector"}: ${streak > 0 ? `tu racha sigue en ${streak}` : "tu racha sigue viva"}`;
+export const usedText = (used: number, streak: number, t = getT()) => t("shell.protectorUsed", { used, streak });
 
 function ProtectorToast({ used, streak, onDone }: { used: number; streak: number; onDone: () => void }) {
   const [visible, setVisible] = useState(false);
   const done = useRef(onDone);
   done.current = onDone;
+  const t = useT();
   useEffect(() => {
     const show = setTimeout(() => setVisible(true), TOAST_DELAY_MS);
     const hide = setTimeout(() => done.current(), TOAST_DELAY_MS + TOAST_MS);
@@ -120,11 +123,11 @@ function ProtectorToast({ used, streak, onDone }: { used: number; streak: number
           <span className="grid size-11 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
             <ShieldIcon aria-hidden className="size-6" />
           </span>
-          <p className="min-w-0 flex-1 py-1 font-display text-base leading-tight font-extrabold">{usedText(used, streak)}</p>
+          <p className="min-w-0 flex-1 py-1 font-display text-base leading-tight font-extrabold">{usedText(used, streak, t)}</p>
           <button
             type="button"
             onClick={onDone}
-            aria-label="Cerrar aviso"
+            aria-label={t("shell.closeNotice")}
             className="grid size-11 shrink-0 place-items-center rounded-md text-muted-foreground outline-none hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
             <XIcon className="size-5" aria-hidden />
@@ -178,13 +181,14 @@ function ProtectorsSync() {
 /** 🛡️×N al lado de la racha; al tocarlo explica cómo funcionan. */
 export function ProtectorBadge({ className, compact }: { className?: string; compact?: boolean }) {
   const status = useProtectors();
+  const t = useT();
   if (!status) return null;
   return (
     <Dialog>
       <DialogTrigger asChild>
         <button
           type="button"
-          aria-label={`${status.stock} ${status.stock === 1 ? "protector" : "protectores"} de racha. Qué es`}
+          aria-label={t("shell.protectorBadge", { count: status.stock })}
           className={cn(
             "inline-flex shrink-0 items-center gap-0.5 rounded-full font-semibold text-primary tabular-nums outline-none hover:bg-primary/10 focus-visible:ring-[3px] focus-visible:ring-ring/50",
             compact ? "-my-1 min-h-7 px-1" : "bg-primary/10 px-2 py-0.5 text-sm",
@@ -203,22 +207,23 @@ export function ProtectorBadge({ className, compact }: { className?: string; com
 }
 
 function ProtectorsExplainer({ stock, nextIn }: { stock: number; nextIn: number }) {
+  const t = useT();
   return (
     <>
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
-          <ShieldIcon aria-hidden className="size-6 text-primary" /> Protector de racha
+          <ShieldIcon aria-hidden className="size-6 text-primary" /> {t("shell.protectorTitle")}
         </DialogTitle>
         <DialogDescription>
-          {stock === 0 ? "Todavía no tenés ninguno." : `Tenés ${stock} ${stock === 1 ? "guardado" : "guardados"}.`}{" "}
-          {stock < MAX_PROTECTORS && `Te falta${nextIn === 1 ? "" : "n"} ${nextIn} ${nextIn === 1 ? "día" : "días"} para el próximo.`}
+          {stock === 0 ? t("shell.protectorNone") : t("shell.protectorHave", { count: stock })}{" "}
+          {stock < MAX_PROTECTORS && t("shell.protectorNext", { count: nextIn })}
         </DialogDescription>
       </DialogHeader>
       <ul className="list-disc space-y-1.5 pl-5 text-sm">
-        <li>Si un día no jugás ningún diario, se usa solo y tu racha sigue.</li>
-        <li>Ganás uno cada {DAYS_PER_PROTECTOR} días seguidos jugando. Guardás hasta {MAX_PROTECTORS}.</li>
-        <li>Con Craneá Plus, cada mes arrancás con {MAX_PROTECTORS}.</li>
-        <li>Cuida la racha de cada juego y la Racha Craneá. Si faltás más días de los que cubrís, la racha se corta y los guardás.</li>
+        <li>{t("shell.protectorRule1")}</li>
+        <li>{t("shell.protectorRule2", { days: DAYS_PER_PROTECTOR, max: MAX_PROTECTORS })}</li>
+        <li>{t("shell.protectorRule3", { max: MAX_PROTECTORS })}</li>
+        <li>{t("shell.protectorRule4")}</li>
       </ul>
     </>
   );
@@ -227,6 +232,7 @@ function ProtectorsExplainer({ stock, nextIn }: { stock: number; nextIn: number 
 /** Tarjeta para /estadisticas. */
 export function ProtectorsCard() {
   const status = useProtectors();
+  const t = useT();
   if (!status) return <div className="h-[4.75rem]" />;
   return (
     <Dialog>
@@ -239,10 +245,10 @@ export function ProtectorsCard() {
             <ShieldIcon aria-hidden className="size-6" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block font-display text-xl font-extrabold">Protectores de racha</span>
+            <span className="block font-display text-xl font-extrabold">{t("shell.protectorsCard")}</span>
             <span className="block text-sm text-muted-foreground tabular-nums">
-              {status.stock} de {MAX_PROTECTORS}
-              {status.stock < MAX_PROTECTORS && ` · el próximo en ${status.nextIn} ${status.nextIn === 1 ? "día" : "días"}`}
+              {t("shell.protectorsStock", { stock: status.stock, max: MAX_PROTECTORS })}
+              {status.stock < MAX_PROTECTORS && t("shell.protectorsNextIn", { count: status.nextIn })}
             </span>
           </span>
           <span className="font-display text-2xl font-extrabold text-primary tabular-nums" aria-hidden>

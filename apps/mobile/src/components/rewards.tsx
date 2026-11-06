@@ -4,6 +4,7 @@ import { motion } from "@/lib/motion";
 import { usePlusPaywall, useRewardedAd } from "@/components/plus";
 import { Button, Card, Icon, Text } from "@/components/ui";
 import { usePlus } from "@/entitlements";
+import { useT } from "@/lib/i18n";
 import { adsAvailable } from "@/monetization/ads";
 import { useExtraAttempts } from "@/monetization/extra-attempt";
 import { useTheme } from "@/theme/theme";
@@ -13,8 +14,6 @@ import { fonts, radius } from "@/theme/tokens";
  * Los dos únicos lugares con anuncios, siempre elegidos por la persona y nunca con Plus:
  * una pista más cuando no quedan y un intento más en un diario perdido.
  */
-
-const UNAVAILABLE = "No hay anuncios disponibles ahora. Probá más tarde.";
 
 function PlusLink({ text, reason }: { text: string; reason: "pistas" | "anuncios" }) {
   const paywall = usePlusPaywall();
@@ -28,16 +27,17 @@ function PlusLink({ text, reason }: { text: string; reason: "pistas" | "anuncios
 /** No quedan pistas gratis en este tablero: un anuncio da una más, o Plus las da sin límite. */
 export function HintOffer({ onEarned, onClose }: { onEarned: () => void; onClose: () => void }) {
   const { colors } = useTheme();
+  const t = useT();
   const { state, run } = useRewardedAd();
   const ads = adsAvailable();
   return (
     <Animated.View entering={motion.appear()} style={[styles.panel, { backgroundColor: colors.card, borderColor: colors.border }]} accessibilityLiveRegion="polite">
       <Icon name="bulb-outline" size={18} color={colors.cluePresent} />
       <View style={{ flex: 1, gap: 8 }}>
-        <Text>Ya usaste la pista gratis de este tablero.</Text>
+        <Text>{t("hub.freeHintUsed")}</Text>
         {ads && (
           <Button
-            title="Ver un anuncio para una pista"
+            title={t("hub.adForHint")}
             icon="play-circle-outline"
             variant="outline"
             loading={state === "loading"}
@@ -46,10 +46,10 @@ export function HintOffer({ onEarned, onClose }: { onEarned: () => void; onClose
             }}
           />
         )}
-        {state === "unavailable" && <Text variant="small">{UNAVAILABLE}</Text>}
-        <PlusLink text="Pistas sin límite con Craneá Plus" reason="pistas" />
+        {state === "unavailable" && <Text variant="small">{t("hub.adsUnavailable")}</Text>}
+        <PlusLink text={t("hub.unlimitedHints")} reason="pistas" />
       </View>
-      <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Cerrar" hitSlop={10}>
+      <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel={t("common.close")} hitSlop={10}>
         <Icon name="close" size={18} color={colors.mutedForeground} />
       </Pressable>
     </Animated.View>
@@ -69,6 +69,7 @@ export function useExtraAttemptOffer(gameId: string, date: string | null) {
  */
 export function ExtraAttemptOffer({ gameId, date, onGranted, onReveal }: { gameId: string; date: string; onGranted: () => void; onReveal: () => void }) {
   const { colors } = useTheme();
+  const t = useT();
   const { plus } = useExtraAttemptOffer(gameId, date);
   const { state, run } = useRewardedAd();
   const markUsed = useExtraAttempts((s) => s.markUsed);
@@ -78,13 +79,13 @@ export function ExtraAttemptOffer({ gameId, date, onGranted, onReveal }: { gameI
   };
   return (
     <Card style={{ gap: 10, borderColor: colors.ink }}>
-      <Text variant="bodyBold" style={{ fontFamily: fonts.displayHeavy, fontSize: 18 }}>¿Un intento más?</Text>
-      <Text variant="small">Si sale, suma a tu racha y a tus estadísticas. En el ranking este diario queda como no resuelto.</Text>
+      <Text variant="bodyBold" style={{ fontFamily: fonts.displayHeavy, fontSize: 18 }}>{t("hub.extraAttemptTitle")}</Text>
+      <Text variant="small">{t("hub.extraAttemptBody")}</Text>
       {plus ? (
-        <Button title="Usar un intento más" icon="add-circle-outline" size="lg" onPress={grant} />
+        <Button title={t("hub.useExtraAttempt")} icon="add-circle-outline" size="lg" onPress={grant} />
       ) : (
         <Button
-          title="Ver un anuncio: un intento más"
+          title={t("hub.adForAttempt")}
           icon="play-circle-outline"
           size="lg"
           loading={state === "loading"}
@@ -93,10 +94,10 @@ export function ExtraAttemptOffer({ gameId, date, onGranted, onReveal }: { gameI
           }}
         />
       )}
-      {state === "unavailable" && <Text variant="small" accessibilityLiveRegion="polite">{UNAVAILABLE}</Text>}
-      {!plus && state === "unavailable" && <PlusLink text="Con Craneá Plus, sin anuncios" reason="anuncios" />}
+      {state === "unavailable" && <Text variant="small" accessibilityLiveRegion="polite">{t("hub.adsUnavailable")}</Text>}
+      {!plus && state === "unavailable" && <PlusLink text={t("hub.noAdsWithPlus")} reason="anuncios" />}
       <Button
-        title="Ver la solución"
+        title={t("hub.seeSolution")}
         variant="ghost"
         disabled={state === "loading"}
         onPress={() => {

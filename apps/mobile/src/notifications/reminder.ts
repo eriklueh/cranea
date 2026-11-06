@@ -1,10 +1,12 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { todayKey } from "@cranea/core";
+import { gamesFor, type Locale } from "@cranea/core/i18n";
 import { playedDays } from "@cranea/core/protectors";
 import { Platform } from "react-native";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { GAMES } from "@/games/registry";
+import { getLocale, translator } from "@/lib/i18n";
 import { isExpoGo } from "@/monetization/native";
 import { coveredDays, dailyStreak, useProgress } from "@/stores/progress";
 
@@ -12,6 +14,7 @@ import { coveredDays, dailyStreak, useProgress } from "@/stores/progress";
  * Recordatorio del diario con notificaciones **locales** (sin servidor): se programan los próximos
  * `DAYS_AHEAD` días, uno por uno, y se vuelven a programar al abrir la app, al volver al frente y
  * cada vez que se guarda un diario. Un día en el que ya jugaste algún diario no se avisa.
+ * El texto sale en el idioma activo al programar; `ReminderScheduler` reprograma al cambiar el idioma.
  *
  * Expo Go no trae todo el módulo nativo en Android: ahí (y en web) queda apagado sin romper nada.
  */
@@ -69,34 +72,54 @@ export const useReminder = create<ReminderState>()(
   ),
 );
 
-export const formatMinutes = (m: number) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}`;
+/** La hora y, en inglés, "AM"/"PM" aparte (para dibujarlos más chicos): "21:30" / { "9:30", "PM" }. */
+export function minutesParts(m: number, locale: Locale = getLocale()): { time: string; suffix: string } {
+  const h = Math.floor(m / 60);
+  const mm = String(m % 60).padStart(2, "0");
+  if (locale !== "en") return { time: `${h}:${mm}`, suffix: "" };
+  return { time: `${h % 12 || 12}:${mm}`, suffix: h < 12 ? "AM" : "PM" };
+}
 
-/** La racha más larga que sigue viva el día `date` (UTC), con lo jugado hasta ahora. */
-function streakOn(date: string) {
+/** "21:30" / "9:30 PM" */
+export function formatMinutes(m: number, locale: Locale = getLocale()) {
+  const { time, suffix } = minutesParts(m, locale);
+  return suffix ? `${time} ${suffix}` : time;
+}
+
+/** La racha más larga que sigue viva el día `date` (UTC), con lo jugado hasta ahora (en inglés, sin Palabra). */
+function streakOn(date: string, locale: Locale) {
   const { games } = useProgress.getState();
   const covered = coveredDays();
-  return Math.max(0, ...GAMES.map((g) => dailyStreak(games[g.id]?.daily ?? {}, date, covered)));
+  return Math.max(0, ...gamesFor(GAMES, locale).map((g) => dailyStreak(games[g.id]?.daily ?? {}, date, covered)));
 }
 
 /** Texto del aviso: con racha, la racha; si no, que ya están los de hoy. */
-export function reminderBody(streak: number) {
-  return streak > 0 ? `Tu racha de ${streak} ${streak === 1 ? "día" : "días"} te espera 🔥` : "Ya están los desafíos de hoy";
+export function reminderBody(streak: number, locale: Locale = getLocale()) {
+  const t = translator(locale);
+  return streak > 0 ? t("notifications.streak", { count: streak }) : t("notifications.today");
 }
 
-/** Prepara el canal (Android) y cómo se muestra con la app abierta (no hace falta avisar: ya estás). */
+/**
+ * Prepara el canal (Android) y cómo se muestra con la app abierta (no hace falta avisar: ya estás).
+ * El nombre del canal se vuelve a poner si cambia el idioma.
+ */
 let prepared = false;
-async function prepare(n: NotificationsModule) {
-  if (prepared) return;
-  prepared = true;
-  n.setNotificationHandler({
-    handleNotification: async () => ({ shouldShowBanner: false, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: false }),
-  });
-  if (Platform.OS === "android") {
+let channelLocale: Locale | null = null;
+async function prepare(n: NotificationsModule, locale: Locale = getLocale()) {
+  if (!prepared) {
+    prepared = true;
+    n.setNotificationHandler({
+      handleNotification: async () => ({ shouldShowBanner: false, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: false }),
+    });
+  }
+  if (Platform.OS === "android" && channelLocale !== locale) {
+    const t = translator(locale);
     await n.setNotificationChannelAsync(CHANNEL_ID, {
-      name: "Recordatorio del diario",
-      description: "Un aviso por día para jugar los desafíos.",
+      name: t("notifications.channel"),
+      description: t("hub.reminderChannelDesc"),
       importance: n.AndroidImportance.DEFAULT,
     });
+    channelLocale = locale;
   }
 }
 
@@ -147,7 +170,9 @@ async function schedule() {
     if (!enabled || !useProgress.getState().hydrated) return;
     const permission = await n.getPermissionsAsync();
     if (!permission.granted && permission.ios?.status !== n.IosAuthorizationStatus.PROVISIONAL) return;
-    await prepare(n);
+    const locale = getLocale();
+    const t = translator(locale);
+    await prepare(n, locale);
     const played = playedDays(useProgress.getState().games);
     const now = Date.now();
     for (let i = 0; i <= DAYS_AHEAD; i++) {
@@ -160,7 +185,7 @@ async function schedule() {
       if (played.has(date)) continue;
       await n.scheduleNotificationAsync({
         identifier: `${ID_PREFIX}${i}`,
-        content: { title: "Craneá", body: reminderBody(streakOn(date)), data: { kind: KIND, url: "/" } },
+        content: { title: t("notifications.title"), body: reminderBody(streakOn(date, locale), locale), data: { kind: KIND, url: "/" } },
         trigger: { type: n.SchedulableTriggerInputTypes.DATE, date: at, channelId: CHANNEL_ID },
       });
     }

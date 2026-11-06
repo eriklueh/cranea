@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { LoaderCircleIcon, Share2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getLocale, translator, useT, type Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { renderResultCard, type ResultCard } from "./share-image";
 import { outcomeMessage, shareImageWithText, shareText } from "./share";
@@ -12,6 +13,7 @@ import { outcomeMessage, shareImageWithText, shareText } from "./share";
  * (Safari) no abren la hoja de compartir si pasa demasiado tiempo desde el toque.
  */
 export function ResultShareButton({ text, card, filename, className }: { text: string; card: ResultCard; filename: string; className?: string }) {
+  const t = useT();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const image = useRef<Promise<Blob> | null>(null);
@@ -45,7 +47,7 @@ export function ResultShareButton({ text, card, filename, className }: { text: s
     <div className={cn("grid gap-1", className)}>
       <Button variant="outline" onClick={onShare} disabled={busy}>
         {busy ? <LoaderCircleIcon aria-hidden className="motion-safe:animate-spin" /> : <Share2Icon aria-hidden />}
-        Compartir resultado
+        {t("share.shareResult")}
       </Button>
       <p role="status" aria-live="polite" className={cn("text-center text-xs text-muted-foreground", !message && "sr-only")}>
         {message}
@@ -54,9 +56,14 @@ export function ResultShareButton({ text, card, filename, className }: { text: s
   );
 }
 
-/** "Diario #12" o "Nivel 2-3", para la imagen. */
-export const resultLabel = (mode: { kind: "daily"; number: number } | { kind: "level"; world: number; level: number }) =>
-  mode.kind === "daily" ? `Diario #${mode.number}` : `Nivel ${mode.world}-${mode.level}`;
+/** "Diario #12" o "Nivel 2-3" ("Daily #12", "Level 2-3"), para la imagen. Sin `locale`, el activo. */
+export const resultLabel = (
+  mode: { kind: "daily"; number: number } | { kind: "level"; world: number; level: number },
+  locale: Locale = getLocale(),
+) => {
+  const t = translator(locale);
+  return mode.kind === "daily" ? t("share.dailyLabel", { n: mode.number }) : t("share.levelLabel", { world: mode.world, level: mode.level });
+};
 
 /** Marcas de intentos para la imagen: los fallados, el que salió y los que sobraron. */
 export function attemptMarks(total: number, misses: number, won: boolean): ("miss" | "win" | "empty")[] {

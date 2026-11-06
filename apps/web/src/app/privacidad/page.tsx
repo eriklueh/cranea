@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Política de privacidad", descriptio
 export default function Privacy() {
   const mail = <a href={`mailto:${LEGAL.email}`} className="underline underline-offset-4">{LEGAL.email}</a>;
   return (
-    <LegalPage title="Política de privacidad">
+    <LegalPage title="Política de privacidad" lang="es" page="privacy">
       <p>
         Craneá (la web cranea.app y la app para Android e iOS) es un servicio de juegos de lógica a cargo de {LEGAL.owner},
         con domicilio en {LEGAL.country}. Esta política explica qué datos usamos, para qué y qué podés hacer con ellos.

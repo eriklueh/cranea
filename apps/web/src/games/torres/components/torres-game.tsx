@@ -14,10 +14,12 @@ import { Board } from "./board";
 import { CheckMessage, Lives, NumberPad, Timer, Toolbar } from "./controls";
 import { ResultDialog, type GameMode } from "./result-dialog";
 import type { TutorialMode } from "@/components/tutorial/mode";
+import { useT } from "@/lib/i18n";
 
 const ARROWS: Record<string, [number, number]> = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] };
 
 export function TorresGame({ puzzle, mode }: { puzzle: TorresPuzzle; mode: GameMode | TutorialMode }) {
+  const t = useT();
   const start = useTorres((s) => s.start);
   const current = useTorres((s) => s.puzzle);
   const status = useTorres((s) => s.status);
@@ -93,12 +95,12 @@ export function TorresGame({ puzzle, mode }: { puzzle: TorresPuzzle; mode: GameM
     const p = useProgress.getState();
     if (mode.kind === "level") p.recordLevel(GAME_ID, levelKey(mode.world, mode.level), result);
     else if (!mode.practice) p.recordDaily(GAME_ID, mode.date, result);
-    const t = setTimeout(() => setResultOpen(true), status === "won" ? WIN_RESULT_MS : LOSS_RESULT_MS);
-    return () => clearTimeout(t);
+    const id = setTimeout(() => setResultOpen(true), status === "won" ? WIN_RESULT_MS : LOSS_RESULT_MS);
+    return () => clearTimeout(id);
   }, [status, current, puzzle, mode]);
 
-  const title = mode.kind === "tutorial" ? "Tutorial" : mode.kind === "daily" ? `Torres del día #${mode.number}` : `Nivel ${mode.level}`;
-  const subtitle = mode.kind === "tutorial" ? "Torres" : mode.kind === "daily" ? "Mismo tablero para todos" : `Mundo ${mode.world}`;
+  const title = mode.kind === "tutorial" ? t("common.tutorial") : mode.kind === "daily" ? t("torres.dailyTitle", { n: mode.number }) : t("common.level", { n: mode.level });
+  const subtitle = mode.kind === "tutorial" ? "Torres" : mode.kind === "daily" ? t("torres.sameBoard") : t("common.world", { n: mode.world });
   const ready = current === puzzle && values.length === puzzle.size * puzzle.size;
 
   return (
@@ -116,7 +118,7 @@ export function TorresGame({ puzzle, mode }: { puzzle: TorresPuzzle; mode: GameM
         </div>
       </div>
 
-      <section aria-label="Ciudad" className="anim-appear relative mb-2">
+      <section aria-label={t("torres.city")} className="anim-appear relative mb-2">
         <Board
           size={puzzle.size}
           clues={puzzle.clues}
@@ -141,11 +143,11 @@ export function TorresGame({ puzzle, mode }: { puzzle: TorresPuzzle; mode: GameM
         finished={status !== "playing"}
         done={
           <button className="min-h-11 text-sm font-semibold underline decoration-margin decoration-2 underline-offset-4" onClick={() => setResultOpen(true)}>
-            Ver resultado
+            {t("torres.seeResult")}
           </button>
         }
       >
-        <section aria-label="Controles" className="space-y-2">
+        <section aria-label={t("torres.controls")} className="space-y-2">
           <NumberPad />
           <Toolbar />
         </section>

@@ -7,7 +7,7 @@ import type { Verdict } from "./machine";
 export type Target = string | readonly string[];
 
 export interface TutorialStep<S> {
-  /** Frases cortas, en voseo. */
+  /** Frases cortas, ya en el idioma activo (en español, con voseo). */
   text: string;
   /** Lo que se ve y se puede tocar; el resto queda oscurecido y bloqueado. */
   targets?: readonly Target[];
@@ -15,7 +15,7 @@ export interface TutorialStep<S> {
   anchor?: Target;
   /** Sin `check` es un paso de lectura: avanza con Siguiente. */
   check?: (s: S) => Verdict;
-  /** Aviso si la jugada no es la esperada. */
+  /** Aviso si la jugada no es la esperada (ya traducido). */
   nudge?: string;
   /** Espera antes de pasar al siguiente, para que se vea la animación de la jugada. */
   delay?: number;
@@ -30,7 +30,7 @@ export interface TutorialStore<S> {
 
 export interface TutorialScript<S> {
   game: string;
-  /** Nombre del juego, para los textos ("Tutorial de Cifra"). */
+  /** Nombre del juego (marca, no se traduce), para los textos ("Tutorial de Cifra" / "Cifra tutorial"). */
   name: string;
   levelHref: string;
   homeHref: string;
@@ -44,6 +44,6 @@ export interface TutorialScript<S> {
   steps: readonly TutorialStep<S>[];
   /** Vuelve a arrancar el tablero del tutorial (para "Repetir"). */
   reset: () => void;
-  /** Texto final, antes de ir al nivel 1. */
+  /** Texto final, antes de ir al nivel 1 (ya traducido). */
   outro: string;
 }

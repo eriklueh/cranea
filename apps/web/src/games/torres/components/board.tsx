@@ -3,9 +3,10 @@ import { useMemo, type CSSProperties, type Ref } from "react";
 import { clueState, duplicateCells, type ClueState, type Side, type TorresClues } from "@cranea/core/torres";
 import { cn } from "@/lib/utils";
 import { celebrateStep } from "@/lib/motion";
+import { useT, type T } from "@/lib/i18n";
 
-const SIDE_LABEL: Record<Side, string> = { top: "arriba", bottom: "abajo", left: "la izquierda", right: "la derecha" };
-const STATE_LABEL: Record<ClueState, string> = { none: "", pending: "", ok: ", cumplida", conflict: ", no se cumple" };
+const SIDE_LABEL = (t: T): Record<Side, string> => ({ top: t("torres.sideTop"), bottom: t("torres.sideBottom"), left: t("torres.sideLeft"), right: t("torres.sideRight") });
+const STATE_LABEL = (t: T): Record<ClueState, string> => ({ none: "", pending: "", ok: t("torres.clueOk"), conflict: t("torres.clueConflict") });
 
 interface Props {
   size: number;
@@ -35,14 +36,15 @@ function place(side: Side, index: number, size: number): CSSProperties {
 }
 
 function Clue({ value, state, side, index, size }: { value: number; state: ClueState; side: Side; index: number; size: number }) {
+  const t = useT();
   if (!value) return null;
-  const line = side === "top" || side === "bottom" ? `columna ${index + 1}` : `fila ${index + 1}`;
+  const line = side === "top" || side === "bottom" ? t("torres.column", { n: index + 1 }) : t("torres.row", { n: index + 1 });
   return (
     <span className="grid place-items-center" style={place(side, index, size)}>
       <span
         role="img"
         data-tutorial={`clue-${side}-${index}`}
-        aria-label={`Desde ${SIDE_LABEL[side]}, ${line}: se ven ${value}${STATE_LABEL[state]}`}
+        aria-label={t("torres.clueLabel", { side: SIDE_LABEL(t)[side], line, value, state: STATE_LABEL(t)[state] })}
         className={cn(
           "grid size-[min(1.9rem,92%)] place-items-center rounded-full font-display text-[clamp(0.95rem,3.8vw,1.2rem)] font-bold tabular-nums transition-colors duration-(--dur-slow)",
           // Cada cambio de estado tiene su propio gesto: un latido al cumplirse (`confirm`), una sacudida chica al no cumplirse (`shake`).
@@ -72,6 +74,7 @@ function Notes({ mask, size }: { mask: number; size: number }) {
 
 /** Tablero de Torres: casillas en el centro y pistas de borde alrededor. */
 export function Board({ size, clues, givens, values, notes, selected = null, wrong = [], onSelect, readOnly = false, feedback = true, wave = false, gridRef, className }: Props) {
+  const t = useT();
   const dupes = useMemo(() => duplicateCells(values, size), [values, size]);
   const wrongSet = useMemo(() => new Set(wrong), [wrong]);
   const range = Array.from({ length: size }, (_, i) => i);
@@ -98,7 +101,7 @@ export function Board({ size, clues, givens, values, notes, selected = null, wro
     const isWrong = wrongSet.has(i);
     const noteMask = v ? 0 : (notes?.[i] ?? 0);
     const noteList = range.filter((k) => noteMask & (1 << k)).map((k) => k + 1);
-    const label = `Fila ${r + 1}, columna ${c + 1}: ${v ? `altura ${v}` : "vacía"}${given ? ", dada" : ""}${conflict ? ", repetida" : ""}${isWrong ? ", incorrecta" : ""}${noteList.length ? `, notas ${noteList.join(" ")}` : ""}`;
+    const label = `${t("torres.cellLabel", { r: r + 1, c: c + 1, content: v ? t("torres.cellHeight", { v }) : t("torres.cellEmpty") })}${given ? t("torres.cellGiven") : ""}${conflict ? t("torres.cellRepeated") : ""}${isWrong ? t("torres.cellWrong") : ""}${noteList.length ? t("torres.cellNotes", { list: noteList.join(" ") }) : ""}`;
     const cls = cn(
       "relative grid aspect-square place-items-center font-display text-[clamp(1.15rem,6vw,1.9rem)] font-bold tabular-nums select-none outline-none transition-[color,background-color,box-shadow] duration-(--dur-base) ease-out",
       "border-ink/20",
@@ -151,7 +154,7 @@ export function Board({ size, clues, givens, values, notes, selected = null, wro
   };
 
   return (
-    <div ref={gridRef} data-tutorial={readOnly ? undefined : "board"} role="group" aria-label={`Tablero de ${size} por ${size}`} className={cn("mx-auto grid w-full", className)} style={style}>
+    <div ref={gridRef} data-tutorial={readOnly ? undefined : "board"} role="group" aria-label={t("torres.boardLabel", { n: size })} className={cn("mx-auto grid w-full", className)} style={style}>
       {/* Marco del tablero, detrás de las casillas. */}
       <span
         aria-hidden

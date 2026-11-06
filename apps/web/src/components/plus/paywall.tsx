@@ -6,7 +6,8 @@ import { Dialog as DialogPrimitive } from "radix-ui";
 import { useEffect, useState, type ReactNode } from "react";
 import { create } from "zustand";
 import { Button } from "@/components/ui/button";
-import { APP_STORE_URL, FREE_LEVELS, PLAY_STORE_URL, PLUS_BENEFITS, PLUS_PRICE, usePlus } from "@/lib/plus";
+import { useT } from "@/lib/i18n";
+import { APP_STORE_URL, FREE_LEVELS, PLAY_STORE_URL, PLUS_BENEFITS, usePlus } from "@/lib/plus";
 import { cn } from "@/lib/utils";
 
 /** Igual que `accountsEnabled`, sin importar el proveedor (que importa este módulo). */
@@ -15,12 +16,12 @@ const accounts = Boolean(process.env.NEXT_PUBLIC_CONVEX_URL);
 /** Qué se quiso hacer: cambia solo la primera línea. */
 export type PaywallReason = "levels" | "archive" | "hints" | "general";
 
-const REASON: Record<PaywallReason, string> = {
-  levels: `Los primeros ${FREE_LEVELS} niveles de cada juego son gratis; el resto es parte de Plus. Los desafíos del día siguen gratis.`,
-  archive: "Los diarios anteriores son parte de Plus. Los de hoy siguen gratis.",
-  hints: "Ya usaste la pista gratis de este tablero.",
-  general: "Más para jugar, a tu ritmo. Los desafíos del día siguen gratis.",
-};
+const REASON = {
+  levels: "plus.reasonLevels",
+  archive: "plus.reasonArchive",
+  hints: "plus.reasonHints",
+  general: "plus.reasonGeneral",
+} as const satisfies Record<PaywallReason, string>;
 
 const usePaywall = create<{ reason: PaywallReason | null }>(() => ({ reason: null }));
 
@@ -53,6 +54,7 @@ function storeLinks() {
 function StoreButtons({ onLeave }: { onLeave?: () => void }) {
   // Se elige en el cliente: depende del navegador.
   const [links, setLinks] = useState<ReturnType<typeof storeLinks> | null>(null);
+  const t = useT();
   useEffect(() => setLinks(storeLinks()), []);
   if (!links) return <div aria-hidden className="h-12" />;
   const { primary, stores } = links;
@@ -60,7 +62,7 @@ function StoreButtons({ onLeave }: { onLeave?: () => void }) {
   if (!stores.length) {
     return (
       <Button asChild size="lg" className="h-12 w-full text-base">
-        <Link href="/plus#app" onClick={onLeave}>Descargá la app</Link>
+        <Link href="/plus#app" onClick={onLeave}>{t("plus.downloadApp")}</Link>
       </Button>
     );
   }
@@ -68,10 +70,10 @@ function StoreButtons({ onLeave }: { onLeave?: () => void }) {
     <div className="grid gap-2">
       {primary ? (
         <Button asChild size="lg" className="h-12 w-full text-base">
-          <a href={primary.url} target="_blank" rel="noopener noreferrer">Conseguilo en la app</a>
+          <a href={primary.url} target="_blank" rel="noopener noreferrer">{t("plus.getInApp")}</a>
         </Button>
       ) : (
-        <p className="text-center text-sm font-semibold">Conseguilo en la app</p>
+        <p className="text-center text-sm font-semibold">{t("plus.getInApp")}</p>
       )}
       {(!primary || stores.length > 1) && (
         <div className="grid grid-cols-2 gap-2">
@@ -91,6 +93,7 @@ function HavePlus({ onLeave }: { onLeave?: () => void }) {
   const { isLoaded, isSignedIn } = useAuth();
   const clerk = useClerk();
   const [asked, setAsked] = useState(false);
+  const t = useT();
   if (!isLoaded) return <div aria-hidden className="h-12" />;
   if (!isSignedIn) {
     return (
@@ -103,20 +106,20 @@ function HavePlus({ onLeave }: { onLeave?: () => void }) {
           clerk.openSignIn();
         }}
       >
-        Ya tengo Plus
+        {t("plus.havePlus")}
       </Button>
     );
   }
   if (!asked) {
     return (
       <Button size="lg" variant="outline" className="h-12 w-full" onClick={() => setAsked(true)}>
-        Ya tengo Plus
+        {t("plus.havePlus")}
       </Button>
     );
   }
   return (
     <p role="status" className="rounded-lg bg-muted px-3 py-2.5 text-sm">
-      Con esta cuenta todavía no aparece Plus. Entrá con la misma cuenta que usás en la app; si recién lo compraste, puede tardar unos minutos.
+      {t("plus.notOnAccount")}
     </p>
   );
 }
@@ -132,38 +135,39 @@ export function PlusPitch({ reason, title: Title = "h2", onLeave, more = true }:
   /** Enlace a /plus (no hace falta en /plus). */
   more?: boolean;
 }) {
+  const t = useT();
   return (
     <div className="flex flex-col gap-4">
       <div>
         <PlusBadge />
         <Title className="mt-2 font-display text-3xl leading-tight font-extrabold tracking-tight">Craneá Plus</Title>
-        <p className="mt-1 text-muted-foreground">{REASON[reason]}</p>
+        <p className="mt-1 text-muted-foreground">{t(REASON[reason], { count: FREE_LEVELS })}</p>
       </div>
-      <ul className="grid gap-2" aria-label="Qué incluye">
+      <ul className="grid gap-2" aria-label={t("plus.includes")}>
         {PLUS_BENEFITS.map((b) => (
           <li key={b} className="flex items-start gap-2.5">
             <span aria-hidden className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-clue-exact-bg text-ok">
               <CheckIcon className="size-3.5" strokeWidth={3} />
             </span>
-            <span className="font-semibold">{b}</span>
+            <span className="font-semibold">{t(b)}</span>
           </li>
         ))}
       </ul>
       <p className="text-sm text-muted-foreground">
-        <span className="font-display text-lg font-extrabold text-foreground">{PLUS_PRICE.replace(/^./, (c) => c.toUpperCase())}</span>
-        {" "}· se cancela cuando quieras desde la tienda.
+        <span className="font-display text-lg font-extrabold text-foreground">{t("plus.price").replace(/^./, (c) => c.toUpperCase())}</span>
+        {t("plus.cancelAnytime")}
       </p>
       <div className="grid gap-2">
         <StoreButtons onLeave={onLeave} />
         {accounts && <HavePlus onLeave={onLeave} />}
       </div>
       <p className="text-xs text-muted-foreground">
-        La suscripción va con tu cuenta: si la sacás en la app, iniciá sesión acá con la misma cuenta y listo.
+        {t("plus.accountNote")}
         {more && (
           <>
             {" "}
             <Link href="/plus" onClick={onLeave} className="font-semibold text-foreground underline decoration-border decoration-2 underline-offset-4 hover:decoration-current">
-              Más sobre Plus
+              {t("plus.more")}
             </Link>
           </>
         )}
@@ -181,6 +185,7 @@ export function PaywallSheet() {
     if (reason) setShown(reason);
   }, [reason]);
   const { plus } = usePlus();
+  const t = useT();
   // Si Plus llega con la hoja abierta (inició sesión), se cierra sola.
   useEffect(() => {
     if (plus) closePaywall();
@@ -195,7 +200,7 @@ export function PaywallSheet() {
           className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] flex-col rounded-t-2xl border-2 border-b-0 border-foreground/80 bg-card text-card-foreground shadow-[0_-4px_0_0_var(--shadow-ink)] outline-none data-[state=open]:anim-sheet-in data-[state=closed]:anim-sheet-out sm:inset-x-auto sm:top-1/2 sm:bottom-auto sm:left-1/2 sm:max-h-[min(44rem,90dvh)] sm:w-full sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:border-b-2 sm:shadow-[0_6px_0_0_var(--shadow-ink)] sm:data-[state=open]:anim-dialog-in sm:data-[state=closed]:anim-dialog-out"
         >
           <DialogPrimitive.Close asChild>
-            <Button variant="ghost" size="icon" aria-label="Cerrar" className="absolute top-2 right-2 size-11 [&_svg:not([class*='size-'])]:size-5">
+            <Button variant="ghost" size="icon" aria-label={t("common.close")} className="absolute top-2 right-2 size-11 [&_svg:not([class*='size-'])]:size-5">
               <XIcon />
             </Button>
           </DialogPrimitive.Close>
@@ -225,6 +230,7 @@ export function PlusGate({ reason, daily, free = false, children }: {
   children: ReactNode;
 }) {
   const { plus, ready } = usePlus();
+  const t = useT();
   if (free) return children;
   if (!ready) return <div className="min-h-[70svh]" aria-busy />;
   if (plus) return children;
@@ -238,7 +244,7 @@ export function PlusGate({ reason, daily, free = false, children }: {
           href={daily}
           className="group mt-4 flex min-h-12 items-center justify-between gap-3 rounded-xl border-2 border-border bg-card px-4 py-2 font-semibold outline-none hover:border-ink focus-visible:ring-[3px] focus-visible:ring-ring/50"
         >
-          Jugar el desafío de hoy
+          {t("plus.playToday")}
           <ChevronRightIcon aria-hidden className="size-5 shrink-0 text-pencil transition-transform group-hover:translate-x-0.5" />
         </Link>
       )}

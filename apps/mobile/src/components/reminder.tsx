@@ -4,10 +4,12 @@ import { AppState, Linking, Pressable, StyleSheet, Switch, View } from "react-na
 import Animated from "react-native-reanimated";
 import { motion } from "@/lib/motion";
 import { Button, Card, Icon, Row, Text } from "@/components/ui";
+import { useLocale, useT, type T } from "@/lib/i18n";
 import {
   disableReminder,
   enableReminder,
   formatMinutes,
+  minutesParts,
   onReminderTap,
   remindersAvailable,
   rescheduleReminders,
@@ -19,13 +21,14 @@ import { fonts, radius } from "@/theme/tokens";
 
 /**
  * Mantiene programados los avisos: al abrir, al volver al frente, al guardar un diario y al cambiar
- * la hora. Al tocar un aviso abre el inicio. Va una vez en la app.
+ * la hora o el idioma (los textos se escriben al programarlos). Al tocar un aviso abre el inicio. Va una vez en la app.
  */
 export function ReminderScheduler() {
   const progressHydrated = useProgress((s) => s.hydrated);
   const reminderHydrated = useReminder((s) => s.hydrated);
   const enabled = useReminder((s) => s.enabled);
   const minutes = useReminder((s) => s.minutes);
+  const locale = useLocale();
 
   useEffect(() => onReminderTap(() => router.navigate("/")), []);
 
@@ -40,7 +43,7 @@ export function ReminderScheduler() {
       app.remove();
       unsubscribe();
     };
-  }, [progressHydrated, reminderHydrated, enabled, minutes]);
+  }, [progressHydrated, reminderHydrated, enabled, minutes, locale]);
 
   return null;
 }
@@ -51,6 +54,9 @@ const wrap = (m: number) => (m + 24 * 60) % (24 * 60);
 /** Elegir la hora: horas y cuartos de hora, con botones grandes para el dedo. */
 function TimePicker({ minutes, onChange }: { minutes: number; onChange: (m: number) => void }) {
   const { colors } = useTheme();
+  const t = useT();
+  const locale = useLocale();
+  const { time, suffix } = minutesParts(minutes, locale);
   const btn = (icon: "remove" | "add", label: string, delta: number) => (
     <Pressable
       onPress={() => onChange(wrap(minutes + delta))}
@@ -62,23 +68,28 @@ function TimePicker({ minutes, onChange }: { minutes: number; onChange: (m: numb
     </Pressable>
   );
   return (
-    <Row gap={6} style={{ justifyContent: "center" }} accessibilityRole="adjustable" accessibilityLabel={`Hora del aviso: ${formatMinutes(minutes)}`}>
-      {btn("remove", "Una hora antes", -60)}
-      {btn("remove", "Un cuarto de hora antes", -STEP)}
-      <Text style={{ minWidth: 84, textAlign: "center", fontFamily: fonts.displayHeavy, fontSize: 32, color: colors.ink }}>{formatMinutes(minutes)}</Text>
-      {btn("add", "Un cuarto de hora después", STEP)}
-      {btn("add", "Una hora después", 60)}
+    <Row gap={6} style={{ justifyContent: "center" }} accessibilityRole="adjustable" accessibilityLabel={t("hub.reminderTime", { time: formatMinutes(minutes, locale) })}>
+      {btn("remove", t("hub.hourEarlier"), -60)}
+      {btn("remove", t("hub.quarterEarlier"), -STEP)}
+      <Text style={{ minWidth: 84, textAlign: "center", fontFamily: fonts.displayHeavy, fontSize: 32, color: colors.ink }} numberOfLines={1}>
+        {time}
+        {suffix ? <Text style={{ fontFamily: fonts.displayHeavy, fontSize: 14, color: colors.ink }}> {suffix}</Text> : null}
+      </Text>
+      {btn("add", t("hub.quarterLater"), STEP)}
+      {btn("add", t("hub.hourLater"), 60)}
     </Row>
   );
 }
 
-function deniedText() {
-  return "Las notificaciones están apagadas para Craneá. Prendelas en los ajustes del teléfono.";
+function deniedText(t: T) {
+  return t("hub.notificationsDenied");
 }
 
 /** Para la pantalla de cuenta/ajustes. */
 export function ReminderSettings() {
   const { colors } = useTheme();
+  const t = useT();
+  const locale = useLocale();
   const hydrated = useReminder((s) => s.hydrated);
   const enabled = useReminder((s) => s.enabled);
   const minutes = useReminder((s) => s.minutes);
@@ -96,25 +107,25 @@ export function ReminderSettings() {
 
   return (
     <View style={{ gap: 8 }}>
-      <Text variant="label">Recordatorio</Text>
+      <Text variant="label">{t("hub.reminderLabel")}</Text>
       <Card style={{ gap: 12 }}>
         <Row gap={12}>
           <Icon name="notifications-outline" size={22} />
           <View style={{ flex: 1 }}>
-            <Text variant="bodyBold">Aviso del diario</Text>
+            <Text variant="bodyBold">{t("hub.reminderName")}</Text>
             <Text variant="small">
               {!available
-                ? "Los avisos funcionan en la app instalada (no en Expo Go)."
+                ? t("hub.reminderExpoGo")
                 : enabled
-                  ? `Todos los días a las ${formatMinutes(minutes)}, si todavía no jugaste.`
-                  : "Un aviso por día, solo si todavía no jugaste."}
+                  ? t("hub.reminderOn", { time: formatMinutes(minutes, locale) })
+                  : t("hub.reminderOff")}
             </Text>
           </View>
           <Switch
             value={enabled && available}
             disabled={!available || !hydrated || busy}
             onValueChange={(v) => void toggle(v)}
-            accessibilityLabel="Aviso del diario"
+            accessibilityLabel={t("hub.reminderName")}
             trackColor={{ true: colors.primary }}
           />
         </Row>
@@ -126,10 +137,11 @@ export function ReminderSettings() {
 }
 
 function DeniedNote() {
+  const t = useT();
   return (
     <View style={{ gap: 6 }}>
-      <Text variant="small">{deniedText()}</Text>
-      <Button title="Abrir ajustes" variant="outline" icon="settings-outline" onPress={() => void Linking.openSettings()} />
+      <Text variant="small">{deniedText(t)}</Text>
+      <Button title={t("hub.openSettings")} variant="outline" icon="settings-outline" onPress={() => void Linking.openSettings()} />
     </View>
   );
 }
@@ -140,6 +152,8 @@ function DeniedNote() {
  */
 export function ReminderOffer() {
   const { colors } = useTheme();
+  const t = useT();
+  const locale = useLocale();
   const hydrated = useReminder((s) => s.hydrated);
   const offered = useReminder((s) => s.offered);
   const enabled = useReminder((s) => s.enabled);
@@ -169,30 +183,30 @@ export function ReminderOffer() {
             <Icon name="notifications" size={22} color={colors.primary} />
           </View>
           <View style={{ flex: 1, gap: 2 }}>
-            <Text variant="title" style={{ fontSize: 20 }}>¿Te aviso mañana?</Text>
+            <Text variant="title" style={{ fontSize: 20 }}>{t("hub.reminderOfferTitle")}</Text>
             <Text variant="muted">
-              {denied ? deniedText() : `Un aviso por día a las ${formatMinutes(minutes)}, para no cortar la racha. Si ya jugaste, no te molesto.`}
+              {denied ? deniedText(t) : t("hub.reminderOfferBody", { time: formatMinutes(minutes, locale) })}
             </Text>
           </View>
         </Row>
         {denied ? (
           <Row gap={8}>
-            <Button title="Abrir ajustes" variant="outline" style={{ flex: 1 }} onPress={() => void Linking.openSettings()} />
-            <Button title="Ahora no" variant="ghost" onPress={() => setDenied(false)} />
+            <Button title={t("hub.openSettings")} variant="outline" style={{ flex: 1 }} onPress={() => void Linking.openSettings()} />
+            <Button title={t("hub.notNow")} variant="ghost" onPress={() => setDenied(false)} />
           </Row>
         ) : (
           <>
             {picking && <TimePicker minutes={minutes} onChange={setMinutes} />}
             <Row gap={8} style={{ flexWrap: "wrap" }}>
-              <Button title="Sí, avisame" icon="checkmark" loading={busy} style={{ flexGrow: 1 }} onPress={() => void accept()} />
-              {!picking && <Button title="Otra hora" variant="outline" onPress={() => setPicking(true)} />}
+              <Button title={t("hub.yesRemindMe")} icon="checkmark" loading={busy} style={{ flexGrow: 1 }} onPress={() => void accept()} />
+              {!picking && <Button title={t("hub.otherTime")} variant="outline" onPress={() => setPicking(true)} />}
             </Row>
             <Pressable
               onPress={() => useReminder.getState().set({ offered: true })}
               accessibilityRole="button"
               style={{ minHeight: 44, alignItems: "center", justifyContent: "center" }}
             >
-              <Text variant="bodyBold" style={{ color: colors.mutedForeground }}>No, gracias</Text>
+              <Text variant="bodyBold" style={{ color: colors.mutedForeground }}>{t("hub.noThanks")}</Text>
             </Pressable>
           </>
         )}

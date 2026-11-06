@@ -5,10 +5,12 @@ import { useEffect, useRef, useState } from "react";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { XIcon } from "lucide-react";
 import type { AchievementState } from "@cranea/core/achievements";
+import { achievementCopy } from "@cranea/core/i18n";
 import { api } from "../../convex/_generated/api";
 import { accountsEnabled } from "@/components/account-provider";
 import { AchievementIcon } from "@/components/achievement-icon";
 import { useAccountReady } from "@/components/progress-sync";
+import { getLocale, useLocale, useT } from "@/lib/i18n";
 import { useAchievements, useAchievementsReady } from "@/stores/achievements";
 import { useProgress } from "@/stores/progress";
 
@@ -55,7 +57,7 @@ function AchievementsWatcher() {
       if (cancelled) return;
       const check = () => {
         const store = useAchievements.getState();
-        const fresh = evaluate(useProgress.getState().games).filter((a) => a.unlocked && store.unlocked[a.id] === undefined);
+        const fresh = evaluate(useProgress.getState().games, undefined, getLocale()).filter((a) => a.unlocked && store.unlocked[a.id] === undefined);
         if (fresh.length) store.unlock(fresh.map((a) => ({ id: a.id, at: a.at ?? Date.now() })));
         if (!store.seeded) {
           store.setSeeded();
@@ -81,6 +83,8 @@ function AchievementsWatcher() {
 }
 
 function AchievementToast({ toast, onDone }: { toast: Toast; onDone: () => void }) {
+  const t = useT();
+  const locale = useLocale();
   const [visible, setVisible] = useState(false);
   const done = useRef(onDone);
   done.current = onDone;
@@ -107,16 +111,16 @@ function AchievementToast({ toast, onDone }: { toast: Toast; onDone: () => void 
           </span>
           <Link href="/logros" className="min-w-0 flex-1 rounded-md py-1 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
             <span className="block text-xs font-bold tracking-wide text-muted-foreground uppercase">
-              {"one" in toast ? "Logro desbloqueado" : "Logros desbloqueados"}
+              {"one" in toast ? t("stats.toastOne") : t("stats.toastMany")}
             </span>
             <span className="block truncate font-display text-lg leading-tight font-extrabold">
-              {"one" in toast ? toast.one.name : `¡${toast.many} logros nuevos!`}
+              {"one" in toast ? achievementCopy(toast.one, locale, 0).name : t("stats.toastManyTitle", { count: toast.many })}
             </span>
           </Link>
           <button
             type="button"
             onClick={onDone}
-            aria-label="Cerrar aviso"
+            aria-label={t("stats.closeToast")}
             className="grid size-11 shrink-0 place-items-center rounded-md text-muted-foreground outline-none hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
             <XIcon className="size-5" aria-hidden />

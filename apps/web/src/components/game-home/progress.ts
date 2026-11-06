@@ -1,3 +1,5 @@
+import type { Locale } from "@cranea/core/i18n";
+import { translator } from "@/lib/i18n";
 import type { GameProgress } from "@/stores/progress";
 import type { Done, GameHomeConfig, HomeWorld } from "./types";
 
@@ -48,10 +50,11 @@ export function msToNextDaily(now: number) {
   return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1) - now;
 }
 
-/** "5 h 12 min", "12 min", "menos de un minuto" */
-export function formatCountdown(ms: number) {
+/** "5 h 12 min", "12 min", "menos de un minuto" (en inglés: "5h 12m"). */
+export function formatCountdown(ms: number, locale: Locale = "es") {
+  const t = translator(locale);
   const min = Math.floor(ms / 60_000);
-  if (min < 1) return "menos de un minuto";
+  if (min < 1) return t("hub.lessThanMinute");
   const h = Math.floor(min / 60);
-  return h > 0 ? `${h} h ${String(min % 60).padStart(2, "0")} min` : `${min} min`;
+  return h > 0 ? t("hub.hoursMinutes", { h, m: String(min % 60).padStart(2, "0") }) : t("hub.minutes", { m: min });
 }

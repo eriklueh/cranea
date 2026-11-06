@@ -1,6 +1,8 @@
 import { generateDaily, rowsFromIslands } from "@cranea/core/puentes";
 import { Stack } from "expo-router";
 import { useMemo } from "react";
+import { gameTitle } from "@/components/game-header";
+import { useLocale, useT } from "@/lib/i18n";
 import { DailyGate } from "@/components/daily-gate";
 import { PuentesGame } from "@/games/puentes/components/puentes-game";
 import { StaticBoard } from "@/games/puentes/components/preview";
@@ -9,14 +11,16 @@ import { dailyNumber, GAME_ID } from "@/games/puentes/data";
 
 /** El diario se genera con la fecha UTC como semilla: todos ven el mismo tablero. Cuenta la primera partida. */
 export default function PuentesDaily() {
+  const t = useT();
+  const locale = useLocale();
   return (
     <>
-      <Stack.Screen options={{ title: "Puentes del día" }} />
+      <Stack.Screen options={{ title: t("puentes.dailyTitle") }} />
       <DailyGate
         gameId={GAME_ID}
         game="Puentes"
         home="/puentes"
-        title={(date) => `Puentes del día #${dailyNumber(date)}`}
+        title={(date) => gameTitle("Puentes", { kind: "daily", number: dailyNumber(date) }, locale)}
         reveal={(date) => <Solution date={date} />}
       >
         {(date, practice) => <Play key={`${date}-${practice}`} date={date} practice={practice} />}
@@ -33,6 +37,7 @@ function Play({ date, practice }: { date: string; practice: boolean }) {
 
 /** Ya jugado: la solución de hoy, como en la web (que la muestra en el tablero). */
 function Solution({ date }: { date: string }) {
+  const t = useT();
   const puzzle = useMemo(() => generateDaily(date), [date]);
   const width = useBoardWidth(puzzle.width, 100);
   return (
@@ -41,7 +46,7 @@ function Solution({ date }: { date: string }) {
       bridges={puzzle.solution}
       done={puzzle.islands.map((_, i) => i)}
       width={width}
-      label="La solución del mapa de hoy"
+      label={t("puentes.solutionLabel")}
     />
   );
 }

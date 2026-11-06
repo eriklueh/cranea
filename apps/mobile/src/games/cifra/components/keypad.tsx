@@ -4,6 +4,7 @@ import { Button, Text, shadow } from "@/components/ui";
 import { haptic } from "@/lib/haptics";
 import { sound } from "@/lib/sound";
 import { useOnChange } from "@/lib/hooks";
+import { useT } from "@/lib/i18n";
 import { motion, PRESS_SCALE, useShake } from "@/lib/motion";
 import { useTheme } from "@/theme/theme";
 import { fonts, radius } from "@/theme/tokens";
@@ -21,12 +22,13 @@ export function InputSlots() {
   useOnChange(shakeKey, (key) => key > 0 && haptic("invalid"));
   useOnChange(won, (w) => w && haptic("win"));
   useOnChange(input.length, (n, before) => n > before && sound("tap"));
+  const t = useT();
   if (!puzzle) return null;
   return (
     <Animated.View
       style={[styles.slots, shake]}
       accessibilityLiveRegion="polite"
-      accessibilityLabel={`Tu código: ${input.join(" ") || "vacío"}`}
+      accessibilityLabel={t("cifra.yourCode", { code: input.join(" ") || t("cifra.empty") })}
     >
       {Array.from({ length: puzzle.length }, (_, i) =>
         input[i] === undefined ? (
@@ -52,6 +54,7 @@ export function Keypad() {
   const submit = useCifra((s) => s.submit);
   const playing = status === "playing";
   const full = puzzle ? input.length === puzzle.length : false;
+  const t = useT();
   return (
     <View style={{ gap: 8 }}>
       <View style={styles.grid}>
@@ -61,7 +64,7 @@ export function Keypad() {
             <View key={d} style={styles.keyWrap}>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`Cifra ${d}`}
+                accessibilityLabel={t("cifra.digit", { d })}
                 accessibilityState={{ disabled }}
                 disabled={disabled}
                 onPress={() => {
@@ -82,8 +85,8 @@ export function Keypad() {
         })}
       </View>
       <View style={{ flexDirection: "row", gap: 8 }}>
-        <Button title="Borrar" icon="backspace-outline" variant="outline" size="lg" style={{ flex: 1 }} onPress={backspace} disabled={!playing || input.length === 0} />
-        <Button title="Probar código" size="lg" style={{ flex: 2 }} onPress={submit} disabled={!playing || !full} />
+        <Button title={t("cifra.delete")} icon="backspace-outline" variant="outline" size="lg" style={{ flex: 1 }} onPress={backspace} disabled={!playing || input.length === 0} />
+        <Button title={t("cifra.tryCode")} size="lg" style={{ flex: 2 }} onPress={submit} disabled={!playing || !full} />
       </View>
     </View>
   );

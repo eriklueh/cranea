@@ -1,8 +1,10 @@
+"use client";
 import type { CSSProperties } from "react";
+import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type { TileMark } from "@cranea/core/cifra";
 
-const MARK_LABEL: Record<TileMark, string> = { none: "sin marcar", out: "descartada", in: "va", here: "va ahí" };
+const MARK_LABEL = { none: "cifra.markNone", out: "cifra.markOut", in: "cifra.markIn", here: "cifra.markHere" } as const satisfies Record<TileMark, string>;
 
 interface Props {
   digit?: number;
@@ -21,6 +23,7 @@ interface Props {
 
 /** Ficha de 2×2 cuadritos. En el tablero permite anotar la deducción del jugador. */
 export function DigitTile({ digit, mark = "none", position = 0, interactive = false, disabled = false, onClick, size = "md", tone = "clue", className, style, tutorial }: Props) {
+  const t = useT();
   const Tile = interactive ? "button" : "span";
   return (
     <Tile
@@ -30,7 +33,7 @@ export function DigitTile({ digit, mark = "none", position = 0, interactive = fa
       data-clue-tile={interactive ? "" : undefined}
       data-tutorial={tutorial}
       style={style}
-      aria-label={interactive ? `Cifra ${digit}, posición ${position + 1}: ${MARK_LABEL[mark]}.${disabled ? "" : " Tocá para cambiar."}` : undefined}
+      aria-label={interactive ? t("cifra.tileLabel", { digit: digit ?? "", position: position + 1, mark: t(MARK_LABEL[mark]) }) + (disabled ? "" : t("cifra.tileTapToChange")) : undefined}
       className={cn(
         "relative inline-flex shrink-0 items-center justify-center rounded-md font-display font-bold tabular-nums select-none",
         size === "md" ? "size-12 text-[1.65rem]" : "size-10 text-xl",

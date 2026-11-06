@@ -5,10 +5,11 @@ import { cn } from "@/lib/utils";
 import { celebrateStep, haptic, play, useOnChange } from "@/lib/motion";
 import { sound } from "@/lib/sound";
 import { WinBurst } from "@/components/win-burst";
+import { useT, type T } from "@/lib/i18n";
 import { useNonograma } from "../store";
 
 const NONE: number[] = [];
-const STATE_LABEL: Record<Cell, string> = { 0: "vacía", 1: "pintada", 2: "con cruz" };
+const STATE_LABEL = (t: T): Record<Cell, string> => ({ 0: t("nonograma.cellEmpty"), 1: t("nonograma.cellFilled"), 2: t("nonograma.cellCrossed") });
 
 const SIZING: Record<number, { box: string; clue: string; gap: string }> = {
   4: { box: "max-w-[17rem]", clue: "text-lg", gap: "gap-2" },
@@ -19,6 +20,7 @@ const SIZING: Record<number, { box: string; clue: string; gap: string }> = {
 
 /** Tablero con pistas. Tocar o arrastrar en línea recta pinta; la primera casilla decide si pinta o borra. */
 export function Board({ puzzle }: { puzzle: NonogramaPuzzle }) {
+  const t = useT();
   // Hasta que arranca la partida (y en el HTML prerenderizado) se muestra el tablero vacío.
   const live = useNonograma((s) => s.puzzle === puzzle);
   const storeBoard = useNonograma((s) => s.board);
@@ -151,7 +153,7 @@ export function Board({ puzzle }: { puzzle: NonogramaPuzzle }) {
       <div
         ref={cellsRef}
         role="grid"
-        aria-label={`Tablero de ${W} por ${H}`}
+        aria-label={t("nonograma.boardLabel", { w: W, h: H })}
         aria-readonly={!playing}
         className={cn(
           "relative grid aspect-square touch-none overflow-hidden rounded-sm border-2 border-ink bg-tile shadow-[0_4px_0_0_var(--shadow-ink)] transition-[border-color,box-shadow] duration-(--dur-slow)",
@@ -182,7 +184,7 @@ export function Board({ puzzle }: { puzzle: NonogramaPuzzle }) {
                   data-cell={i}
                   data-tutorial={`cell-${i}`}
                   tabIndex={i === (cursor ?? 0) ? 0 : -1}
-                  aria-label={`Fila ${r + 1} (${rowClue}), columna ${c + 1} (${colClue}): ${STATE_LABEL[state]}${flaggedSet.has(i) ? ", revisar" : ""}`}
+                  aria-label={`${t("nonograma.cellLabel", { r: r + 1, rowClue, c: c + 1, colClue, state: STATE_LABEL(t)[state] })}${flaggedSet.has(i) ? t("nonograma.cellFlagged") : ""}`}
                   onFocus={() => useNonograma.getState().cursor !== i && useNonograma.getState().setCursor(i)}
                   className={cn(
                     // El foco es un outline: queda encima de la tinta de la casilla.

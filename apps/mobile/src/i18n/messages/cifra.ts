@@ -1,5 +1,172 @@
 import type { NamespaceShape } from "@cranea/core/i18n";
 
-export const es = {};
+/** Pantallas de Cifra en la app (games/cifra, app/cifra). */
+export const es = {
+  // Inicio y diario
+  dailyTitle: "Cifra del día",
+  dailyBlurb: "El mismo tablero para todos. Tres intentos.",
+  statAttempts: "Intentos",
+  solution: "Solución",
 
-export const en: NamespaceShape<typeof es> = {};
+  // Nivel
+  preparing: "Preparando el tablero…",
+  levelMissing: "Nivel inexistente",
+  plusLevel: "Nivel de Craneá Plus",
+  plusLevelMessage: "Los primeros {free} niveles de Cifra son gratis. Este y todos los demás se abren con Craneá Plus, junto con los de los otros juegos.",
+  levelLocked: "Nivel bloqueado",
+  levelLockedMessage: "Ganá el nivel anterior para abrirlo.",
+
+  // Partida
+  contextDaily: "Mismo tablero para todos",
+  contextLevel: "Código de {n} cifras",
+  livesLeft: { one: "Te queda {count} intento", other: "Te quedan {count} intentos" },
+  timeLabel: "Tiempo {time}",
+  clues: "Pistas",
+  hint: "Pista",
+  hintAsk: "Pedir una pista",
+  hintShowDeduction: "Ver la deducción",
+  clearMarks: "Borrar marcas",
+  hintAllShown: "Tus marcas ya muestran todo lo que se puede deducir. Escribí el código.",
+  hintWhat: "¿Qué se deduce?",
+  hintClose: "Cerrar pista",
+  rows: { one: "la fila {rows}", other: "las filas {rows}" },
+  nudgeGuessRows: "Suponé una cifra en un lugar y cruzala con {rows}.",
+  nudgeGuess: "Suponé una cifra en un lugar y mirá si todo cierra.",
+  nudgeCross: "Cruzá {rows} con lo que ya sabés.",
+  nudgeRead: "Mirá {rows}: se lee sola.",
+
+  // Teclado y fichas
+  yourCode: "Tu código: {code}",
+  empty: "vacío",
+  digit: "Cifra {d}",
+  delete: "Borrar",
+  tryCode: "Probar código",
+  markNone: "sin marcar",
+  markOut: "descartada",
+  markIn: "va",
+  markHere: "va ahí",
+  tileLabel: "Cifra {digit}, posición {position}: {mark}.",
+  tileTapToChange: " Tocá para cambiar.",
+  exactCount: "{n} en su lugar",
+  presentCount: "{n} en otro lugar",
+  legendExact: "en su lugar",
+  legendPresent: "está, en otro lugar",
+
+  // Resultado
+  extraScore: "con un intento extra",
+  share: "Craneá · {title}\n{marks} {score} en {time}\n{url}",
+  cardExtra: "Con intento extra",
+  cardLost: "No salió",
+  firstTry: "Al primer intento",
+  unsolvedTime: "Sin resolver · {time}",
+  wonExtraTitle: "¡Salió con el intento extra!",
+  wonTitle: "Código descifrado",
+  lostTitle: "Se acabaron los intentos",
+  wonExtraDesc: "{title}, en {time}. Suma a tu racha; en el ranking queda como no resuelto.",
+  wonDesc: "{title}, en {attempts} de {max} intentos y {time}.",
+  pendingDesc: "{title}, sin resolver por ahora.",
+  lostDesc: "{title}, sin resolver. Este era el código:",
+  hintsUsed: { one: "Usaste {count} pista", other: "Usaste {count} pistas" },
+  nextLevel: "Siguiente nivel",
+  backToWorlds: "Volver a los mundos",
+  seeRanking: "Ver ranking",
+
+  // Cómo se juega
+  howToTitle: "Cómo se juega",
+  howToHeading: "Cómo se juega Cifra",
+  howToIntro:
+    "Hay un código secreto de cifras distintas. El tablero ya trae varios intentos puntuados. Cada fila te dice cuántas de sus cifras están en el código y cuántas están en su lugar, pero nunca cuáles. Cruzando las filas, solo un código encaja con todas. Todas las cifras del código aparecen entre las pistas. Tenés tres intentos para escribirlo.",
+  howToLegend: "A la izquierda, el círculo lleno cuenta las cifras en su lugar. A la derecha, el aro cuenta las que están en otro lugar.",
+  howToSolveTitle: "Cómo se resuelve este",
+  howToSolve:
+    "El aro con un 3 indica que las tres cifras están en el código, pero ninguna en su lugar. Cruzá sus posiciones: el 7 no puede ir último por la primera fila, ni en el medio por la segunda, así que va primero. El 1 no puede ir primero ni último: va en el medio. El 0 ocupa el lugar que queda. El código es 710.",
+  howToMarksTitle: "Marcá tus deducciones",
+  howToMarks:
+    "Tocá una ficha del tablero: la raya la descarta, el aro indica que va en el código y el fondo sólido confirma que va ahí. Un cuarto toque la deja sin marcar. Cada casilla se marca por separado y las marcas no completan nada solas: son tus notas.",
+  howToWorldsTitle: "Los mundos",
+  howToWorlds:
+    "Cada mundo pide una técnica más. Primero contar lo que ya sabés de cada fila, y después suponer una cifra en un lugar para ver si todo se contradice. Ningún tablero necesita adivinar. Si te trabás, el botón Pista te dice qué filas cruzar.",
+  startPlaying: "Empezar a jugar",
+};
+
+export const en: NamespaceShape<typeof es> = {
+  dailyTitle: "Daily Cifra",
+  dailyBlurb: "Same board for everyone. Three tries.",
+  statAttempts: "Tries",
+  solution: "Solution",
+
+  preparing: "Setting up the board…",
+  levelMissing: "Level not found",
+  plusLevel: "Craneá Plus level",
+  plusLevelMessage: "The first {free} Cifra levels are free. This one and all the rest unlock with Craneá Plus, along with every other game's.",
+  levelLocked: "Level locked",
+  levelLockedMessage: "Win the previous level to unlock it.",
+
+  contextDaily: "Same board for everyone",
+  contextLevel: "{n}-digit code",
+  livesLeft: { one: "{count} try left", other: "{count} tries left" },
+  timeLabel: "Time {time}",
+  clues: "Clues",
+  hint: "Hint",
+  hintAsk: "Get a hint",
+  hintShowDeduction: "Show the deduction",
+  clearMarks: "Clear marks",
+  hintAllShown: "Your marks already show everything you can deduce. Enter the code.",
+  hintWhat: "What does it tell you?",
+  hintClose: "Close hint",
+  rows: { one: "row {rows}", other: "rows {rows}" },
+  nudgeGuessRows: "Try a digit in one spot and check it against {rows}.",
+  nudgeGuess: "Try a digit in one spot and see if everything still adds up.",
+  nudgeCross: "Cross-check {rows} with what you already know.",
+  nudgeRead: "Look at {rows}: it gives itself away.",
+
+  yourCode: "Your code: {code}",
+  empty: "empty",
+  digit: "Digit {d}",
+  delete: "Delete",
+  tryCode: "Try code",
+  markNone: "unmarked",
+  markOut: "ruled out",
+  markIn: "in the code",
+  markHere: "goes here",
+  tileLabel: "Digit {digit}, spot {position}: {mark}.",
+  tileTapToChange: " Tap to change.",
+  exactCount: "{n} in the right spot",
+  presentCount: "{n} in another spot",
+  legendExact: "right spot",
+  legendPresent: "in the code, wrong spot",
+
+  extraScore: "with an extra try",
+  share: "Craneá · {title}\n{marks} {score} in {time}\n{url}",
+  cardExtra: "Extra try",
+  cardLost: "Not this time",
+  firstTry: "First try",
+  unsolvedTime: "Unsolved · {time}",
+  wonExtraTitle: "Got it on the extra try!",
+  wonTitle: "Code cracked",
+  lostTitle: "Out of tries",
+  wonExtraDesc: "{title}, in {time}. It counts toward your streak; on the leaderboard it stays unsolved.",
+  wonDesc: "{title}, in {attempts} of {max} tries and {time}.",
+  pendingDesc: "{title}, unsolved for now.",
+  lostDesc: "{title}, unsolved. Here's the code:",
+  hintsUsed: { one: "You used {count} hint", other: "You used {count} hints" },
+  nextLevel: "Next level",
+  backToWorlds: "Back to worlds",
+  seeRanking: "See leaderboard",
+
+  howToTitle: "How to play",
+  howToHeading: "How to play Cifra",
+  howToIntro:
+    "There's a secret code made of different digits. The board already has a few scored guesses. Each row tells you how many of its digits are in the code and how many are in the right spot, but never which ones. Cross-check the rows and only one code fits them all. Every digit in the code shows up somewhere in the clues. You get three tries to enter it.",
+  howToLegend: "On the left, the solid dot counts digits in the right spot. On the right, the ring counts digits that are in the code but in another spot.",
+  howToSolveTitle: "Solving this one",
+  howToSolve:
+    "The ring with a 3 means all three digits are in the code, but none is in the right spot. Cross-check their positions: the 7 can't go last (row one) or in the middle (row two), so it goes first. The 1 can't go first or last, so it goes in the middle. The 0 takes the spot that's left. The code is 710.",
+  howToMarksTitle: "Mark your deductions",
+  howToMarks:
+    "Tap a tile on the board: a strike rules it out, a ring means it's in the code, and a solid fill confirms it goes there. A fourth tap clears it. Each tile is marked on its own, and marks never fill anything in for you: they're just your notes.",
+  howToWorldsTitle: "The worlds",
+  howToWorlds:
+    "Each world adds a new technique. First, count what you already know about each row; later, try a digit in one spot and see if everything falls apart. No board ever needs guessing. If you get stuck, the Hint button tells you which rows to cross-check.",
+  startPlaying: "Start playing",
+};

@@ -13,6 +13,7 @@ import Animated, {
 import { scheduleOnRN } from "react-native-worklets";
 import { Text, shadow } from "@/components/ui";
 import { haptic } from "@/lib/haptics";
+import { useT } from "@/lib/i18n";
 import { sound } from "@/lib/sound";
 import { useOnChange } from "@/lib/hooks";
 import { celebrateStep, DURATION, motion, MOTION, pulse, timing, useMotionReduced, useShake } from "@/lib/motion";
@@ -41,7 +42,7 @@ const BORDER = 2;
 /** Debajo de este tamaño de casilla el dedo tapa demasiado: se ofrece el zoom. */
 const MIN_CELL = 22;
 
-const STATE_LABEL: Record<Cell, string> = { 0: "vacía", 1: "pintada", 2: "con cruz" };
+const STATE_LABEL = { 0: "nonograma.cellEmpty", 1: "nonograma.cellFilled", 2: "nonograma.cellCrossed" } as const satisfies Record<Cell, string>;
 
 export interface BoardLayout {
   cell: number;
@@ -93,6 +94,7 @@ const clamp = (v: number, lo: number, hi: number) => {
 
 export const Board = forwardRef<BoardHandle, { puzzle: NonogramaPuzzle; layout: BoardLayout; onZoomChange?: (zoomed: boolean) => void }>(function Board({ puzzle, layout, onZoomChange }, ref) {
   const { colors } = useTheme();
+  const t = useT();
   const reduced = useMotionReduced();
   const { width: W, height: H } = puzzle;
   const { cell, zoomable, maxScale, clueW, clueH } = layout;
@@ -272,7 +274,7 @@ export const Board = forwardRef<BoardHandle, { puzzle: NonogramaPuzzle; layout: 
             ]}
           >
             <GestureDetector gesture={gesture}>
-              <View style={{ width: gridW, height: gridH, overflow: "hidden" }} accessibilityLabel={`Tablero de ${W} por ${H}`}>
+              <View style={{ width: gridW, height: gridH, overflow: "hidden" }} accessibilityLabel={t("nonograma.board", { w: W, h: H })}>
                 <Animated.View style={[{ width: gridW, height: gridH, transformOrigin: [0, 0, 0] }, content]}>
                   {Array.from({ length: H }, (_, r) => (
                     <View key={r} style={{ flexDirection: "row" }}>
@@ -304,6 +306,7 @@ const CellView = memo(function CellView({ i, r, c, W, H, size, rowClue, colClue,
   const flagged = useNonograma((s) => s.flagged.length > 0 && s.flagged.includes(i));
   const finished = useNonograma((s) => s.status !== "playing" && !s.conceal);
   const won = useNonograma((s) => s.status === "won");
+  const t = useT();
 
   // `stamp` al pintar; al terminar, el dibujo aparece en diagonal y, si ganaste, late en ola (`celebrate`).
   const stamp = useMemo(() => (reduced ? undefined : finished ? motion.stamp(delay) : STAMP), [reduced, finished, delay]);
@@ -319,7 +322,7 @@ const CellView = memo(function CellView({ i, r, c, W, H, size, rowClue, colClue,
     <View
       accessible
       accessibilityRole="button"
-      accessibilityLabel={`Fila ${r + 1} (${rowClue.join(" ") || "0"}), columna ${c + 1} (${colClue.join(" ") || "0"}): ${STATE_LABEL[state]}${flagged ? ", revisar" : ""}`}
+      accessibilityLabel={t("nonograma.cell", { row: r + 1, rowClue: rowClue.join(" ") || "0", col: c + 1, colClue: colClue.join(" ") || "0", state: t(STATE_LABEL[state]) }) + (flagged ? t("nonograma.cellFlagged") : "")}
       accessibilityActions={[{ name: "activate" }]}
       onAccessibilityAction={(e) => {
         if (e.nativeEvent.actionName !== "activate") return;

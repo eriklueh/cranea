@@ -1,3 +1,5 @@
+import { list, type Locale } from "@cranea/core/i18n";
+import type { T } from "@/lib/i18n";
 import { tileMarkState, traceSolve, type CifraPuzzle, type Clue, type Marks, type Trace, type TraceStep } from "@cranea/core/cifra";
 
 const traces = new Map<string, { puzzle: CifraPuzzle; trace: Trace }>();
@@ -32,14 +34,15 @@ export function nextHintStep(puzzle: CifraPuzzle, misses: readonly Clue[], marks
   return traceFor(puzzle).steps.findIndex((step) => !shown(step, rows, marks));
 }
 
-const rowList = (rows: number[]) => {
+/** "la fila 2" / "las filas 1, 2 y 3" ("row 2" / "rows 1, 2 and 3"). */
+const rowList = (rows: number[], t: T, locale: Locale) => {
   const n = rows.map((r) => String(r + 1));
-  return n.length < 2 ? `la fila ${n[0]}` : `las filas ${n.slice(0, -1).join(", ")} y ${n.at(-1)}`;
+  return n.length < 2 ? t("cifra.hintRow", { n: n[0] }) : t("cifra.hintRows", { list: list(n, locale) });
 };
 
 /** Primer nivel de la pista: dónde mirar, sin decir qué sale. */
-export function hintNudge(step: TraceStep) {
-  if (step.tier === 3) return step.rows.length ? `Suponé una cifra en un lugar y cruzala con ${rowList(step.rows)}.` : "Suponé una cifra en un lugar y mirá si todo cierra.";
-  if (step.tier === 2) return `Cruzá ${rowList(step.rows)} con lo que ya sabés.`;
-  return `Mirá ${rowList(step.rows)}: se lee sola.`;
+export function hintNudge(step: TraceStep, t: T, locale: Locale) {
+  if (step.tier === 3) return step.rows.length ? t("cifra.hintSuppose", { rows: rowList(step.rows, t, locale) }) : t("cifra.hintSupposeAll");
+  if (step.tier === 2) return t("cifra.hintCross", { rows: rowList(step.rows, t, locale) });
+  return t("cifra.hintRead", { rows: rowList(step.rows, t, locale) });
 }

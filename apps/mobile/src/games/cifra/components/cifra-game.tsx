@@ -5,6 +5,7 @@ import { AppState, Pressable, StyleSheet, View } from "react-native";
 import Animated from "react-native-reanimated";
 import { DailyNotice } from "@/components/daily-gate";
 import { FinishSlot, ResultLink } from "@/components/finish-slot";
+import { cifraStepText } from "@cranea/core/i18n";
 import { GameHeader, gameTitle } from "@/components/game-header";
 import { ResultSheet } from "@/components/result-sheet";
 import { attemptMarks, ResultShareButton, resultLabel, type ResultCard } from "@/components/share-card";
@@ -14,6 +15,7 @@ import { Button, Icon, Row, Screen, Text } from "@/components/ui";
 import { SHARE_URL } from "@/config";
 import { FREE_HINTS, usePlus } from "@/entitlements";
 import { formatTime } from "@/lib/format";
+import { useLocale, useT } from "@/lib/i18n";
 import { DURATION, LOSS_RESULT_MS, motion, staggerStep, WIN_RESULT_MS } from "@/lib/motion";
 import { useProgress } from "@/stores/progress";
 import { useTheme } from "@/theme/theme";
@@ -103,18 +105,24 @@ export function CifraGame({ puzzle, mode }: { puzzle: CifraPuzzle; mode: GameMod
     return () => clearTimeout(t);
   }, [status, current, puzzle, mode, loaded]);
 
-  const context = mode.kind === "daily" ? "Mismo tablero para todos" : `Código de ${puzzle.length} cifras`;
+  const t = useT();
+  const locale = useLocale();
+  const context = mode.kind === "daily" ? t("cifra.contextDaily") : t("cifra.contextLevel", { n: puzzle.length });
   const ready = loaded && current === puzzle;
 
   return (
     <>
-      <Stack.Screen options={{ title: gameTitle("Cifra", mode.kind === "level" ? { ...mode, world: displayWorld(mode.world) } : mode) }} />
+      <Stack.Screen
+        options={{
+          title: gameTitle("Cifra", mode.kind === "level" ? { ...mode, world: displayWorld(mode.world) } : mode, locale),
+        }}
+      />
       <Screen>
         <GameHeader context={context} right={ready ? <><Lives /><Timer /></> : null} />
         {mode.kind === "daily" && <DailyNotice practice={mode.practice} />}
         {ready && (
           <>
-            <Animated.View entering={motion.appear()} style={{ gap: 8 }} accessibilityLabel="Pistas">
+            <Animated.View entering={motion.appear()} style={{ gap: 8 }} accessibilityLabel={t("cifra.clues")}>
               {puzzle.clues.map((c, i) => (
                 <ClueRow key={i} clue={c} marks={marks} row={i} size={size} highlight={hintRows.includes(i)} onCycleMark={cycleMark} disabled={status !== "playing"} />
               ))}
@@ -161,8 +169,9 @@ function Lives() {
   const misses = useCifra((s) => s.misses.length);
   const total = useCifra(attemptLimit);
   const left = total - misses;
+  const t = useT();
   return (
-    <Row gap={3} accessibilityLabel={`Te ${left === 1 ? "queda" : "quedan"} ${left} ${left === 1 ? "intento" : "intentos"}`}>
+    <Row gap={3} accessibilityLabel={t("cifra.livesLeft", { count: left })}>
       {Array.from({ length: total }, (_, i) => (
         <Icon key={i} name={i < left ? "heart" : "heart-outline"} size={16} color={i < left ? colors.margin : colors.border} />
       ))}
@@ -174,13 +183,14 @@ function Timer() {
   const elapsed = useCifra((s) => s.elapsed);
   const startedAt = useCifra((s) => s.startedAt);
   const [, tick] = useState(0);
+  const t = useT();
   useEffect(() => {
     if (!startedAt) return;
-    const t = setInterval(() => tick((n) => n + 1), 1000);
-    return () => clearInterval(t);
+    const id = setInterval(() => tick((n) => n + 1), 1000);
+    return () => clearInterval(id);
   }, [startedAt]);
   return (
-    <Text variant="bodyBold" style={{ fontVariant: ["tabular-nums"], minWidth: 40, textAlign: "right" }} accessibilityLabel={`Tiempo ${formatTime(playedMs({ elapsed, startedAt }))}`}>
+    <Text variant="bodyBold" style={{ fontVariant: ["tabular-nums"], minWidth: 40, textAlign: "right" }} accessibilityLabel={t("cifra.timeLabel", { time: formatTime(playedMs({ elapsed, startedAt })) })}>
       {formatTime(playedMs({ elapsed, startedAt }))}
     </Text>
   );
@@ -192,6 +202,7 @@ function Tools() {
   const hasMarks = useCifra((s) => Object.keys(s.marks).length > 0);
   const hint = useCifra((s) => s.hint);
   const plus = usePlus();
+  const t = useT();
   const playing = status === "playing";
   const ask = () => {
     const s = useCifra.getState();
@@ -206,8 +217,8 @@ function Tools() {
       pointerEvents={playing ? "auto" : "none"}
       importantForAccessibility={playing ? "auto" : "no-hide-descendants"}
     >
-      <Button title="Pista" icon="bulb-outline" variant="ghost" onPress={ask} accessibilityLabel={hint?.level === 1 ? "Ver la deducción" : "Pedir una pista"} />
-      <Button title="Borrar marcas" icon="trash-outline" variant="ghost" disabled={!hasMarks} onPress={() => useCifra.getState().clearMarks()} />
+      <Button title={t("cifra.hint")} icon="bulb-outline" variant="ghost" onPress={ask} accessibilityLabel={hint?.level === 1 ? t("cifra.hintShowDeduction") : t("cifra.hintAsk")} />
+      <Button title={t("cifra.clearMarks")} icon="trash-outline" variant="ghost" disabled={!hasMarks} onPress={() => useCifra.getState().clearMarks()} />
     </Row>
   );
 }
@@ -220,6 +231,8 @@ function HintPanel() {
   const showHint = useCifra((s) => s.showHint);
   const closeHint = useCifra((s) => s.closeHint);
   const outOfHints = useCifra((s) => s.outOfHints);
+  const t = useT();
+  const locale = useLocale();
   if (!puzzle) return null;
   // Al terminar, la pista abierta se queda (si desapareciera, todo lo de abajo saltaría); la oferta, no.
   if (outOfHints && status === "playing") {
@@ -241,19 +254,19 @@ function HintPanel() {
       <Icon name="bulb" size={18} color={colors.cluePresent} />
       <View style={{ flex: 1, gap: 6 }}>
         {!step ? (
-          <Text>Tus marcas ya muestran todo lo que se puede deducir. Escribí el código.</Text>
+          <Text>{t("cifra.hintAllShown")}</Text>
         ) : hint.level === 1 ? (
           <>
-            <Text>{hintNudge(step)}</Text>
+            <Text>{hintNudge(step, t, locale)}</Text>
             <Pressable onPress={() => showHint(hint.step)} accessibilityRole="button" hitSlop={8}>
-              <Text variant="bodyBold" style={{ textDecorationLine: "underline" }}>¿Qué se deduce?</Text>
+              <Text variant="bodyBold" style={{ textDecorationLine: "underline" }}>{t("cifra.hintWhat")}</Text>
             </Pressable>
           </>
         ) : (
-          <Text>{step.text}</Text>
+          <Text>{cifraStepText(step, locale).text}</Text>
         )}
       </View>
-      <Pressable onPress={closeHint} accessibilityRole="button" accessibilityLabel="Cerrar pista" hitSlop={10}>
+      <Pressable onPress={closeHint} accessibilityRole="button" accessibilityLabel={t("cifra.hintClose")} hitSlop={10}>
         <Icon name="close" size={18} color={colors.mutedForeground} />
       </Pressable>
     </Animated.View>
@@ -271,24 +284,26 @@ function CifraResult({ open, onClose, mode, onRetry, onExtra }: { open: boolean;
   const misses = useCifra((s) => s.misses);
   const elapsed = useCifra((s) => s.elapsed);
   const hintsUsed = useCifra((s) => s.hintsUsed);
+  const t = useT();
+  const locale = useLocale();
   if (!puzzle || status === "playing") return null;
 
   const won = status === "won";
   const attempts = won ? misses.length + 1 : MAX_ATTEMPTS;
   const time = formatTime(elapsed);
-  const title = mode.kind === "daily" ? `Cifra del día #${mode.number}` : `Nivel ${displayWorld(mode.world)}-${mode.level}`;
+  const title = mode.kind === "daily" ? gameTitle("Cifra", mode, locale) : t("common.level", { n: `${displayWorld(mode.world)}-${mode.level}` });
   // Diario perdido con el intento extra a mano: la solución queda tapada hasta que se elige.
   const offering = official && !won && !extraAttempt && offer.available && !revealed;
   const marks = Array.from({ length: misses.length + (won ? 1 : 0) }, (_, i) => (i < misses.length ? "🟥" : "🟩")).join("") + "⬜".repeat(Math.max(0, MAX_ATTEMPTS - misses.length - (won ? 1 : 0)));
-  const score = won ? (extraAttempt ? "con un intento extra" : `${attempts}/${MAX_ATTEMPTS}`) : "X";
-  const shareMessage = `Craneá · ${title}\n${marks} ${score} en ${time}\n${SHARE_URL}/cifra`;
+  const score = won ? (extraAttempt ? t("cifra.extraScore") : `${attempts}/${MAX_ATTEMPTS}`) : "X";
+  const shareMessage = t("cifra.share", { title, marks, score, time, url: `${SHARE_URL}/cifra` });
   // Solo las marcas de los intentos: el código no aparece.
   const card: ResultCard = {
     game: "Cifra",
-    label: resultLabel(mode.kind === "level" ? { ...mode, world: displayWorld(mode.world) } : mode),
+    label: resultLabel(mode.kind === "level" ? { ...mode, world: displayWorld(mode.world) } : mode, locale),
     won,
-    headline: won ? (extraAttempt ? "Con intento extra" : `${attempts}/${MAX_ATTEMPTS}`) : "No salió",
-    detail: won ? `${attempts === 1 ? "Al primer intento" : `${attempts} intentos`} · ${time}` : `Sin resolver · ${time}`,
+    headline: won ? (extraAttempt ? t("cifra.cardExtra") : `${attempts}/${MAX_ATTEMPTS}`) : t("cifra.cardLost"),
+    detail: won ? `${attempts === 1 ? t("cifra.firstTry") : t("common.attempts", { count: attempts })} · ${time}` : t("cifra.unsolvedTime", { time }),
     marks: attemptMarks(Math.max(MAX_ATTEMPTS, misses.length + (won ? 1 : 0)), misses.length, won),
   };
 
@@ -296,15 +311,15 @@ function CifraResult({ open, onClose, mode, onRetry, onExtra }: { open: boolean;
     <ResultSheet
       visible={open}
       onClose={onClose}
-      title={won ? (extraAttempt ? "¡Salió con el intento extra!" : attempts === 1 ? "Al primer intento" : "Código descifrado") : "Se acabaron los intentos"}
+      title={won ? (extraAttempt ? t("cifra.wonExtraTitle") : attempts === 1 ? t("cifra.firstTry") : t("cifra.wonTitle")) : t("cifra.lostTitle")}
       description={
         won
           ? extraAttempt
-            ? `${title}, en ${time}. Suma a tu racha; en el ranking queda como no resuelto.`
-            : `${title}, en ${attempts} de ${MAX_ATTEMPTS} intentos y ${time}.`
+            ? t("cifra.wonExtraDesc", { title, time })
+            : t("cifra.wonDesc", { title, attempts, max: MAX_ATTEMPTS, time })
           : offering
-            ? `${title}, sin resolver por ahora.`
-            : `${title}, sin resolver. Este era el código:`
+            ? t("cifra.pendingDesc", { title })
+            : t("cifra.lostDesc", { title })
       }
     >
       {offering && mode.kind === "daily" ? (
@@ -316,11 +331,11 @@ function CifraResult({ open, onClose, mode, onRetry, onExtra }: { open: boolean;
           ))}
         </Row>
       )}
-      {hintsUsed > 0 && <Text variant="small" style={{ textAlign: "center" }}>{hintsUsed === 1 ? "Usaste 1 pista" : `Usaste ${hintsUsed} pistas`}</Text>}
+      {hintsUsed > 0 && <Text variant="small" style={{ textAlign: "center" }}>{t("cifra.hintsUsed", { count: hintsUsed })}</Text>}
       <View style={{ gap: 8 }}>
         {mode.kind === "level" && mode.next ? (
           <Button
-            title="Siguiente nivel"
+            title={t("cifra.nextLevel")}
             size="lg"
             onPress={() => {
               onClose();
@@ -328,11 +343,11 @@ function CifraResult({ open, onClose, mode, onRetry, onExtra }: { open: boolean;
             }}
           />
         ) : (
-          <Button title="Volver a los mundos" size="lg" onPress={() => { onClose(); router.navigate("/cifra"); }} />
+          <Button title={t("cifra.backToWorlds")} size="lg" onPress={() => { onClose(); router.navigate("/cifra"); }} />
         )}
-        {mode.kind === "level" && !won && <Button title="Reintentar" variant="outline" icon="refresh" onPress={onRetry} />}
+        {mode.kind === "level" && !won && <Button title={t("common.retry")} variant="outline" icon="refresh" onPress={onRetry} />}
         {mode.kind === "daily" && (
-          <Button title="Ver ranking" variant="outline" icon="trophy-outline" onPress={() => { onClose(); router.push({ pathname: "/ranking", params: { juego: GAME_ID, fecha: mode.date } }); }} />
+          <Button title={t("cifra.seeRanking")} variant="outline" icon="trophy-outline" onPress={() => { onClose(); router.push({ pathname: "/ranking", params: { juego: GAME_ID, fecha: mode.date } }); }} />
         )}
         <ResultShareButton text={shareMessage} card={card} />
       </View>
@@ -344,15 +359,16 @@ function CifraResult({ open, onClose, mode, onRetry, onExtra }: { open: boolean;
 /** Leyenda de los puntajes, para "Cómo se juega". */
 export function PegLegend() {
   const { colors } = useTheme();
+  const t = useT();
   return (
     <Row style={{ justifyContent: "center", flexWrap: "wrap" }} gap={16}>
       <Row gap={6}>
         <Symbol kind="exact" color={colors.clueExact} />
-        <Text style={{ color: colors.clueExact, fontFamily: fonts.body }}>en su lugar</Text>
+        <Text style={{ color: colors.clueExact, fontFamily: fonts.body }}>{t("cifra.legendExact")}</Text>
       </Row>
       <Row gap={6}>
         <Symbol kind="present" color={colors.cluePresent} />
-        <Text style={{ color: colors.cluePresent, fontFamily: fonts.body }}>está, en otro lugar</Text>
+        <Text style={{ color: colors.cluePresent, fontFamily: fonts.body }}>{t("cifra.legendPresent")}</Text>
       </Row>
     </Row>
   );

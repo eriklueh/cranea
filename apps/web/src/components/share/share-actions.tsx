@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { ImageIcon, LoaderCircleIcon, Share2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { renderShareCard, type ShareCard } from "./share-image";
 import { outcomeMessage, shareImage, shareText } from "./share";
@@ -14,7 +15,7 @@ export function ShareActions({
   text,
   card,
   filename,
-  label = "Compartir",
+  label,
   className,
   size = "lg",
 }: {
@@ -25,6 +26,7 @@ export function ShareActions({
   className?: string;
   size?: "lg" | "default";
 }) {
+  const t = useT();
   const [busy, setBusy] = useState<"text" | "image" | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -46,7 +48,7 @@ export function ShareActions({
       const c = card();
       setMessage(outcomeMessage(await shareImage(await renderShareCard(c), filename, c.title)));
     } catch {
-      setMessage("No se pudo armar la imagen.");
+      setMessage(t("share.imageFailed"));
     }
     setBusy(null);
   };
@@ -57,7 +59,7 @@ export function ShareActions({
       <div className="flex gap-2">
         <Button size="lg" className={cn(h, "min-w-0 flex-1 shrink")} onClick={onText} disabled={busy !== null}>
           {busy === "text" ? <LoaderCircleIcon aria-hidden className="motion-safe:animate-spin" /> : <Share2Icon aria-hidden />}
-          {label}
+          {label ?? t("common.share")}
         </Button>
         <Button
           size="lg"
@@ -65,10 +67,10 @@ export function ShareActions({
           className={cn(h, "px-3.5 min-[400px]:px-4")}
           onClick={onImage}
           disabled={busy !== null}
-          aria-label="Compartir como imagen"
+          aria-label={t("share.asImage")}
         >
           {busy === "image" ? <LoaderCircleIcon aria-hidden className="motion-safe:animate-spin" /> : <ImageIcon aria-hidden />}
-          <span className="max-[399px]:sr-only">Imagen</span>
+          <span className="max-[399px]:sr-only">{t("share.image")}</span>
         </Button>
       </div>
       <p role="status" aria-live="polite" className={cn("min-h-5 text-center text-sm text-muted-foreground", !message && "sr-only")}>

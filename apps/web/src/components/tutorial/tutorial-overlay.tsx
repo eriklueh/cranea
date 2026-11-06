@@ -5,10 +5,11 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { useHydrated } from "@/hooks/use-hydrated";
+import { useT, type T } from "@/lib/i18n";
 import { prefersReducedMotion } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { useTutorialGate } from "./gate";
-import { initialState, progressLabel, reduce, type StepMeta, type TutorialEvent, type TutorialState } from "./machine";
+import { initialState, isBuiltinNudge, NUDGE, progress, reduce, type StepMeta, type TutorialEvent, type TutorialState } from "./machine";
 import { markTutorial } from "./storage";
 import type { Target, TutorialScript } from "./types";
 
@@ -24,6 +25,10 @@ const GAP = 12;
 const EDGE = 12;
 const RADIUS = 10;
 const FOCUSABLE = 'button:not([disabled]), [tabindex]:not([tabindex="-1"]), a[href]';
+
+const NUDGE_TEXT = { [NUDGE.wrong]: "tutorial.nudgeWrong", [NUDGE.outside]: "tutorial.nudgeOutside", [NUDGE.info]: "tutorial.nudgeInfo" } as const;
+/** Los avisos genéricos de la máquina llegan como ids; los de cada paso, ya traducidos. */
+const nudgeText = (t: T, nudge: string | null) => (isBuiltinNudge(nudge) ? t(NUDGE_TEXT[nudge]) : nudge);
 
 const names = (t: Target) => (typeof t === "string" ? [t] : t);
 const elementsFor = (t: Target) => names(t).flatMap((n) => [...document.querySelectorAll<HTMLElement>(`[data-tutorial="${n}"]`)]);
@@ -112,6 +117,7 @@ const roundedRect = (b: Box, r = RADIUS) =>
 /** Recorrido guiado sobre el juego real: oscurece todo menos lo que hay que tocar y valida cada jugada. */
 export function TutorialOverlay<S>({ script }: { script: TutorialScript<S> }) {
   const router = useRouter();
+  const t = useT();
   const gate = useTutorialGate();
   const hydrated = useHydrated();
   const [state, setState] = useState<TutorialState>(initialState);
@@ -258,8 +264,10 @@ export function TutorialOverlay<S>({ script }: { script: TutorialScript<S> }) {
   top = Math.max(EDGE, Math.min(top, vh - bh - EDGE));
 
   const dim = `M0,0H${vw}V${vh}H0Z${holes.map((b) => roundedRect(b)).join("")}`;
-  const label = progressLabel(state.step, script.steps.length);
+  const label = t("tutorial.progress", progress(state.step, script.steps.length));
+  const title = t("tutorial.title", { name: script.name });
   const text = step ? step.text : script.outro;
+  const nudge = nudgeText(t, state.nudge);
 
   return createPortal(
     <div ref={setRoot} className="pointer-events-none fixed inset-0 z-40" data-tutorial-overlay>
@@ -274,44 +282,44 @@ export function TutorialOverlay<S>({ script }: { script: TutorialScript<S> }) {
       <div
         ref={bubbleRef}
         role="region"
-        aria-label={`Tutorial de ${script.name}`}
+        aria-label={title}
         className="pointer-events-auto absolute rounded-xl border-2 border-ink bg-card p-4 text-card-foreground shadow-[0_4px_0_0_var(--shadow-ink)] transition-[top,left] duration-(--dur-slow) ease-out motion-reduce:transition-none"
         style={{ top, left, width: bw }}
       >
         <div className="mb-1 flex items-center justify-between gap-2">
-          <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{finished ? `Tutorial de ${script.name}` : label}</span>
+          <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{finished ? title : label}</span>
           {!finished && (
             <button type="button" onClick={skip} className="-my-2 -mr-2 min-h-11 min-w-11 rounded-md px-3 text-sm font-semibold text-muted-foreground underline-offset-4 outline-none hover:text-foreground hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50">
-              Saltar
+              {t("tutorial.skip")}
             </button>
           )}
         </div>
-        {finished && <p className="font-display text-2xl font-extrabold tracking-tight">¡Listo!</p>}
+        {finished && <p className="font-display text-2xl font-extrabold tracking-tight">{t("tutorial.done")}</p>}
         <p key={finished ? "end" : `step-${state.step}`} className="anim-appear text-base leading-snug font-medium">
           {text}
         </p>
-        <p key={`nudge-${state.nudgeKey}`} className={cn("text-sm font-semibold text-margin", state.nudge ? "anim-shake-sm mt-2" : "hidden")}>
-          {state.nudge}
+        <p key={`nudge-${state.nudgeKey}`} className={cn("text-sm font-semibold text-margin", nudge ? "anim-shake-sm mt-2" : "hidden")}>
+          {nudge}
         </p>
         {step && !step.check && (
           <div className="mt-3 flex justify-end">
             <Button data-primary className="min-h-11 px-5" onClick={() => dispatch({ type: "next" })}>
-              Siguiente
+              {t("tutorial.next")}
             </Button>
           </div>
         )}
         {finished && (
           <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
             <Button variant="outline" className="min-h-11" onClick={restart}>
-              Repetir
+              {t("tutorial.repeat")}
             </Button>
             {gate ? (
               <Button data-primary className="min-h-11 px-5" onClick={() => leave("done")}>
-                Ahora el nivel 1
+                {t("tutorial.toLevel1")}
               </Button>
             ) : (
               <Button asChild data-primary className="min-h-11 px-5">
-                <Link href={script.levelHref}>Ahora el nivel 1</Link>
+                <Link href={script.levelHref}>{t("tutorial.toLevel1")}</Link>
               </Button>
             )}
           </div>
@@ -320,10 +328,10 @@ export function TutorialOverlay<S>({ script }: { script: TutorialScript<S> }) {
 
       {/* Lectores de pantalla: cada paso nuevo y cada aviso se anuncian. */}
       <p aria-live="polite" className="sr-only">
-        {finished ? `¡Listo! ${script.outro}` : `${label}. ${text}`}
+        {finished ? `${t("tutorial.done")} ${script.outro}` : `${label}. ${text}`}
       </p>
       <p role="status" className="sr-only">
-        {state.nudge}
+        {nudge}
       </p>
     </div>,
     document.body,

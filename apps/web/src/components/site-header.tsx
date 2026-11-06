@@ -1,6 +1,8 @@
+"use client";
 import Link from "next/link";
 import { AccountButton } from "@/components/account-button";
 import { SettingsSheet } from "@/components/settings/settings-sheet";
+import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 /** El juego de la ruta, para la miga "Craneá / Cifra". `current` en su pantalla de inicio. */
@@ -11,11 +13,12 @@ export interface HeaderGame {
 }
 
 export function SiteHeader({ game, children }: { game?: HeaderGame; children?: React.ReactNode }) {
+  const t = useT();
   return (
     <header className="mx-auto flex h-16 w-full max-w-3xl items-center justify-between gap-2 pr-3 pl-16 max-sm:pl-6 sm:gap-3 sm:pr-4">
       <div className="flex min-w-0 items-center gap-3">
         {game ? (
-          <nav aria-label="Estás en" className="min-w-0">
+          <nav aria-label={t("shell.youAreIn")} className="min-w-0">
             <ol className="flex min-w-0 items-center gap-1 font-display text-lg font-extrabold tracking-tight min-[400px]:gap-1.5 min-[400px]:text-xl">
               <li className="shrink-0">
                 <Link href="/" className="rounded-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">

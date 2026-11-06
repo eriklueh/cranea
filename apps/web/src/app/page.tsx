@@ -1,3 +1,4 @@
+"use client";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { GAMES } from "@/games/registry";
@@ -9,6 +10,9 @@ import { PuentesPreview } from "@/games/puentes/components/preview";
 import { NonogramaPreview } from "@/games/nonograma/components/preview";
 import { PalabraPreview } from "@/games/palabra/components/preview";
 import { TorresPreview } from "@/games/torres/components/preview";
+import { LEGAL_PATHS } from "@/components/legal-page";
+import { useLocale, useT, useVisibleGames } from "@/lib/i18n";
+import { gameCopy } from "@cranea/core/i18n";
 
 function CifraPreview() {
   return (
@@ -33,17 +37,23 @@ const PREVIEWS: Record<string, React.ComponentType> = {
   torres: TorresPreview,
 };
 
+/** Inicio. Cliente: las tarjetas, el pie y el diario de hoy dependen del idioma (Palabra solo en español). */
 export default function Home() {
+  const t = useT();
+  const locale = useLocale();
+  const games = useVisibleGames(GAMES);
+  const legal = LEGAL_PATHS[locale];
   return (
     <>
       <SiteHeader />
       <main className="mx-auto w-full max-w-3xl px-5 pt-2 pb-16 sm:pr-6 sm:pl-16 sm:pt-6">
-        <h1 className="sr-only">Craneá: juegos de lógica</h1>
+        <h1 className="sr-only">{t("shell.homeTitle")}</h1>
         <TodayHub />
-        <h2 className="mt-6 mb-2 text-xs font-bold tracking-wider text-muted-foreground uppercase">Los juegos</h2>
+        <h2 className="mt-6 mb-2 text-xs font-bold tracking-wider text-muted-foreground uppercase">{t("shell.theGames")}</h2>
         <ul className="grid gap-3 sm:gap-4">
-          {GAMES.map((g) => {
+          {games.map((g) => {
             const Preview = PREVIEWS[g.id];
+            const copy = gameCopy(g.id, locale);
             return (
             <li key={g.id}>
               <Link
@@ -53,10 +63,13 @@ export default function Home() {
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-5">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 sm:justify-start">
-                      <h3 className="font-display text-3xl font-extrabold">{g.name}</h3>
+                      <h3 className="font-display text-3xl font-extrabold">
+                        {copy.name}
+                        {copy.subtitle && <span className="ml-2 align-middle font-sans text-base font-bold text-muted-foreground">{copy.subtitle}</span>}
+                      </h3>
                       <DailyBadge gameId={g.id} />
                     </div>
-                    <p className="mt-1 max-w-sm text-muted-foreground">{g.tagline}</p>
+                    <p className="mt-1 max-w-sm text-muted-foreground">{copy.tagline || g.tagline}</p>
                   </div>
                   {Preview && <div className="self-center sm:self-auto"><Preview /></div>}
                 </div>
@@ -66,8 +79,8 @@ export default function Home() {
           })}
         </ul>
         <footer className="mt-10 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-          <Link href="/privacidad" className="underline-offset-4 hover:underline">Privacidad</Link>
-          <Link href="/terminos" className="underline-offset-4 hover:underline">Términos</Link>
+          <Link href={legal.privacy} className="underline-offset-4 hover:underline">{t("common.privacy")}</Link>
+          <Link href={legal.terms} className="underline-offset-4 hover:underline">{t("common.terms")}</Link>
           <a href="mailto:hola@cranea.app" className="underline-offset-4 hover:underline">hola@cranea.app</a>
         </footer>
       </main>

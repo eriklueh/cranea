@@ -1,4 +1,5 @@
 import { todayKey } from "@cranea/core";
+import { gameCopy, worldCopy, type Locale } from "@cranea/core/i18n";
 import { Link, useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
@@ -9,10 +10,14 @@ import { Button, Card, Icon, Row, Screen, Text, shadow } from "@/components/ui";
 import { FREE_LEVELS, isFreeLevel, isPlusWorld, plusLevelCount, usePlus, usePlusReady } from "@/entitlements";
 import { formatCountdown, formatTime, msToNextDaily } from "@/lib/format";
 import { useClock } from "@/lib/hooks";
+import { useLocale, useT } from "@/lib/i18n";
 import { dailyStreak, useGameProgress, useProgress, type GameProgress } from "@/stores/progress";
 import { useTheme } from "@/theme/theme";
 import { alpha, fonts, radius } from "@/theme/tokens";
-import { doneFor, nextLevel, wonIn, type GameHomeConfig } from "./types";
+import { doneFor, localized, nextLevel, wonIn, type GameHomeConfig, type HomeWorld } from "./types";
+
+/** Nombre y descripción de un mundo en el idioma activo. */
+const worldText = (config: GameHomeConfig, world: HomeWorld, locale: Locale) => worldCopy(config.id, world, locale);
 
 /**
  * Pantalla de inicio de un juego (igual que la web: components/game-home). Una sola acción
@@ -21,6 +26,8 @@ import { doneFor, nextLevel, wonIn, type GameHomeConfig } from "./types";
 export function GameHome({ config: base }: { config: GameHomeConfig }) {
   const plus = usePlus();
   const plusReady = usePlusReady();
+  const t = useT();
+  const locale = useLocale();
   const hydrated = useProgress((s) => s.hydrated) && plusReady;
   const config = useMemo(() => (plus ? base : withPlan(base)), [base, plus]);
   const progress = useGameProgress(config.id);
@@ -36,13 +43,13 @@ export function GameHome({ config: base }: { config: GameHomeConfig }) {
   ) : (
     <Card style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
       <Icon name="sparkles" />
-      <Text variant="bodyBold">Completaste todos los mundos.</Text>
+      <Text variant="bodyBold">{t("hub.allWorldsDone")}</Text>
     </Card>
   );
 
   return (
     <Screen>
-      <Text variant="muted">{config.pitch}</Text>
+      <Text variant="muted">{locale === "es" ? config.pitch : gameCopy(config.id, locale).tagline}</Text>
       {dailyDone ? (
         <>
           {continueCard}
@@ -78,17 +85,16 @@ function withPlan(config: GameHomeConfig): GameHomeConfig {
 /** Ya no quedan niveles gratis por jugar. Un aviso, no un muro: el diario sigue arriba. */
 function FreeDoneCard({ config }: { config: GameHomeConfig }) {
   const paywall = usePlusPaywall();
+  const t = useT();
   const levels = plusLevelCount(config.worlds);
   return (
     <Card style={{ gap: 10 }}>
       <Row gap={10}>
         <Icon name="sparkles" />
-        <Text variant="bodyBold" style={{ flex: 1 }}>Completaste los niveles gratis.</Text>
+        <Text variant="bodyBold" style={{ flex: 1 }}>{t("hub.freeDoneTitle")}</Text>
       </Row>
-      <Text variant="muted">
-        Con Craneá Plus tenés {levels} niveles más de {config.name}, en {config.worlds.length === 1 ? "un mundo" : `${config.worlds.length} mundos`}. Los desafíos del día siguen gratis.
-      </Text>
-      <Button title="Conocer Craneá Plus" icon="star" variant="outline" onPress={() => paywall("mundos")} />
+      <Text variant="muted">{t("hub.freeDoneBody", { levels, game: config.name, worlds: config.worlds.length })}</Text>
+      <Button title={t("hub.freeDoneAction")} icon="star" variant="outline" onPress={() => paywall("mundos")} />
     </Card>
   );
 }
@@ -97,15 +103,16 @@ function FreeDoneCard({ config }: { config: GameHomeConfig }) {
 function ArchiveLink({ config, plus }: { config: GameHomeConfig; plus: boolean }) {
   const { colors } = useTheme();
   const router = useRouter();
+  const t = useT();
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`Diarios anteriores${plus ? "" : ", con Craneá Plus"}`}
+      accessibilityLabel={plus ? t("hub.pastDailies") : t("hub.pastDailiesPlus")}
       onPress={() => router.push({ pathname: "/archivo/[game]", params: { game: config.id } })}
       style={({ pressed }) => [styles.archive, { borderColor: colors.border, backgroundColor: pressed ? colors.accent : "transparent" }]}
     >
       <Icon name="calendar-outline" size={20} />
-      <Text variant="bodyBold" style={{ flex: 1 }}>Diarios anteriores</Text>
+      <Text variant="bodyBold" style={{ flex: 1 }}>{t("hub.pastDailies")}</Text>
       {!plus && <PlusBadge />}
       <Icon name="chevron-forward" size={18} color={colors.pencil} />
     </Pressable>
@@ -115,12 +122,14 @@ function ArchiveLink({ config, plus }: { config: GameHomeConfig; plus: boolean }
 function ContinueCard({ config, progress, next, highlighted }: { config: GameHomeConfig; progress: GameProgress; next: NonNullable<ReturnType<typeof nextLevel>>; highlighted: boolean }) {
   const { colors } = useTheme();
   const router = useRouter();
+  const t = useT();
   const fresh = Object.keys(progress.levels).length === 0;
   const worldIndex = config.worlds.indexOf(next.world);
+  const action = fresh ? t("hub.startLevels") : t("hub.keepPlaying");
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${fresh ? "Empezar los niveles" : "Seguir jugando"}: mundo ${worldIndex + 1}, nivel ${next.level}`}
+      accessibilityLabel={t("hub.continueA11y", { action, world: worldIndex + 1, level: next.level })}
       onPress={() => router.push(config.levelHref(next.world.id, next.level))}
       style={({ pressed }) => [
         styles.continue,
@@ -133,10 +142,8 @@ function ContinueCard({ config, progress, next, highlighted }: { config: GameHom
         <Text style={{ fontFamily: fonts.displayHeavy, fontSize: 20, color: highlighted ? colors.paper : colors.ink }}>{next.level}</Text>
       </View>
       <View style={{ flex: 1 }}>
-        <Text variant="bodyBold">{fresh ? "Empezar los niveles" : "Seguir jugando"}</Text>
-        <Text variant="small">
-          Mundo {worldIndex + 1} · Nivel {next.level}
-        </Text>
+        <Text variant="bodyBold">{action}</Text>
+        <Text variant="small">{t("common.worldLevel", { world: worldIndex + 1, level: next.level })}</Text>
       </View>
       <Icon name="chevron-forward" color={colors.pencil} />
     </Pressable>
@@ -146,6 +153,8 @@ function ContinueCard({ config, progress, next, highlighted }: { config: GameHom
 function DailyCard({ config, progress, now }: { config: GameHomeConfig; progress: GameProgress; now: number }) {
   const { colors } = useTheme();
   const router = useRouter();
+  const t = useT();
+  const locale = useLocale();
   const { daily, article } = config;
   const today = todayKey(new Date(now));
   const number = daily.number(today);
@@ -169,20 +178,20 @@ function DailyCard({ config, progress, now }: { config: GameHomeConfig; progress
         <Card raised>
           <Row style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
             <Text variant="title">
-              Desafío de hoy <Text variant="muted">#{number}</Text>
+              {t("hub.todayChallenge")} <Text variant="muted">#{number}</Text>
             </Text>
             {streak > 0 && <Streak days={streak} />}
           </Row>
           <Text variant="muted" style={{ marginTop: 2 }}>
-            {resume ? "Tenés una partida empezada." : streak > 0 ? "Jugalo para no cortar la racha." : daily.blurb}
+            {resume ? t("hub.inProgress") : streak > 0 ? t("hub.keepStreak") : localized(daily.blurb, locale)}
           </Text>
-          <Button title={resume ? "Seguir" : "Jugar"} icon="play" size="lg" style={{ marginTop: 14 }} onPress={() => router.push(daily.href)} />
+          <Button title={resume ? t("hub.resume") : t("common.play")} icon="play" size="lg" style={{ marginTop: 14 }} onPress={() => router.push(daily.href)} />
         </Card>
       </Animated.View>
     );
   }
 
-  const fem = article === "la";
+  const resultText = played.won ? config.resultText(played, locale) : "";
   return (
     <Animated.View entering={motion.fade()} style={[styles.dailyDone, { backgroundColor: alpha(colors.card, 0.7), borderColor: colors.border }]}>
       <Row gap={12}>
@@ -191,10 +200,10 @@ function DailyCard({ config, progress, now }: { config: GameHomeConfig; progress
         </View>
         <View style={{ flex: 1 }}>
           <Text variant="bodyBold">
-            Desafío de hoy <Text variant="muted">#{number}</Text>
+            {t("hub.todayChallenge")} <Text variant="muted">#{number}</Text>
           </Text>
-          <Text variant="small" accessibilityLabel={`${played.won ? (fem ? "Resuelta" : "Resuelto") + " " + config.resultText(played) : "No salió"}, ${formatTime(played.timeMs)}`}>
-            <Text variant="small" style={{ color: colors.ink }}>{played.won ? config.resultText(played).replace(/^en /, "") : "No salió"}</Text>
+          <Text variant="small" accessibilityLabel={`${played.won ? t("hub.solved", { article }) + " " + resultText : t("hub.notSolved")}, ${formatTime(played.timeMs)}`}>
+            <Text variant="small" style={{ color: colors.ink }}>{played.won ? resultText.replace(/^(en|in) /, "") : t("hub.notSolved")}</Text>
             {` · ${formatTime(played.timeMs)}`}
             {streak > 0 ? ` · 🔥 ${streak}` : ""}
           </Text>
@@ -202,16 +211,16 @@ function DailyCard({ config, progress, now }: { config: GameHomeConfig; progress
         <Link href={{ pathname: "/ranking", params: { juego: config.id } }} asChild>
           <Pressable accessibilityRole="link" style={styles.rankingLink} hitSlop={6}>
             <Icon name="trophy" size={18} color={colors.cluePresent} />
-            <Text variant="bodyBold" style={{ fontSize: 14 }}>Ranking</Text>
+            <Text variant="bodyBold" style={{ fontSize: 14 }}>{t("common.ranking")}</Text>
           </Pressable>
         </Link>
       </Row>
       <Row style={[styles.dailyFooter, { borderTopColor: colors.border }]}>
         <Text variant="small" style={{ flex: 1 }}>
-          {fem ? "La próxima" : "El próximo"} en <Text variant="small" style={{ color: colors.ink, fontFamily: fonts.bodyBold }}>{formatCountdown(msToNextDaily(now))}</Text>
+          {t("hub.nextIn", { article })} <Text variant="small" style={{ color: colors.ink, fontFamily: fonts.bodyBold }}>{formatCountdown(msToNextDaily(now), locale)}</Text>
         </Text>
         <Pressable accessibilityRole="link" onPress={() => router.push(daily.href)} hitSlop={8} style={{ minHeight: 44, justifyContent: "center" }}>
-          <Text variant="bodyBold" style={{ fontSize: 14, textDecorationLine: "underline" }}>Jugar de nuevo</Text>
+          <Text variant="bodyBold" style={{ fontSize: 14, textDecorationLine: "underline" }}>{t("hub.playAgain")}</Text>
         </Pressable>
       </Row>
     </Animated.View>
@@ -220,8 +229,9 @@ function DailyCard({ config, progress, now }: { config: GameHomeConfig; progress
 
 function Streak({ days }: { days: number }) {
   const { colors } = useTheme();
+  const t = useT();
   return (
-    <View style={[styles.streak, { backgroundColor: colors.cluePresentBg }]} accessibilityLabel={`${days} ${days === 1 ? "día" : "días"} de racha`}>
+    <View style={[styles.streak, { backgroundColor: colors.cluePresentBg }]} accessibilityLabel={t("hub.streakDays", { count: days })}>
       <Icon name="flame" size={14} color={colors.cluePresent} />
       <Text style={{ fontFamily: fonts.bodyBold, fontSize: 14, color: colors.cluePresent }}>{days}</Text>
     </View>
@@ -243,15 +253,18 @@ function WorldMap({ config, progress, hydrated, initialWorld, nextKey }: { confi
   const missing = previous ? Math.max(0, world.unlockAfter - wonIn(previous, done)) : 0;
   const paid = Boolean(config.planLocked?.(world.id));
   const paywall = usePlusPaywall();
+  const t = useT();
+  const locale = useLocale();
+  const copy = worldText(config, world, locale);
 
   return (
     <View style={{ marginTop: 10, gap: 10 }}>
       <Row style={{ justifyContent: "space-between" }}>
-        <Text variant="label">Niveles</Text>
+        <Text variant="label">{t("common.levels")}</Text>
         {config.howToHref && (
           <Pressable accessibilityRole="link" onPress={() => router.push(config.howToHref!)} style={styles.howTo} hitSlop={6}>
             <Icon name="help-circle-outline" size={18} color={colors.mutedForeground} />
-            <Text variant="small" style={{ fontFamily: fonts.bodyBold }}>Cómo se juega</Text>
+            <Text variant="small" style={{ fontFamily: fonts.bodyBold }}>{t("hub.howItWorks")}</Text>
           </Pressable>
         )}
       </Row>
@@ -266,7 +279,7 @@ function WorldMap({ config, progress, hydrated, initialWorld, nextKey }: { confi
               key={w.id}
               accessibilityRole="tab"
               accessibilityState={{ selected }}
-              accessibilityLabel={`Mundo ${i + 1}: ${w.name}. ${wOpen ? `${wWon} de ${w.levels}` : config.planLocked?.(w.id) ? "con Craneá Plus" : "bloqueado"}`}
+              accessibilityLabel={t("hub.worldTab", { n: i + 1, name: worldText(config, w, locale).name, state: wOpen ? t("hub.worldProgress", { won: wWon, total: w.levels }) : config.planLocked?.(w.id) ? t("hub.withPlus") : t("hub.locked") })}
               onPress={() => setPicked(w.id)}
               style={[styles.tab, selected && { backgroundColor: colors.card, borderColor: colors.border }]}
             >
@@ -283,7 +296,7 @@ function WorldMap({ config, progress, hydrated, initialWorld, nextKey }: { confi
       </View>
 
       <Row style={{ justifyContent: "space-between" }}>
-        <Text variant="title" style={{ fontSize: 18, flex: 1 }} numberOfLines={1}>{world.name}</Text>
+        <Text variant="title" style={{ fontSize: 18, flex: 1 }} numberOfLines={1}>{copy.name}</Text>
         <Text variant="small">
           <Text variant="small" style={{ color: colors.ink, fontFamily: fonts.bodyBold }}>{hydrated ? wonIn(world, done) : "–"}</Text>/{world.levels}
         </Text>
@@ -291,18 +304,18 @@ function WorldMap({ config, progress, hydrated, initialWorld, nextKey }: { confi
       {hydrated && paid && (
         <View style={[styles.locked, { backgroundColor: colors.cluePresentBg, alignItems: "center" }]}>
           <Icon name="star" size={14} color={colors.cluePresent} />
-          <Text variant="small" style={{ flex: 1, color: colors.cluePresent }}>Este mundo es parte de Craneá Plus.</Text>
+          <Text variant="small" style={{ flex: 1, color: colors.cluePresent }}>{t("hub.plusWorld")}</Text>
           <Pressable accessibilityRole="button" onPress={() => paywall("mundos")} hitSlop={6} style={{ minHeight: 44, justifyContent: "center" }}>
-            <Text variant="small" style={{ fontFamily: fonts.bodyBold, color: colors.cluePresent, textDecorationLine: "underline" }}>Ver Plus</Text>
+            <Text variant="small" style={{ fontFamily: fonts.bodyBold, color: colors.cluePresent, textDecorationLine: "underline" }}>{t("hub.seePlus")}</Text>
           </Pressable>
         </View>
       )}
       {hydrated && !paid && config.planLocked && (
         <View style={[styles.locked, { backgroundColor: colors.cluePresentBg, alignItems: "center" }]}>
           <Icon name="star" size={14} color={colors.cluePresent} />
-          <Text variant="small" style={{ flex: 1, color: colors.cluePresent }}>Los primeros {FREE_LEVELS} niveles son gratis. El resto, con Craneá Plus.</Text>
+          <Text variant="small" style={{ flex: 1, color: colors.cluePresent }}>{t("hub.freeLevels", { count: FREE_LEVELS })}</Text>
           <Pressable accessibilityRole="button" onPress={() => paywall("mundos")} hitSlop={6} style={{ minHeight: 44, justifyContent: "center" }}>
-            <Text variant="small" style={{ fontFamily: fonts.bodyBold, color: colors.cluePresent, textDecorationLine: "underline" }}>Ver Plus</Text>
+            <Text variant="small" style={{ fontFamily: fonts.bodyBold, color: colors.cluePresent, textDecorationLine: "underline" }}>{t("hub.seePlus")}</Text>
           </Pressable>
         </View>
       )}
@@ -310,12 +323,12 @@ function WorldMap({ config, progress, hydrated, initialWorld, nextKey }: { confi
         <View style={[styles.locked, { backgroundColor: colors.muted }]}>
           <Icon name="lock-closed" size={14} color={colors.mutedForeground} />
           <Text variant="small" style={{ flex: 1 }}>
-            Se abre con {world.unlockAfter} niveles de «{previous?.name}».{" "}
-            <Text variant="small" style={{ color: colors.ink, fontFamily: fonts.bodyBold }}>Te {missing === 1 ? "falta" : "faltan"} {missing}.</Text>
+            {t("hub.unlocksAfter", { count: world.unlockAfter, world: previous ? worldText(config, previous, locale).name : "" })}{" "}
+            <Text variant="small" style={{ color: colors.ink, fontFamily: fonts.bodyBold }}>{t("hub.missing", { count: missing })}</Text>
           </Text>
         </View>
       )}
-      {open && <Text variant="small">{world.description}</Text>}
+      {open && <Text variant="small">{copy.description}</Text>}
 
       <View style={styles.grid}>
         {Array.from({ length: world.levels }, (_, i) => (
@@ -329,13 +342,15 @@ function WorldMap({ config, progress, hydrated, initialWorld, nextKey }: { confi
 function LevelCell({ config, progress, hydrated, worldId, n, done, next, onLocked, badge }: { config: GameHomeConfig; progress: GameProgress; hydrated: boolean; worldId: number; n: number; done: (w: number, l: number) => boolean; next: boolean; /** Nivel de Plus: tocarlo abre Plus. */ onLocked?: () => void; /** Estrellita de Plus en la esquina (en el mundo con niveles gratis). */ badge?: boolean }) {
   const { colors } = useTheme();
   const router = useRouter();
+  const t = useT();
+  const locale = useLocale();
   const result = hydrated ? progress.levels[config.levelKey(worldId, n)] : undefined;
   const won = Boolean(result?.won);
   const tried = Boolean(result && !result.won);
   const unlocked = hydrated && config.isLevelUnlocked(worldId, n, done);
   const stars = won ? config.stars(result!) : 0;
   const thumb = won ? config.thumbnail?.(worldId, n) : null;
-  const title = won ? config.levelTitle?.(worldId, n) : "";
+  const title = won ? config.levelTitle?.(worldId, n, locale) : "";
 
   const cell = [
     styles.cell,
@@ -347,7 +362,7 @@ function LevelCell({ config, progress, hydrated, worldId, n, done, next, onLocke
     hydrated && !unlocked && { borderColor: "transparent" },
   ];
   const color = next ? colors.paper : tried ? colors.margin : !unlocked ? alpha(colors.pencil, 0.4) : colors.ink;
-  const label = `Nivel ${n}${title ? `, ${title}` : ""}${won ? `, resuelto ${config.resultText(result!)}` : tried ? ", sin resolver" : ""}${next ? ", el próximo" : ""}${!unlocked ? (onLocked ? ", con Craneá Plus" : ", bloqueado") : ""}`;
+  const label = `${t("common.level", { n })}${title ? `, ${title}` : ""}${won ? t("hub.cellSolved", { result: config.resultText(result!, locale) }) : tried ? t("hub.cellUnsolved") : ""}${next ? t("hub.cellNext") : ""}${!unlocked ? (onLocked ? t("hub.cellPlus") : t("hub.cellLocked")) : ""}`;
 
   return (
     <View style={styles.cellWrap}>

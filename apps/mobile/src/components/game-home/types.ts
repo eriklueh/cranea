@@ -1,7 +1,7 @@
 import type { Href } from "expo-router";
 import type { ReactNode } from "react";
 import type { Locale } from "@cranea/core/i18n";
-import { plural } from "@/lib/format";
+import { getLocale, translator } from "@/lib/i18n";
 import type { GameProgress, Result } from "@/stores/progress";
 
 /**
@@ -56,8 +56,8 @@ export interface GameHomeConfig {
   levelTitle?: (world: number, level: number, locale: Locale) => string;
 }
 
-/** "en 2 intentos" */
-export const attemptsText = (r: Result) => `en ${plural(r.attempts, "intento", "intentos")}`;
+/** "en 2 intentos" / "in 2 tries". Sirve como `resultText` de un juego. */
+export const attemptsText = (r: Result, locale: Locale = getLocale()) => translator(locale)("hub.inAttempts", { count: r.attempts });
 
 export const doneFor = (config: GameHomeConfig, progress: GameProgress): Done => (w, l) =>
   Boolean(progress.levels[config.levelKey(w, l)]?.won);

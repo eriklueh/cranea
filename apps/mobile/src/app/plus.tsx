@@ -10,23 +10,24 @@ import { PRIVACY_URL, TERMS_URL } from "@/config";
 import { usePlus } from "@/entitlements";
 import { accountsEnabled } from "@/lib/convex";
 import { haptic } from "@/lib/haptics";
+import { useT, type Key, type T } from "@/lib/i18n";
 import { isExpoGo } from "@/monetization/native";
 import { freeTrialOf, getPackages, openManageSubscription, purchase, purchasesAvailable, restore, trialIneligible, trialText, type FreeTrial } from "@/monetization/purchases";
 import { useTheme } from "@/theme/theme";
 import { fonts, radius } from "@/theme/tokens";
 
-const HEADLINE: Record<PlusReason, string> = {
-  mundos: "Todos los mundos te esperan",
-  archivo: "Jugá los diarios que te perdiste",
-  pistas: "Pistas cuando las necesites",
-  anuncios: "Sin anuncios",
+const HEADLINE: Record<PlusReason, Key> = {
+  mundos: "plus.headlineMundos",
+  archivo: "plus.headlineArchivo",
+  pistas: "plus.headlinePistas",
+  anuncios: "plus.headlineAnuncios",
 };
 
-const PERKS: { icon: IconName; title: string; text: string }[] = [
-  { icon: "map-outline", title: "Todos los mundos y niveles", text: "En todos los juegos, a tu ritmo." },
-  { icon: "calendar-outline", title: "Archivo de diarios", text: "Los desafíos de días anteriores, para practicar." },
-  { icon: "bulb-outline", title: "Pistas sin límite", text: "Cuando te trabás, sin esperar." },
-  { icon: "eye-off-outline", title: "Sin anuncios", text: "Nunca vas a ver uno." },
+const PERKS: { icon: IconName; title: Key; text: Key }[] = [
+  { icon: "map-outline", title: "plus.perkWorlds", text: "plus.perkWorldsText" },
+  { icon: "calendar-outline", title: "plus.perkArchive", text: "plus.perkArchiveText" },
+  { icon: "bulb-outline", title: "plus.perkHints", text: "plus.perkHintsText" },
+  { icon: "eye-off-outline", title: "plus.perkNoAds", text: "plus.perkNoAdsText" },
 ];
 
 /**
@@ -36,17 +37,18 @@ const PERKS: { icon: IconName; title: string; text: string }[] = [
 export default function PlusScreen() {
   const { motivo } = useLocalSearchParams<{ motivo?: string }>();
   const plus = usePlus();
-  const headline = motivo && motivo in HEADLINE ? HEADLINE[motivo as PlusReason] : "Craneá Plus";
+  const t = useT();
+  const headline = motivo && motivo in HEADLINE ? t(HEADLINE[motivo as PlusReason]) : t("common.plus");
 
   return (
     <>
-      <Stack.Screen options={{ title: "Craneá Plus" }} />
+      <Stack.Screen options={{ title: t("common.plus") }} />
       <Screen contentStyle={{ gap: 18 }}>
         <View style={{ gap: 6 }}>
           <PlusBadge />
-          <Text variant="display" accessibilityRole="header">{plus ? "Ya tenés Plus" : headline}</Text>
+          <Text variant="display" accessibilityRole="header">{plus ? t("plus.alreadyPlus") : headline}</Text>
           <Text variant="muted">
-            {plus ? "¡Gracias por bancar Craneá! Tenés todo abierto, en el celular y en la web." : "Los desafíos del día, el ranking y tus estadísticas son y van a seguir siendo gratis. Plus suma esto:"}
+            {plus ? t("plus.thanks") : t("plus.intro")}
           </Text>
         </View>
         <Perks />
@@ -59,6 +61,7 @@ export default function PlusScreen() {
 
 function Perks() {
   const { colors } = useTheme();
+  const t = useT();
   return (
     <Card style={{ gap: 14 }}>
       {PERKS.map((p) => (
@@ -67,8 +70,8 @@ function Perks() {
             <Icon name={p.icon} size={18} color={colors.cluePresent} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text variant="bodyBold">{p.title}</Text>
-            <Text variant="small">{p.text}</Text>
+            <Text variant="bodyBold">{t(p.title)}</Text>
+            <Text variant="small">{t(p.text)}</Text>
           </View>
         </Row>
       ))}
@@ -78,20 +81,22 @@ function Perks() {
 
 function Subscribed() {
   const router = useRouter();
+  const t = useT();
   return (
     <View style={{ gap: 8 }}>
-      <Button title="Seguir jugando" size="lg" onPress={() => (router.canGoBack() ? router.back() : router.navigate("/"))} />
-      <Button title="Gestionar suscripción" variant="outline" icon="open-outline" onPress={openManageSubscription} />
+      <Button title={t("plus.keepPlaying")} size="lg" onPress={() => (router.canGoBack() ? router.back() : router.navigate("/"))} />
+      <Button title={t("plus.manage")} variant="outline" icon="open-outline" onPress={openManageSubscription} />
     </View>
   );
 }
 
 function Buy() {
+  const t = useT();
   if (!accountsEnabled || !purchasesAvailable()) {
     return (
       <Card>
         <Text variant="muted">
-          {isExpoGo ? "Las compras no funcionan en Expo Go. Probalas con un development build." : "Las compras todavía no están disponibles en esta versión."}
+          {isExpoGo ? t("plus.expoGo") : t("plus.unavailable")}
         </Text>
       </Card>
     );
@@ -102,13 +107,14 @@ function Buy() {
 function BuySignedIn() {
   const { isLoaded, isSignedIn } = useAuth();
   const router = useRouter();
+  const t = useT();
   if (!isLoaded) return <ActivityIndicator />;
   if (!isSignedIn) {
     return (
       <Card raised style={{ gap: 12 }}>
-        <Text variant="bodyBold">Primero, entrá a tu cuenta</Text>
-        <Text variant="muted">Así Plus queda con vos: en este celular, en otro y en la web.</Text>
-        <Button title="Entrar o crear cuenta" icon="person-outline" size="lg" onPress={() => router.push("/cuenta")} />
+        <Text variant="bodyBold">{t("plus.signInFirst")}</Text>
+        <Text variant="muted">{t("plus.signInWhy")}</Text>
+        <Button title={t("plus.signInAction")} icon="person-outline" size="lg" onPress={() => router.push("/cuenta")} />
       </Card>
     );
   }
@@ -117,6 +123,7 @@ function BuySignedIn() {
 
 function Plans() {
   const { colors } = useTheme();
+  const t = useT();
   const [packages, setPackages] = useState<PurchasesPackage[] | null>(null);
   const [failed, setFailed] = useState(false);
   const [picked, setPicked] = useState<string | null>(null);
@@ -159,29 +166,29 @@ function Plans() {
     const r = await restore();
     setBusy(null);
     if ("error" in r) setMessage(r.error);
-    else if (!r.plus) setMessage("No encontramos una suscripción con esta cuenta de la tienda.");
+    else if (!r.plus) setMessage(t("plus.noSubscription"));
   };
 
   if (failed) {
     return (
       <Card style={{ gap: 10 }}>
-        <Text variant="muted">No pudimos cargar los planes. Revisá la conexión.</Text>
-        <Button title="Probar de nuevo" variant="outline" icon="refresh" onPress={load} />
+        <Text variant="muted">{t("plus.loadFailed")}</Text>
+        <Button title={t("plus.tryAgain")} variant="outline" icon="refresh" onPress={load} />
       </Card>
     );
   }
-  if (!packages) return <ActivityIndicator accessibilityLabel="Cargando planes" />;
-  if (!packages.length) return <Card><Text variant="muted">Los planes todavía no están disponibles. Probá más tarde.</Text></Card>;
+  if (!packages) return <ActivityIndicator accessibilityLabel={t("plus.loadingPlans")} />;
+  if (!packages.length) return <Card><Text variant="muted">{t("plus.noPlans")}</Text></Card>;
 
   return (
     <View style={{ gap: 10 }}>
       <View accessibilityRole="radiogroup" style={{ gap: 10 }}>
         {packages.map((p) => {
           const on = p.identifier === picked;
-          const period = periodOf(p);
-          const perMonth = p.packageType === "ANNUAL" && p.product.pricePerMonthString ? `Equivale a ${p.product.pricePerMonthString} por mes` : null;
+          const period = periodOf(p, t);
+          const perMonth = p.packageType === "ANNUAL" && p.product.pricePerMonthString ? t("plus.perMonthEquiv", { price: p.product.pricePerMonthString }) : null;
           const free = trialOf(p);
-          const trial = free ? trialTerms(free, p.product.priceString, period.per) : null;
+          const trial = free ? trialTerms(free, p.product.priceString, period.per, t) : null;
           return (
             <Pressable
               key={p.identifier}
@@ -205,41 +212,42 @@ function Plans() {
           );
         })}
       </View>
-      <Button title={selectedTrial ? `Empezar ${trialText(selectedTrial)} gratis` : "Suscribirme"} icon="star" size="lg" loading={busy === "buy"} disabled={!selected || busy !== null} onPress={buy} />
+      <Button title={selectedTrial ? t("plus.startTrial", { trial: trialText(selectedTrial, t) }) : t("plus.subscribe")} icon="star" size="lg" loading={busy === "buy"} disabled={!selected || busy !== null} onPress={buy} />
       {message && <Text style={{ color: colors.margin, textAlign: "center" }} accessibilityLiveRegion="polite">{message}</Text>}
-      <Button title="Restaurar compras" variant="ghost" loading={busy === "restore"} disabled={busy !== null} onPress={restoreNow} />
+      <Button title={t("plus.restore")} variant="ghost" loading={busy === "restore"} disabled={busy !== null} onPress={restoreNow} />
     </View>
   );
 }
 
 const order = (p: PurchasesPackage) => (p.packageType === "ANNUAL" ? 0 : p.packageType === "MONTHLY" ? 1 : 2);
 
-function periodOf(p: PurchasesPackage) {
-  if (p.packageType === "ANNUAL") return { name: "Anual", per: "por año" };
-  if (p.packageType === "MONTHLY") return { name: "Mensual", per: "por mes" };
-  if (p.packageType === "LIFETIME") return { name: "Para siempre", per: "una vez" };
+function periodOf(p: PurchasesPackage, t: T) {
+  if (p.packageType === "ANNUAL") return { name: t("plus.annual"), per: t("plus.perYear") };
+  if (p.packageType === "MONTHLY") return { name: t("plus.monthly"), per: t("plus.perMonth") };
+  if (p.packageType === "LIFETIME") return { name: t("plus.lifetime"), per: t("plus.once") };
   return { name: p.product.title, per: "" };
 }
 
 /** "2 días gratis, después USD 19,99 por año": lo que las tiendas piden que quede claro. */
-function trialTerms(trial: FreeTrial, price: string, per: string) {
-  return `${trialText(trial)} gratis, después ${price}${per ? ` ${per}` : ""}`;
+function trialTerms(trial: FreeTrial, price: string, per: string, t: T) {
+  return t("plus.trialTerms", { trial: trialText(trial, t), price: per ? `${price} ${per}` : price });
 }
 
 /** Lo que Apple y Google piden mostrar junto a una suscripción. */
 function Legal() {
+  const t = useT();
   const open = (url: string) => WebBrowser.openBrowserAsync(url).catch(() => {});
   return (
     <View style={{ gap: 6, alignItems: "center" }}>
       <Text variant="small" style={{ textAlign: "center" }}>
-        La suscripción se renueva sola hasta que la canceles, y se cobra a tu cuenta de la tienda. Podés cancelarla cuando quieras desde la tienda, hasta 24 h antes de la renovación.
+        {t("plus.legal")}
       </Text>
       <Row gap={16}>
         <Pressable onPress={() => open(TERMS_URL)} accessibilityRole="link" style={styles.link}>
-          <Text variant="small" style={{ textDecorationLine: "underline" }}>Términos de uso</Text>
+          <Text variant="small" style={{ textDecorationLine: "underline" }}>{t("plus.terms")}</Text>
         </Pressable>
         <Pressable onPress={() => open(PRIVACY_URL)} accessibilityRole="link" style={styles.link}>
-          <Text variant="small" style={{ textDecorationLine: "underline" }}>Privacidad</Text>
+          <Text variant="small" style={{ textDecorationLine: "underline" }}>{t("common.privacy")}</Text>
         </Pressable>
       </Row>
     </View>

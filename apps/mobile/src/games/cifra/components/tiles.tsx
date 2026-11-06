@@ -5,11 +5,12 @@ import { Pressable, StyleSheet, View, useWindowDimensions, type StyleProp, type 
 import Animated, { useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 import { Text, shadow } from "@/components/ui";
 import { haptic } from "@/lib/haptics";
+import { useT } from "@/lib/i18n";
 import { celebrateStep, DURATION, hop as hopTo, motion, MOTION, PRESS_SCALE, pulse, staggerStep, type Entering } from "@/lib/motion";
 import { useTheme } from "@/theme/theme";
 import { fonts, radius } from "@/theme/tokens";
 
-const MARK_LABEL: Record<TileMark, string> = { none: "sin marcar", out: "descartada", in: "va", here: "va ahí" };
+const MARK_LABEL = { none: "cifra.markNone", out: "cifra.markOut", in: "cifra.markIn", here: "cifra.markHere" } as const satisfies Record<TileMark, string>;
 
 export type DigitTone = "clue" | "input" | "empty" | "solution";
 
@@ -41,6 +42,7 @@ export function DigitTile({
   hopSpan?: number;
 }) {
   const { colors } = useTheme();
+  const t = useT();
   const dim = size;
   const bump = useSharedValue(1);
   const lift = useSharedValue(0);
@@ -86,7 +88,7 @@ export function DigitTile({
     <Animated.View entering={entering} style={animated}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`Cifra ${digit}, posición ${position + 1}: ${MARK_LABEL[mark]}.${disabled ? "" : " Tocá para cambiar."}`}
+        accessibilityLabel={t("cifra.tileLabel", { digit: digit ?? "", position: position + 1, mark: t(MARK_LABEL[mark]) }) + (disabled ? "" : t("cifra.tileTapToChange"))}
         disabled={disabled}
         hitSlop={2}
         onPress={() => {
@@ -107,12 +109,13 @@ type Kind = "exact" | "present";
 export function Indicator({ kind, value, entering }: { kind: Kind; value: number; entering?: Entering }) {
   const { colors } = useTheme();
   const fg = kind === "exact" ? colors.clueExact : colors.cluePresent;
+  const t = useT();
   return (
     <Animated.View
       entering={entering}
       accessible
       accessibilityRole="image"
-      accessibilityLabel={`${value} ${kind === "exact" ? "en su lugar" : "en otro lugar"}`}
+      accessibilityLabel={t(kind === "exact" ? "cifra.exactCount" : "cifra.presentCount", { n: value })}
       style={[styles.indicator, { backgroundColor: kind === "exact" ? colors.clueExactBg : colors.cluePresentBg, opacity: value === 0 ? 0.5 : 1 }]}
     >
       <Symbol kind={kind} color={fg} />

@@ -4,19 +4,20 @@ import { CalendarClockIcon, CheckIcon, ChevronRightIcon, LockIcon, XIcon } from 
 import { todayKey } from "@cranea/core";
 import { useClock } from "@/components/game-home/use-clock";
 import { PlusBadge, openPaywall } from "@/components/plus/paywall";
+import { useIntlLocale, useLocale, useT, type Locale } from "@/lib/i18n";
 import { usePlus } from "@/lib/plus";
 import { cn } from "@/lib/utils";
 import { useGameProgress, type Result } from "@/stores/progress";
 import { addDays, dayNumber, resultLine } from "./dailies";
 
-const MONTH = new Intl.DateTimeFormat("es-AR", { month: "long", year: "numeric", timeZone: "UTC" });
-const LONG_DAY = new Intl.DateTimeFormat("es-AR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
-const WEEKDAYS = ["L", "M", "M", "J", "V", "S", "D"];
+const monthFormat = (intl: string) => new Intl.DateTimeFormat(intl, { month: "long", year: "numeric", timeZone: "UTC" });
+const longDayFormat = (intl: string) => new Intl.DateTimeFormat(intl, { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
 
 const utc = (date: string) => new Date(`${date}T00:00:00Z`);
 
 /** Meses (más nuevo primero) con los días de `from` a `to`, incluidos. */
-function months(from: string, to: string) {
+function months(from: string, to: string, intl: string) {
+  const MONTH = monthFormat(intl);
   const out: { key: string; label: string; offset: number; days: string[] }[] = [];
   for (let d = from; d <= to; d = addDays(d, 1)) {
     const key = d.slice(0, 7);
@@ -41,11 +42,13 @@ export function ArchiveView({ gameId, home, launch }: { gameId: string; home: st
   const now = useClock(60_000);
   const progress = useGameProgress(gameId);
   const { plus } = usePlus();
+  const t = useT();
+  const intl = useIntlLocale();
 
   if (now === null) {
     return (
       <main className="mx-auto w-full max-w-md px-5 pt-1 pb-16" aria-busy>
-        <h1 className="font-display text-3xl font-extrabold tracking-tight">Diarios anteriores</h1>
+        <h1 className="font-display text-3xl font-extrabold tracking-tight">{t("hub.archiveTitle")}</h1>
         <div className="mt-5 h-72 rounded-xl bg-muted motion-safe:animate-pulse" />
       </main>
     );
@@ -60,8 +63,8 @@ export function ArchiveView({ gameId, home, launch }: { gameId: string; home: st
 
   return (
     <main className="mx-auto w-full max-w-md px-5 pt-1 pb-16">
-      <h1 className="font-display text-3xl font-extrabold tracking-tight">Diarios anteriores</h1>
-      <p className="mt-1 text-muted-foreground">Jugalos como práctica: no cambian tu racha ni el ranking.</p>
+      <h1 className="font-display text-3xl font-extrabold tracking-tight">{t("hub.archiveTitle")}</h1>
+      <p className="mt-1 text-muted-foreground">{t("hub.archiveIntro")}</p>
       {past && !plus && (
         <button
           type="button"
@@ -70,7 +73,7 @@ export function ArchiveView({ gameId, home, launch }: { gameId: string; home: st
           className="mt-3 flex w-full items-center gap-2 rounded-lg bg-muted px-3 py-2.5 text-left text-sm outline-none hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50"
         >
           <PlusBadge className="shrink-0" />
-          <span className="min-w-0 flex-1">Volver a jugar un día es parte de Craneá Plus.</span>
+          <span className="min-w-0 flex-1">{t("hub.archivePlus")}</span>
           <ChevronRightIcon aria-hidden className="size-4 shrink-0 text-pencil" />
         </button>
       )}
@@ -79,25 +82,26 @@ export function ArchiveView({ gameId, home, launch }: { gameId: string; home: st
         <div className="mt-5 rounded-xl border-2 border-dashed border-border bg-card p-4">
           <p className="flex items-start gap-2 font-semibold">
             <CalendarClockIcon aria-hidden className="mt-0.5 size-5 shrink-0 text-pencil" />
-            El primer diario es el de hoy. Desde mañana vas a poder volver a jugarlo acá.
+            {t("hub.archiveFirst")}
           </p>
           <TodayLink home={home} />
         </div>
       ) : (
         <>
           <p className="mt-4 text-sm text-muted-foreground tabular-nums">
-            Jugaste <span className="font-semibold text-foreground">{played.length}</span> de {total} · resolviste{" "}
+            {t("hub.archivePlayed")}<span className="font-semibold text-foreground">{played.length}</span>
+            {t("hub.archiveOfSolved", { total })}
             <span className="font-semibold text-foreground">{won}</span>
           </p>
           <Legend />
           <div className="mt-2 grid gap-6">
-            {months(launch, today).map((m) => (
+            {months(launch, today, intl).map((m) => (
               <section key={m.key} aria-labelledby={`mes-${m.key}`}>
                 <h2 id={`mes-${m.key}`} className="mb-2 font-display text-lg font-extrabold first-letter:uppercase">
                   {m.label}
                 </h2>
                 <div aria-hidden className="grid grid-cols-7 gap-1 pb-1 text-center text-xs font-bold text-muted-foreground">
-                  {WEEKDAYS.map((w, i) => (
+                  {[...t("hub.weekdays")].map((w, i) => (
                     <span key={i}>{w}</span>
                   ))}
                 </div>
@@ -119,11 +123,14 @@ export function ArchiveView({ gameId, home, launch }: { gameId: string; home: st
 }
 
 function DayCell({ gameId, date, today, result, home, launch, needsPlus }: { gameId: string; date: string; today: boolean; result?: Result; home: string; launch: string; needsPlus: boolean }) {
+  const t = useT();
+  const locale: Locale = useLocale();
+  const intl = useIntlLocale();
   const day = Number(date.slice(8));
   const number = dayNumber(date, launch);
-  const state = today ? "hoy" : !result ? "sin jugar" : result.won ? `resuelto, ${resultLine(gameId, result)}` : "no salió";
+  const state = today ? t("hub.dayToday") : !result ? t("hub.unplayed") : result.won ? t("hub.daySolved", { result: resultLine(gameId, result, locale) }) : t("hub.missed");
   const gated = needsPlus && !today;
-  const label = `${LONG_DAY.format(utc(date))}, #${number}: ${state}${today ? "" : gated ? ". Jugar como práctica, con Craneá Plus" : ". Jugar como práctica"}`;
+  const label = `${longDayFormat(intl).format(utc(date))}, #${number}: ${state}${today ? "" : gated ? t("hub.dayPracticePlus") : t("hub.dayPractice")}`;
   const cls = cn(
     "relative grid aspect-square min-h-11 w-full place-items-center rounded-md font-display text-base font-bold tabular-nums outline-none transition-transform hover:-translate-y-px focus-visible:ring-[3px] focus-visible:ring-ring/50",
     today && "border-2 border-ink bg-card",
@@ -140,7 +147,7 @@ function DayCell({ gameId, date, today, result, home, launch, needsPlus }: { gam
         </span>
       )}
       {gated && !result && <LockIcon aria-hidden className="absolute top-1 right-1 size-2.5 opacity-60" strokeWidth={2.75} />}
-      {today && <span aria-hidden className="absolute bottom-0.5 text-[9px] leading-none font-bold tracking-wide uppercase">hoy</span>}
+      {today && <span aria-hidden className="absolute bottom-0.5 text-[9px] leading-none font-bold tracking-wide uppercase">{t("hub.dayToday")}</span>}
     </>
   );
   // Sin Plus, un día pasado abre la hoja de Plus en vez de jugarse.
@@ -161,28 +168,30 @@ function DayCell({ gameId, date, today, result, home, launch, needsPlus }: { gam
 function Legend() {
   const item = "inline-flex items-center gap-1.5";
   const dot = "inline-block size-3.5 rounded-[3px]";
+  const t = useT();
   return (
-    <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground" aria-label="Referencias">
+    <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground" aria-label={t("hub.legend")}>
       <li className={item}>
-        <span aria-hidden className={cn(dot, "bg-ok")} /> Resuelto
+        <span aria-hidden className={cn(dot, "bg-ok")} /> {t("hub.legendSolved")}
       </li>
       <li className={item}>
-        <span aria-hidden className={cn(dot, "border-2 border-margin")} /> No salió
+        <span aria-hidden className={cn(dot, "border-2 border-margin")} /> {t("hub.legendMissed")}
       </li>
       <li className={item}>
-        <span aria-hidden className={cn(dot, "border-2 border-dashed border-border")} /> Sin jugar
+        <span aria-hidden className={cn(dot, "border-2 border-dashed border-border")} /> {t("hub.legendUnplayed")}
       </li>
     </ul>
   );
 }
 
 function TodayLink({ home }: { home: string }) {
+  const t = useT();
   return (
     <Link
       href={`${home}/diario`}
       className="group mt-6 flex min-h-12 items-center justify-between gap-3 rounded-xl border-2 border-border bg-card px-4 py-2 font-semibold outline-none hover:border-ink focus-visible:ring-[3px] focus-visible:ring-ring/50"
     >
-      El diario de hoy
+      {t("hub.todayDaily")}
       <ChevronRightIcon aria-hidden className="size-5 shrink-0 text-pencil transition-transform group-hover:translate-x-0.5" />
     </Link>
   );

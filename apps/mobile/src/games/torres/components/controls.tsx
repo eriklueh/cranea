@@ -6,6 +6,7 @@ import { motion } from "@/lib/motion";
 import { Icon, Row, Text, shadow, type IconName } from "@/components/ui";
 import { formatTime } from "@/lib/format";
 import { haptic } from "@/lib/haptics";
+import { useT } from "@/lib/i18n";
 import { useTheme } from "@/theme/theme";
 import { fonts, radius } from "@/theme/tokens";
 import { attemptLimit, playedMs, useTorres } from "../store";
@@ -30,6 +31,7 @@ export function NumberPad() {
   const size = useTorres((s) => s.puzzle?.size ?? 0);
   const notesMode = useTorres((s) => s.notesMode);
   const playing = useTorres((s) => s.status === "playing");
+  const t = useT();
   if (!size) return null;
   const key = (pressed: boolean) => [
     styles.key,
@@ -44,8 +46,8 @@ export function NumberPad() {
         <Pressable
           key={v}
           accessibilityRole="button"
-          accessibilityLabel={notesMode ? `Nota ${v}` : `Altura ${v}`}
-          accessibilityHint={notesMode ? "Mantené apretado para escribirla" : "Mantené apretado para anotarla"}
+          accessibilityLabel={notesMode ? t("torres.noteKey", { n: v }) : t("torres.heightKey", { n: v })}
+          accessibilityHint={notesMode ? t("torres.holdToWrite") : t("torres.holdToNote")}
           accessibilityState={{ disabled: !playing }}
           disabled={!playing}
           onPress={() => place(v)}
@@ -63,7 +65,7 @@ export function NumberPad() {
       ))}
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Borrar casilla"
+        accessibilityLabel={t("torres.eraseCell")}
         accessibilityState={{ disabled: !playing }}
         disabled={!playing}
         onPress={() => {
@@ -116,12 +118,13 @@ export function Toolbar() {
   const canUndo = useTorres((s) => s.history.length > 0);
   const hasInput = useTorres((s) => s.puzzle !== null && s.values.some((v, i) => v && !s.puzzle!.givens[i]));
   const { toggleNotesMode, undo, reset, runCheck } = useTorres.getState();
+  const t = useT();
   return (
     <Row gap={6}>
-      <Tool icon="pencil" label="Notas" active={notesMode} onPress={toggleNotesMode} disabled={!playing} />
-      <Tool icon="arrow-undo" label="Deshacer" onPress={undo} disabled={!playing || !canUndo} />
-      <Tool icon="refresh" label="Reiniciar" onPress={reset} disabled={!playing || !canUndo} />
-      <Tool icon="checkmark" label="Comprobar" primary onPress={runCheck} disabled={!playing || !hasInput} />
+      <Tool icon="pencil" label={t("torres.notes")} active={notesMode} onPress={toggleNotesMode} disabled={!playing} />
+      <Tool icon="arrow-undo" label={t("torres.undo")} onPress={undo} disabled={!playing || !canUndo} />
+      <Tool icon="refresh" label={t("torres.restart")} onPress={reset} disabled={!playing || !canUndo} />
+      <Tool icon="checkmark" label={t("torres.check")} primary onPress={runCheck} disabled={!playing || !hasInput} />
     </Row>
   );
 }
@@ -134,19 +137,20 @@ export function CheckMessage() {
   const mistakes = useTorres((s) => s.mistakes);
   const total = useTorres(attemptLimit);
   const [visible, setVisible] = useState(false);
+  const t = useT();
   useEffect(() => {
     if (!check) return setVisible(false);
     setVisible(true);
-    const t = setTimeout(() => setVisible(false), 3500);
-    return () => clearTimeout(t);
+    const id = setTimeout(() => setVisible(false), 3500);
+    return () => clearTimeout(id);
   }, [check]);
   const left = total - mistakes;
   const text =
     check?.kind === "ok"
-      ? "Todo bien hasta acá."
+      ? t("torres.checkOk")
       : status === "lost"
-        ? "Se acabaron los intentos."
-        : `Hay casillas para revisar. ${left === 1 ? "Te queda un intento." : `Te quedan ${left} intentos.`}`;
+        ? t("torres.checkLost")
+        : t("torres.checkWrong", { count: left });
   return (
     <View style={{ minHeight: 22, justifyContent: "center" }} accessibilityLiveRegion="polite">
       {check && visible && (
@@ -166,8 +170,9 @@ export function Lives() {
   const mistakes = useTorres((s) => s.mistakes);
   const total = useTorres(attemptLimit);
   const left = Math.max(0, total - mistakes);
+  const t = useT();
   return (
-    <Row gap={3} accessibilityLabel={`Te ${left === 1 ? "queda" : "quedan"} ${left} de ${total} intentos`}>
+    <Row gap={3} accessibilityLabel={t("torres.livesLeft", { count: left, total })}>
       {Array.from({ length: total }, (_, i) => (
         <Icon key={i} name={i < left ? "heart" : "heart-outline"} size={16} color={i < left ? colors.margin : colors.border} />
       ))}
@@ -180,14 +185,15 @@ export function Timer() {
   const finishedAt = useTorres((s) => s.finishedAt);
   const pausedAt = useTorres((s) => s.pausedAt);
   const [, tick] = useState(0);
+  const t = useT();
   useEffect(() => {
     if (!startedAt || finishedAt) return;
-    const t = setInterval(() => tick((n) => n + 1), 1000);
-    return () => clearInterval(t);
+    const id = setInterval(() => tick((n) => n + 1), 1000);
+    return () => clearInterval(id);
   }, [startedAt, finishedAt]);
   const time = formatTime(playedMs({ startedAt, finishedAt, pausedAt }));
   return (
-    <Text variant="bodyBold" style={{ fontVariant: ["tabular-nums"], minWidth: 40, textAlign: "right" }} accessibilityLabel={`Tiempo ${time}`}>
+    <Text variant="bodyBold" style={{ fontVariant: ["tabular-nums"], minWidth: 40, textAlign: "right" }} accessibilityLabel={t("torres.timeLabel", { time })}>
       {time}
     </Text>
   );

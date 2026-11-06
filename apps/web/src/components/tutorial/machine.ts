@@ -32,11 +32,19 @@ export type TutorialEvent =
 /** Qué tiene que hacer el juego con la jugada: aceptarla como nuevo punto de partida o deshacerla. */
 export type Effect = "accept" | "revert" | null;
 
+/**
+ * Avisos genéricos. Son ids, no textos: este módulo no depende de los diccionarios (lo prueban los
+ * tests de scripts/ sin compilar); la pantalla los traduce con `tutorial.nudgeWrong`, etc.
+ * Los avisos propios de cada paso (`StepMeta.nudge`) llegan ya traducidos.
+ */
 export const NUDGE = {
-  wrong: "Esa no. Probá con lo resaltado.",
-  outside: "Tocá lo resaltado.",
-  info: "Primero tocá Siguiente.",
+  wrong: "@nudge:wrong",
+  outside: "@nudge:outside",
+  info: "@nudge:info",
 } as const;
+
+export type BuiltinNudge = (typeof NUDGE)[keyof typeof NUDGE];
+export const isBuiltinNudge = (n: string | null): n is BuiltinNudge => n === NUDGE.wrong || n === NUDGE.outside || n === NUDGE.info;
 
 export const initialState = (): TutorialState => ({ step: 0, status: "active", nudge: null, nudgeKey: 0 });
 
@@ -69,5 +77,5 @@ export function reduce(state: TutorialState, event: TutorialEvent, steps: readon
   }
 }
 
-/** Avance "3 de 7" para mostrar y anunciar. */
-export const progressLabel = (step: number, total: number) => `Paso ${Math.min(step + 1, total)} de ${total}`;
+/** Avance (paso 3 de 7) para mostrar y anunciar; el texto lo arma la pantalla en el idioma activo. */
+export const progress = (step: number, total: number) => ({ step: Math.min(step + 1, total), total });

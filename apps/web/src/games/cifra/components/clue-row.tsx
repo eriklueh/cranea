@@ -1,6 +1,8 @@
+"use client";
 import type { CSSProperties } from "react";
 import { tileMarkState, type Clue, type Marks } from "@cranea/core/cifra";
 import { DURATION, staggerStep } from "@cranea/core/motion";
+import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { DigitTile } from "./digit-tile";
 import { Indicator } from "./pegs";
@@ -22,14 +24,15 @@ interface Props {
 }
 
 export function ClueRow({ clue, marks, row = 0, miss, size = "md", interactive = false, disabled = false, onCycleMark, highlight, dim, reveal }: Props) {
+  const t = useT();
   const step = staggerStep(clue.guess.length + 1, DURATION.base);
   const score = reveal ? ({ "--base": `${clue.guess.length * step}ms` } as CSSProperties) : undefined;
   return (
     <li data-tutorial={interactive ? `clue-${row}` : undefined} className={cn("flex items-center justify-center gap-2 rounded-lg transition-[background-color,box-shadow,opacity] duration-(--dur-slow) motion-reduce:transition-none", highlight && "bg-clue-present-bg shadow-[0_0_0_6px_var(--clue-present-bg)]", dim && "opacity-40")}>
-      {highlight && <span className="sr-only">Fila señalada: </span>}
+      {highlight && <span className="sr-only">{t("cifra.rowHighlighted")}</span>}
       <Indicator kind="exact" value={clue.feedback.exact} className={reveal ? "anim-pop" : undefined} style={score} />
       <span className={cn("relative flex shrink-0 gap-1.5", miss && "after:absolute after:-bottom-1.5 after:inset-x-0 after:h-0.5 after:rounded-full after:bg-margin")}>
-        {miss && <span className="sr-only">Tu intento fallido: </span>}
+        {miss && <span className="sr-only">{t("cifra.missedGuess")}</span>}
         {clue.guess.map((d, i) => (
           <DigitTile
             key={i}

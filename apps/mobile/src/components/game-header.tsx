@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
+import type { Locale } from "@cranea/core/i18n";
 import { Row, Text } from "@/components/ui";
+import { getLocale, translator } from "@/lib/i18n";
 
 /**
  * Debajo de la barra de navegación, que ya lleva el título ("Puentes del día #2", "Cifra · Nivel 1-3"):
@@ -16,6 +18,7 @@ export function GameHeader({ context, right }: { context: string; right?: ReactN
 }
 
 /** Título de la barra para un diario o un nivel, igual en los cinco juegos. */
-export function gameTitle(game: string, mode: { kind: "daily"; number: number } | { kind: "level"; world: number; level: number }) {
-  return mode.kind === "daily" ? `${game} del día #${mode.number}` : `${game} · Nivel ${mode.world}-${mode.level}`;
+export function gameTitle(game: string, mode: { kind: "daily"; number: number } | { kind: "level"; world: number; level: number }, locale: Locale = getLocale()) {
+  const t = translator(locale);
+  return mode.kind === "daily" ? t("hub.dailyTitle", { game, n: mode.number }) : t("hub.levelTitle", { game, world: mode.world, level: mode.level });
 }

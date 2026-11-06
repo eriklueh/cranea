@@ -2,6 +2,7 @@ import { dailySeed, unpack, WORLDS, type PackedLevel } from "@cranea/core/cifra"
 import packed from "@cranea/core/levels/cifra.json";
 import { attemptsText, levelKey, unlockRules, type GameHomeConfig } from "@/components/game-home/types";
 import { dayNumber } from "@/lib/format";
+import { translator } from "@/lib/i18n";
 import { hasSession } from "./session";
 
 export const GAME_ID = "cifra";
@@ -37,8 +38,8 @@ export const CIFRA_HOME: GameHomeConfig = {
   pitch: "Cruzá intentos ya puntuados hasta que solo un código encaje.",
   article: "el",
   daily: {
-    title: "Cifra del día",
-    blurb: "El mismo tablero para todos. Tres intentos.",
+    title: (locale) => translator(locale)("cifra.dailyTitle"),
+    blurb: (locale) => translator(locale)("cifra.dailyBlurb"),
     href: "/cifra/diario",
     number: dailyNumber,
     inProgress: (date) => hasSession(dailySeed(date)),
@@ -51,5 +52,5 @@ export const CIFRA_HOME: GameHomeConfig = {
   howToHref: "/cifra/como-jugar",
   stars: (r) => Math.max(1, MAX_ATTEMPTS + 1 - r.attempts),
   resultText: attemptsText,
-  resultStat: (r) => ({ label: "Intentos", value: `${r.attempts}/${MAX_ATTEMPTS}` }),
+  resultStat: (r, locale) => ({ label: translator(locale)("cifra.statAttempts"), value: `${r.attempts}/${MAX_ATTEMPTS}` }),
 };

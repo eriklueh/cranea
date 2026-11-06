@@ -15,6 +15,7 @@ import { usePlusPaywall } from "@/components/plus";
 import { Button, Icon, Row, Text } from "@/components/ui";
 import { plusLevelCount, usePlus, usePlusReady } from "@/entitlements";
 import { gameById } from "@/games/registry";
+import { useT } from "@/lib/i18n";
 import { bestFreeTrial, trialText, type FreeTrial } from "@/monetization/purchases";
 import { useTheme } from "@/theme/theme";
 import { radius } from "@/theme/tokens";
@@ -63,6 +64,7 @@ export function PlusNudge({ gameId, mode, won = true, onLeave }: { gameId: strin
   const hydrated = useNudges((s) => s.hydrated);
   const record = useNudges((s) => s.seen[gameId]);
   const levels = PLUS_LEVELS[gameId] ?? 0;
+  const t = useT();
   const today = todayKey();
   const slot = mode.kind === "level" && "world" in mode ? `level:${mode.world}-${mode.level}` : mode.kind === "daily" && "date" in mode && !mode.practice ? `daily:${mode.date}` : null;
   const eligible = Boolean(slot) && won && plusReady && !plus && hydrated && levels > 0 && (record?.date !== today || (record.slot === slot && !record.dismissed));
@@ -76,12 +78,13 @@ export function PlusNudge({ gameId, mode, won = true, onLeave }: { gameId: strin
 
   if (!eligible || !slot) return null;
   const dismiss = () => useNudges.setState((s) => ({ seen: { ...s.seen, [gameId]: { date: today, slot, dismissed: true } } }));
-  return <NudgeCard game={gameById(gameId)?.name ?? "este juego"} levels={levels} onDismiss={dismiss} onLeave={onLeave} />;
+  return <NudgeCard game={gameById(gameId)?.name ?? t("plus.nudgeThisGame")} levels={levels} onDismiss={dismiss} onLeave={onLeave} />;
 }
 
 function NudgeCard({ game, levels, onDismiss, onLeave }: { game: string; levels: number; onDismiss: () => void; onLeave?: () => void }) {
   const { colors } = useTheme();
   const paywall = usePlusPaywall();
+  const t = useT();
   const [trial, setTrial] = useState<FreeTrial | null>(null);
   useEffect(() => {
     let alive = true;
@@ -102,14 +105,14 @@ function NudgeCard({ game, levels, onDismiss, onLeave }: { game: string; levels:
           <Icon name="star" size={16} color={colors.cluePresent} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text variant="bodyBold">¿Querés seguir?</Text>
-          <Text variant="small">Tenés {levels} niveles más de {game} con Craneá Plus.</Text>
+          <Text variant="bodyBold">{t("plus.nudgeTitle")}</Text>
+          <Text variant="small">{t("plus.nudgeBody", { levels, game })}</Text>
         </View>
-        <Pressable accessibilityRole="button" accessibilityLabel="Ahora no" onPress={onDismiss} hitSlop={10} style={{ minWidth: 32, minHeight: 32, alignItems: "center", justifyContent: "center" }}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t("plus.notNow")} onPress={onDismiss} hitSlop={10} style={{ minWidth: 32, minHeight: 32, alignItems: "center", justifyContent: "center" }}>
           <Icon name="close" size={18} color={colors.mutedForeground} />
         </Pressable>
       </Row>
-      <Button title={trial ? `Probá gratis ${trialText(trial)}` : "Ver Craneá Plus"} icon="star" variant="outline" onPress={open} />
+      <Button title={trial ? t("plus.tryFree", { trial: trialText(trial, t) }) : t("plus.seePlus")} icon="star" variant="outline" onPress={open} />
     </Animated.View>
   );
 }

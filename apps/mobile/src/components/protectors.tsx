@@ -1,5 +1,6 @@
 import { todayKey } from "@cranea/core";
 import { DAYS_PER_PROTECTOR, grantPlus, MAX_PROTECTORS, sameProtectors, unseenCovered } from "@cranea/core/protectors";
+import { gamesFor, type Locale } from "@cranea/core/i18n";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { useEffect, useRef, useState } from "react";
 import { AppState, Modal, Pressable, StyleSheet, View } from "react-native";
@@ -13,6 +14,7 @@ import { usePlus } from "@/entitlements";
 import { GAMES } from "@/games/registry";
 import { api, accountsEnabled } from "@/lib/convex";
 import { useClock } from "@/lib/hooks";
+import { getLocale, translator, useT } from "@/lib/i18n";
 import { dailyStreak, protectorsOf, useProgress, type ProtectorState } from "@/stores/progress";
 import { useTheme } from "@/theme/theme";
 import { fonts, radius } from "@/theme/tokens";
@@ -31,12 +33,12 @@ export function useProtectors() {
   return protectorsOf({ games, protectors }, todayKey(new Date(now))).status;
 }
 
-export const usedText = (used: number, streak: number) =>
-  `${used > 1 ? `Usaste ${used} protectores` : "Usaste un protector"}: ${streak > 0 ? `tu racha sigue en ${streak}` : "tu racha sigue viva"}`;
+export const usedText = (used: number, streak: number, locale: Locale = getLocale()) => translator(locale)("hub.protectorUsed", { used, streak });
 
+/** La racha más larga entre los juegos que se ven en el idioma activo (en inglés no está Palabra). */
 function liveStreak(today: string) {
   const { games } = useProgress.getState();
-  return Math.max(0, ...GAMES.map((g) => dailyStreak(games[g.id]?.daily ?? {}, today)));
+  return Math.max(0, ...gamesFor(GAMES, getLocale()).map((g) => dailyStreak(games[g.id]?.daily ?? {}, today)));
 }
 
 /** Va una vez en la app: crea el estado, anota el regalo de Plus, avisa al usar uno y sincroniza. */
@@ -98,6 +100,7 @@ function ProtectorsWatcher({ synced }: { synced: boolean }) {
 function ProtectorToast({ text, onDone }: { text: string; onDone: () => void }) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const t = useT();
   const [visible, setVisible] = useState(false);
   const done = useRef(onDone);
   done.current = onDone;
@@ -123,7 +126,7 @@ function ProtectorToast({ text, onDone }: { text: string; onDone: () => void }) 
           <Icon name="shield-checkmark" size={22} color={colors.primary} />
         </View>
         <Text style={{ flex: 1, fontFamily: fonts.displayHeavy, fontSize: 16, lineHeight: 20, color: colors.ink }}>{text}</Text>
-        <Pressable onPress={onDone} accessibilityRole="button" accessibilityLabel="Cerrar aviso" hitSlop={8} style={{ padding: 8 }}>
+        <Pressable onPress={onDone} accessibilityRole="button" accessibilityLabel={t("hub.closeNotice")} hitSlop={8} style={{ padding: 8 }}>
           <Icon name="close" size={20} color={colors.mutedForeground} />
         </Pressable>
       </Animated.View>
@@ -177,6 +180,7 @@ export function ProtectorBadge({ size = 13 }: { size?: number }) {
   const { colors } = useTheme();
   const hydrated = useProgress((s) => s.hydrated);
   const status = useProtectors();
+  const t = useT();
   const [open, setOpen] = useState(false);
   if (!hydrated) return null;
   return (
@@ -184,7 +188,7 @@ export function ProtectorBadge({ size = 13 }: { size?: number }) {
       <Pressable
         onPress={() => setOpen(true)}
         accessibilityRole="button"
-        accessibilityLabel={`${status.stock} ${status.stock === 1 ? "protector" : "protectores"} de racha. Qué es`}
+        accessibilityLabel={t("hub.protectorBadgeA11y", { count: status.stock })}
         hitSlop={10}
         style={({ pressed }) => [styles.badge, { backgroundColor: pressed ? colors.accent : colors.muted }]}
       >
@@ -199,6 +203,7 @@ export function ProtectorBadge({ size = 13 }: { size?: number }) {
 /** Fila para Estadísticas. */
 export function ProtectorsRow() {
   const { colors } = useTheme();
+  const t = useT();
   const status = useProtectors();
   const [open, setOpen] = useState(false);
   return (
@@ -210,10 +215,10 @@ export function ProtectorsRow() {
       >
         <Icon name="shield-half" size={24} color={colors.primary} />
         <View style={{ flex: 1 }}>
-          <Text variant="bodyBold">Protectores de racha</Text>
+          <Text variant="bodyBold">{t("hub.protectorsTitle")}</Text>
           <Text variant="small">
-            {status.stock} de {MAX_PROTECTORS}
-            {status.stock < MAX_PROTECTORS ? ` · el próximo en ${status.nextIn} ${status.nextIn === 1 ? "día" : "días"}` : ""}
+            {t("hub.protectorsStock", { stock: status.stock, max: MAX_PROTECTORS })}
+            {status.stock < MAX_PROTECTORS ? t("hub.protectorsNext", { count: status.nextIn }) : ""}
           </Text>
         </View>
         <Text style={{ fontFamily: fonts.displayHeavy, fontSize: 22, color: colors.primary }}>×{status.stock}</Text>
@@ -226,28 +231,29 @@ export function ProtectorsRow() {
 function ProtectorsSheet({ open, onClose, stock, nextIn }: { open: boolean; onClose: () => void; stock: number; nextIn: number }) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const t = useT();
   const lines = [
-    "Si un día no jugás ningún diario, se usa solo y tu racha sigue.",
-    `Ganás uno cada ${DAYS_PER_PROTECTOR} días seguidos jugando. Guardás hasta ${MAX_PROTECTORS}.`,
-    `Con Craneá Plus, cada mes arrancás con ${MAX_PROTECTORS}.`,
-    "Cuida la racha de cada juego. Si faltás más días de los que cubrís, la racha se corta y los guardás.",
+    t("hub.protectorLine1"),
+    t("hub.protectorLine2", { days: DAYS_PER_PROTECTOR, max: MAX_PROTECTORS }),
+    t("hub.protectorLine3", { max: MAX_PROTECTORS }),
+    t("hub.protectorLine4"),
   ];
   return (
     <Modal visible={open} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
       {open && (
         <Animated.View entering={motion.fade()} style={StyleSheet.absoluteFill}>
-          <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Cerrar" />
+          <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel={t("common.close")} />
         </Animated.View>
       )}
       {open && (
       <Animated.View entering={motion.sheetIn()} style={[styles.sheet, { backgroundColor: colors.paper, borderColor: colors.ink, paddingBottom: insets.bottom + 18 }]}>
         <Row gap={10}>
           <Icon name="shield-half" size={28} color={colors.primary} />
-          <Text variant="title">Protector de racha</Text>
+          <Text variant="title">{t("hub.protectorTitle")}</Text>
         </Row>
         <Text variant="muted">
-          {stock === 0 ? "Todavía no tenés ninguno." : `Tenés ${stock} ${stock === 1 ? "guardado" : "guardados"}.`}
-          {stock < MAX_PROTECTORS ? ` Te ${nextIn === 1 ? "falta 1 día" : `faltan ${nextIn} días`} para el próximo.` : ""}
+          {stock === 0 ? t("hub.protectorNone") : t("hub.protectorHave", { count: stock })}
+          {stock < MAX_PROTECTORS ? t("hub.protectorMissing", { count: nextIn }) : ""}
         </Text>
         <View style={{ gap: 8 }}>
           {lines.map((l) => (
@@ -257,7 +263,7 @@ function ProtectorsSheet({ open, onClose, stock, nextIn }: { open: boolean; onCl
             </Row>
           ))}
         </View>
-        <Button title="Entendido" size="lg" onPress={onClose} />
+        <Button title={t("hub.gotIt")} size="lg" onPress={onClose} />
       </Animated.View>
       )}
     </Modal>

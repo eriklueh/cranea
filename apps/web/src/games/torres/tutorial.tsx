@@ -1,7 +1,9 @@
 "use client";
+import { useMemo } from "react";
 import { TUTORIAL_PUZZLE as P } from "@cranea/core/torres";
 import { TutorialOverlay } from "@/components/tutorial/tutorial-overlay";
 import type { TutorialScript } from "@/components/tutorial/types";
+import { useT, type T } from "@/lib/i18n";
 import { TorresGame } from "./components/torres-game";
 import { useTorres } from "./store";
 
@@ -19,7 +21,8 @@ const BOTH = 0b011;
 const placed = (s: S, cells: readonly number[]) => s.values.every((v, i) => (v ? cells.includes(i) && v === P.solution[i] : true));
 const noNotes = (s: S, except: number[] = []) => s.notes.every((n, i) => !n || except.includes(i));
 
-const SCRIPT: TutorialScript<S> = {
+/** El guion, con los textos en el idioma activo. */
+const script = (t: T): TutorialScript<S> => ({
   game: "torres",
   name: "Torres",
   levelHref: "/torres/nivel/1/1",
@@ -30,54 +33,56 @@ const SCRIPT: TutorialScript<S> = {
   snapshot: (s) => ({ values: s.values, notes: s.notes, notesMode: s.notesMode, history: s.history, status: s.status, finishedAt: s.finishedAt, wrong: [], check: null }),
   reset: () => useTorres.getState().start(P),
   steps: [
-    { targets: ["board"], text: "Cada casilla es una torre de 1 a 3 pisos. En cada fila y cada columna, cada altura va una sola vez." },
-    { targets: ["clue-top-0"], text: "Los números del borde dicen cuántas torres se ven desde ahí. Las altas tapan a las bajas." },
+    { targets: ["board"], text: t("tutorialTorres.board") },
+    { targets: ["clue-top-0"], text: t("tutorialTorres.clues") },
     {
       targets: ["clue-top-0", cell(0), "pad"],
       anchor: "clue-top-0",
-      text: "Desde acá se ve una sola. Entonces la primera es la más alta: poné un 3.",
-      nudge: "Si se ve una sola, la primera es la de 3.",
+      text: t("tutorialTorres.first"),
+      nudge: t("tutorialTorres.firstNudge"),
       check: (s) => (s.notesMode || !noNotes(s) ? "wrong" : s.values[0] === 3 && placed(s, [0]) ? "done" : s.values.every((v) => !v) ? "progress" : "wrong"),
     },
     {
       targets: [cell(1), "notes", "pad"],
       anchor: cell(1),
-      text: "¿Y acá? Va 1 o 2, porque el 3 ya está en la fila. Anotalo: tocá Notas, la casilla, el 1 y el 2.",
-      nudge: "Primero tocá Notas. Después anotá 1 y 2 en esta casilla.",
+      text: t("tutorialTorres.notes"),
+      nudge: t("tutorialTorres.notesNudge"),
       check: (s) => (!placed(s, [0]) || s.values[0] !== 3 || !noNotes(s, [1]) ? "wrong" : s.notes[1] === BOTH ? "done" : "progress"),
     },
     {
       targets: ["notes"],
-      text: "Así anotás cuando dudás. Tocá Notas otra vez para volver a poner alturas.",
+      text: t("tutorialTorres.notesOff"),
       check: (s) => (s.notes[1] !== BOTH || !placed(s, [0]) ? "wrong" : s.notesMode ? "progress" : "done"),
     },
     {
       targets: ["clue-left-1", ROW1.map(cell), "pad"],
       anchor: ROW1.map(cell),
-      text: "Desde acá se ven las tres. Entonces van de menor a mayor: 1, 2 y 3.",
-      nudge: "De izquierda a derecha: 1, 2 y 3.",
+      text: t("tutorialTorres.row"),
+      nudge: t("tutorialTorres.rowNudge"),
       check: (s) => (s.notesMode || !placed(s, [0, ...ROW1]) ? "wrong" : ROW1.every((i) => s.values[i]) ? "done" : "progress"),
     },
     {
       targets: [[cell(1), cell(4), cell(7)], "pad"],
       anchor: [cell(1), cell(4), cell(7)],
-      text: "Esta columna ya tiene un 2. Entonces arriba va el 1. Tocá la casilla y poné un 1.",
-      nudge: "La casilla de arriba de esta columna lleva un 1.",
+      text: t("tutorialTorres.column"),
+      nudge: t("tutorialTorres.columnNudge"),
       check: (s) => (s.notesMode || !placed(s, [0, 1, ...ROW1]) ? "wrong" : s.values[1] === 1 ? "done" : "progress"),
     },
     {
       targets: ["board", "pad"],
       anchor: "board",
-      text: "Completá el resto sin repetir alturas en ninguna fila ni columna.",
-      nudge: "Esa altura no va. Mirá la fila y la columna.",
+      text: t("tutorialTorres.finish"),
+      nudge: t("tutorialTorres.finishNudge"),
       delay: 900,
       check: (s) => (s.status === "won" ? "done" : s.values.every((v, i) => !v || v === P.solution[i]) ? "progress" : "wrong"),
     },
   ],
-  outro: "Mirá los bordes, no repitas alturas y anotá cuando dudes. El nivel 1 es de 4 por 4.",
-};
+  outro: t("tutorialTorres.outro"),
+});
 
 export function TorresTutorial() {
+  const t = useT();
+  const SCRIPT = useMemo(() => script(t), [t]);
   return (
     <>
       <TorresGame puzzle={P} mode={{ kind: "tutorial" }} />

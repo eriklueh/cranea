@@ -3,6 +3,8 @@
 import { LightbulbIcon, LockIcon, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { openPaywall } from "@/components/plus/paywall";
+import { cifraStepText } from "@cranea/core/i18n";
+import { useLocale, useT } from "@/lib/i18n";
 import { FREE_HINTS, addFreeHintStep, freeHintSteps, usePlus } from "@/lib/plus";
 import { useCifra } from "../store";
 import { hintNudge, nextHintStep, traceFor } from "../hints";
@@ -14,6 +16,7 @@ const base = "inline-flex h-11 min-w-11 items-center justify-center gap-2 rounde
  * Sin Craneá Plus hay `FREE_HINTS` pistas por tablero; volver a ver una ya dada no cuenta. Después, la hoja de Plus.
  */
 export function HintButton() {
+  const t = useT();
   const status = useCifra((s) => s.status);
   const hint = useCifra((s) => s.hint);
   const id = useCifra((s) => s.puzzle?.id);
@@ -40,11 +43,11 @@ export function HintButton() {
     s.showHint(step);
   };
 
-  const title = hint?.level === 1 ? "Ver la deducción" : out ? "Más pistas con Craneá Plus" : "Pedir una pista";
+  const title = hint?.level === 1 ? t("cifra.hintSeeDeduction") : out ? t("cifra.hintMoreWithPlus") : t("cifra.hintAsk");
   return (
-    <button type="button" className={base} onClick={ask} aria-pressed={hint !== null} title={title} aria-label={out && hint?.level !== 1 ? "Pista, más pistas con Craneá Plus" : undefined}>
+    <button type="button" className={base} onClick={ask} aria-pressed={hint !== null} title={title} aria-label={out && hint?.level !== 1 ? t("cifra.hintLockedLabel") : undefined}>
       <LightbulbIcon className="size-4" />
-      Pista
+      {t("cifra.hint")}
       {out && hint?.level !== 1 && <LockIcon aria-hidden className="size-3 opacity-60" />}
     </button>
   );
@@ -57,6 +60,8 @@ export function useHintRows(): number[] {
 const NONE: number[] = [];
 
 export function HintPanel() {
+  const t = useT();
+  const locale = useLocale();
   const hint = useCifra((s) => s.hint);
   const puzzle = useCifra((s) => s.puzzle);
   const status = useCifra((s) => s.status);
@@ -71,19 +76,19 @@ export function HintPanel() {
       <LightbulbIcon aria-hidden className="mt-0.5 size-4 shrink-0 text-clue-present" />
       <div className="flex-1 space-y-1.5">
         {!step ? (
-          <p>Tus marcas ya muestran todo lo que se puede deducir. Escribí el código.</p>
+          <p>{t("cifra.hintAllShown")}</p>
         ) : hint.level === 1 ? (
           <>
-            <p>{hintNudge(step)}</p>
+            <p>{hintNudge(step, t, locale)}</p>
             <button type="button" className="font-semibold underline decoration-margin decoration-2 underline-offset-4" onClick={() => showHint(hint.step)}>
-              ¿Qué se deduce?
+              {t("cifra.hintWhatFollows")}
             </button>
           </>
         ) : (
-          <p>{step.text}</p>
+          <p>{cifraStepText(step, locale).text}</p>
         )}
       </div>
-      <button type="button" className="-m-1 inline-flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-ink/5 hover:text-foreground" onClick={closeHint} aria-label="Cerrar pista">
+      <button type="button" className="-m-1 inline-flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-ink/5 hover:text-foreground" onClick={closeHint} aria-label={t("cifra.hintClose")}>
         <XIcon className="size-4" />
       </button>
     </div>

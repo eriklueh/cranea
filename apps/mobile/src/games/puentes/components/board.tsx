@@ -4,6 +4,7 @@ import { StyleSheet, Text as RNText, View, type AccessibilityActionEvent } from 
 import { GestureDetector, useCompetingGestures, usePanGesture, useTapGesture, type PanGesture } from "react-native-gesture-handler";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { haptic } from "@/lib/haptics";
+import { useT } from "@/lib/i18n";
 import { sound } from "@/lib/sound";
 import { useOnChange } from "@/lib/hooks";
 import { celebrateStep, MOTION, pulse, shake as shakeTo, timing, useMotionReduced, useShake } from "@/lib/motion";
@@ -50,10 +51,11 @@ export function useBoardGesture(enabled: boolean) {
 }
 
 type Origin = { edge: number; island: number } | null;
-const DIR_LABEL: Record<Dir, string> = { up: "arriba", down: "abajo", left: "a la izquierda", right: "a la derecha" };
+const DIR_LABEL = { up: "puentes.dirUp", down: "puentes.dirDown", left: "puentes.dirLeft", right: "puentes.dirRight" } as const satisfies Record<Dir, string>;
 
 export function PuentesBoard({ puzzle, width, board }: { puzzle: PuentesPuzzle; width: number; board: { pan: PanGesture; gesture: ReturnType<typeof useBoardGesture>["gesture"]; input: RefObject<BoardInput> } }) {
   const { colors } = useTheme();
+  const t = useT();
   // Hasta que el juego arranca este tablero, el store puede tener el anterior: se dibuja vacío.
   const live = usePuentes((s) => s.puzzle === puzzle);
   const storeBridges = usePuentes((s) => s.bridges);
@@ -180,7 +182,7 @@ export function PuentesBoard({ puzzle, width, board }: { puzzle: PuentesPuzzle; 
     <Animated.View style={[{ alignSelf: "center" }, shake]}>
       <Animated.View style={nudgeStyle}>
         <GestureDetector gesture={board.gesture}>
-          <View style={{ width, height }} accessibilityLabel="Tablero">
+          <View style={{ width, height }} accessibilityLabel={t("puentes.board")}>
             <GridDots width={W} height={H} cell={cell} color={alpha(colors.pencil, 0.3)} />
             {edges.map((edge, i) => {
               const isGhost = preview === i;
@@ -202,7 +204,7 @@ export function PuentesBoard({ puzzle, width, board }: { puzzle: PuentesPuzzle; 
               );
             })}
             {islands.map((isl, i) => {
-              const actions = (Object.keys(neighbors[i]) as Dir[]).map((dir) => ({ name: dir, label: `Puente ${DIR_LABEL[dir]}` }));
+              const actions = (Object.keys(neighbors[i]) as Dir[]).map((dir) => ({ name: dir, label: t(DIR_LABEL[dir]) }));
               return (
                 <IslandView
                   key={i}
@@ -216,7 +218,7 @@ export function PuentesBoard({ puzzle, width, board }: { puzzle: PuentesPuzzle; 
                   step={celebrateStep(W + H - 2)}
                   reduced={reduced}
                   playing={playing}
-                  actions={playing ? [{ name: "activate", label: selected === null ? "Elegir" : "Unir" }, ...actions] : []}
+                  actions={playing ? [{ name: "activate", label: selected === null ? t("puentes.pick") : t("puentes.join") }, ...actions] : []}
                   onAction={(e) => {
                     const name = e.nativeEvent.actionName;
                     if (name === "activate") tapIsland(i);
@@ -270,6 +272,7 @@ function IslandView({ island, cell, have, selected, selectable, live, won, step,
   onAction: (e: AccessibilityActionEvent) => void;
 }) {
   const { colors } = useTheme();
+  const t = useT();
   const complete = have === island.n;
   const over = have > island.n;
   const size = 2 * ISLAND_R * cell;
@@ -308,7 +311,7 @@ function IslandView({ island, cell, have, selected, selectable, live, won, step,
       accessible
       accessibilityRole={playing ? "button" : "text"}
       accessibilityState={playing ? { selected, disabled: false } : undefined}
-      accessibilityLabel={`Isla ${island.n}, fila ${island.r + 1}, columna ${island.c + 1}: ${have} de ${island.n} puentes${complete ? ", completa" : over ? ", sobran puentes" : ""}.`}
+      accessibilityLabel={t("puentes.island", { n: island.n, row: island.r + 1, col: island.c + 1, have, state: complete ? t("puentes.islandComplete") : over ? t("puentes.islandOver") : "" })}
       accessibilityActions={actions}
       onAccessibilityAction={onAction}
     >

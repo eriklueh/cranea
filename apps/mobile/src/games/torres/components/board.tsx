@@ -4,12 +4,13 @@ import { Pressable, StyleSheet, View, useWindowDimensions, type StyleProp, type 
 import Animated, { useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 import { shadow, Text } from "@/components/ui";
 import { useOnChange } from "@/lib/hooks";
+import { useT } from "@/lib/i18n";
 import { celebrateStep, hop as hopTo, motion, MOTION, pulse, shake, useMotionReduced } from "@/lib/motion";
 import { useTheme } from "@/theme/theme";
 import { alpha, fonts, radius } from "@/theme/tokens";
 
-const SIDE_LABEL: Record<Side, string> = { top: "arriba", bottom: "abajo", left: "la izquierda", right: "la derecha" };
-const STATE_LABEL: Record<ClueState, string> = { none: "", pending: "", ok: ", cumplida", conflict: ", no se cumple" };
+const SIDE_LABEL = { top: "torres.sideTop", bottom: "torres.sideBottom", left: "torres.sideLeft", right: "torres.sideRight" } as const satisfies Record<Side, string>;
+const STATE_LABEL = { none: null, pending: null, ok: "torres.clueOk", conflict: "torres.clueConflict" } as const satisfies Record<ClueState, string | null>;
 const MAX_CELL = 64;
 const MIN_CLUE = 22;
 const FRAME = 2;
@@ -59,6 +60,7 @@ interface Props {
 /** Tablero de Torres: casillas en el centro y pistas de borde alrededor (apps/web/src/games/torres/components/board.tsx). */
 export function Board({ size, clues, givens, values, notes, selected = null, wrong = [], onSelect, readOnly = false, feedback = true, wave = false, rise = false, width, style }: Props) {
   const { colors } = useTheme();
+  const t = useT();
   const reduced = useMotionReduced();
   const { cell, clue, width: total } = boardMetrics(size, width);
   const dupes = useMemo(() => duplicateCells(values, size), [values, size]);
@@ -90,7 +92,7 @@ export function Board({ size, clues, givens, values, notes, selected = null, wro
   );
 
   return (
-    <View style={[{ width: total, flexDirection: "row", alignSelf: "center" }, style]} accessibilityLabel={`Tablero de ${size} por ${size}`}>
+    <View style={[{ width: total, flexDirection: "row", alignSelf: "center" }, style]} accessibilityLabel={t("torres.board", { n: size })}>
       {column("left")}
       <View>
         {lane("top")}
@@ -144,6 +146,7 @@ const Clue = memo(function Clue({ side, index, value, state, size, reduced }: { 
   const { colors } = useTheme();
   const scale = useSharedValue(1);
   const x = useSharedValue(0);
+  const t = useT();
   // Cada cambio de estado tiene su propio gesto: un latido al cumplirse (`confirm`), una sacudida chica al no cumplirse (`shake`).
   useOnChange(state, (s) => {
     if (reduced) return;
@@ -152,7 +155,7 @@ const Clue = memo(function Clue({ side, index, value, state, size, reduced }: { 
   });
   const anim = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }, { scale: scale.value }] }));
   if (!value) return null;
-  const line = side === "top" || side === "bottom" ? `columna ${index + 1}` : `fila ${index + 1}`;
+  const line = side === "top" || side === "bottom" ? t("torres.lineColumn", { n: index + 1 }) : t("torres.lineRow", { n: index + 1 });
   const d = Math.min(size - 2, 32);
   const tone =
     state === "ok" ? { bg: colors.clueExactBg, fg: colors.clueExact } : state === "conflict" ? { bg: colors.margin, fg: colors.paper } : { bg: "transparent", fg: colors.ink };
@@ -160,7 +163,7 @@ const Clue = memo(function Clue({ side, index, value, state, size, reduced }: { 
     <Animated.View
       accessible
       accessibilityRole="text"
-      accessibilityLabel={`Desde ${SIDE_LABEL[side]}, ${line}: se ven ${value}${STATE_LABEL[state]}`}
+      accessibilityLabel={t("torres.clueLabel", { side: t(SIDE_LABEL[side]), line, n: value, state: STATE_LABEL[state] ? t(STATE_LABEL[state]) : "" })}
       style={[{ width: d, height: d, borderRadius: d / 2, alignItems: "center", justifyContent: "center", backgroundColor: tone.bg }, anim]}
     >
       <Text maxFontSizeMultiplier={1} style={{ fontFamily: fonts.display, fontSize: Math.round(d * 0.62), lineHeight: Math.round(d * 0.8), color: tone.fg, fontVariant: ["tabular-nums"] }}>
@@ -192,8 +195,13 @@ interface CellProps {
 
 const Cell = memo(function Cell({ index, row, col, size, cell, value, given, notes, selected, related, sameValue, conflict, wrong, readOnly, rise, wave, onSelect }: CellProps) {
   const { colors } = useTheme();
+  const t = useT();
   const noteList = notes ? Array.from({ length: size }, (_, k) => k + 1).filter((v) => notes & (1 << (v - 1))) : [];
-  const label = `Fila ${row + 1}, columna ${col + 1}: ${value ? `altura ${value}` : "vacía"}${given ? ", dada" : ""}${conflict ? ", repetida" : ""}${wrong ? ", incorrecta" : ""}${noteList.length ? `, notas ${noteList.join(" ")}` : ""}`;
+  const label = t("torres.cellLabel", { row: row + 1, col: col + 1, value: value ? t("torres.cellHeight", { n: value }) : t("torres.cellEmpty") }) +
+    (given ? t("torres.cellGiven") : "") +
+    (conflict ? t("torres.cellRepeated") : "") +
+    (wrong ? t("torres.cellWrong") : "") +
+    (noteList.length ? t("torres.cellNotes", { notes: noteList.join(" ") }) : "");
   const bg = wrong ? alpha(colors.margin, 0.15) : selected ? colors.tile : sameValue ? colors.cluePresentBg : related ? alpha(colors.accent, 0.75) : "transparent";
   const fg = wrong || conflict ? colors.margin : given ? colors.ink : colors.ring;
   const line = alpha(colors.ink, 0.2);

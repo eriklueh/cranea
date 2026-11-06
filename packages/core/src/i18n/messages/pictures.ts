@@ -9,6 +9,8 @@ export const es = {
   Manzana: "Manzana", Mariposa: "Mariposa", Mate: "Mate", Nota: "Nota", Paraguas: "Paraguas", Pato: "Pato",
   Pez: "Pez", Pingüino: "Pingüino", Robot: "Robot", Taza: "Taza", Tetera: "Tetera", Tortuga: "Tortuga",
   Velero: "Velero", Árbol: "Árbol",
+  /** El diario (`generateDaily` en nonograma/levels.ts). */
+  "Dibujo del día": "Dibujo del día",
 };
 
 export const en: NamespaceShape<typeof es> = {
@@ -19,4 +21,5 @@ export const en: NamespaceShape<typeof es> = {
   Manzana: "Apple", Mariposa: "Butterfly", Mate: "Mate", Nota: "Music Note", Paraguas: "Umbrella", Pato: "Duck",
   Pez: "Fish", Pingüino: "Penguin", Robot: "Robot", Taza: "Mug", Tetera: "Teapot", Tortuga: "Turtle",
   Velero: "Sailboat", Árbol: "Tree",
+  "Dibujo del día": "Today's picture",
 };

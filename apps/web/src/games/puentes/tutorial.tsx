@@ -1,8 +1,10 @@
 "use client";
 import { edgeBetween, islandAt, TUTORIAL_PUZZLE as P } from "@cranea/core/puentes";
+import { useMemo } from "react";
 import { TutorialOverlay } from "@/components/tutorial/tutorial-overlay";
 import type { Verdict } from "@/components/tutorial/machine";
 import type { TutorialScript } from "@/components/tutorial/types";
+import { useT, type T } from "@/lib/i18n";
 import { PuentesGame } from "./components/puentes-game";
 import { usePuentes } from "./store";
 
@@ -36,7 +38,7 @@ const onlyChanged = (s: S, expected: readonly number[], free: number[] = []) => 
 /** Verdict según cuántos puentes tiene una conexión: `want` termina el paso, lo intermedio es avance. */
 const reach = (s: S, edge: number, want: number): Verdict => (s.bridges[edge] === want ? "done" : s.bridges[edge] < want ? "progress" : "wrong");
 
-const SCRIPT: TutorialScript<S> = {
+const script = (t: T): TutorialScript<S> => ({
   game: "puentes",
   name: "Puentes",
   levelHref: "/puentes/nivel/1/1",
@@ -47,53 +49,55 @@ const SCRIPT: TutorialScript<S> = {
   snapshot: (s) => ({ bridges: s.bridges, history: s.history, notice: s.notice, selected: null, wrong: [], status: s.status, finishedAt: s.finishedAt }),
   reset: () => usePuentes.getState().start(P),
   steps: [
-    { targets: ["board"], text: "Uní las islas con puentes. Cada número dice cuántos puentes salen de esa isla." },
-    { targets: ["board"], text: "Los puentes van en línea recta, de isla a isla. Entre dos islas puede haber uno o dos." },
+    { targets: ["board"], text: t("tutorialPuentes.intro") },
+    { targets: ["board"], text: t("tutorialPuentes.straight") },
     {
       targets: [[island(ONE), island(MID)]],
       anchor: island(ONE),
-      text: "Este 1 ve una sola isla: el 4 de arriba. Tocá el 1 y después el 4.",
-      nudge: "Uní el 1 con el 4 de arriba.",
+      text: t("tutorialPuentes.one"),
+      nudge: t("tutorialPuentes.oneNudge"),
       check: (s) => (onlyChanged(s, base({}), [DOWN]) ? reach(s, DOWN, 1) : "wrong"),
     },
     {
       targets: [[island(LEFT2), island(RIGHT2)]],
-      text: "Ahora probá unir estos dos 2.",
-      nudge: "Tocá un 2 y después el otro.",
+      text: t("tutorialPuentes.twos"),
+      nudge: t("tutorialPuentes.twosNudge"),
       delay: 600,
       check: (s) => (!onlyChanged(s, AFTER_ONE) ? "wrong" : s.notice?.kind === "blocked" ? "done" : "ignore"),
     },
-    { targets: [[island(LEFT2), island(RIGHT2)]], text: "No se puede: cruzaría el puente del 1. Los puentes nunca se cruzan." },
+    { targets: [[island(LEFT2), island(RIGHT2)]], text: t("tutorialPuentes.blocked") },
     {
       targets: [[island(LEFT2), island(CORNER)]],
-      text: "Entonces este 2 solo puede ir para arriba. Unilo con el 4.",
-      nudge: "Uní el 2 de la izquierda con el 4 de la esquina.",
+      text: t("tutorialPuentes.leftUp"),
+      nudge: t("tutorialPuentes.leftUpNudge"),
       check: (s) => (onlyChanged(s, AFTER_ONE, [LEFT_UP]) ? reach(s, LEFT_UP, 1) : "wrong"),
     },
     {
       targets: [[island(LEFT2), island(CORNER)]],
-      text: "Le falta uno más. Tocá el puente para sumar el segundo.",
-      nudge: "Tocá el puente que acabás de poner.",
+      text: t("tutorialPuentes.double"),
+      nudge: t("tutorialPuentes.doubleNudge"),
       check: (s) => (onlyChanged(s, base({ [DOWN]: 1 }), [LEFT_UP]) && s.bridges[LEFT_UP] > 0 ? reach(s, LEFT_UP, 2) : "wrong"),
     },
     {
       targets: [[island(RIGHT2), island(RIGHT)]],
-      text: "Con el otro 2 pasa lo mismo. Ponele dos puentes hacia arriba.",
-      nudge: "Dos puentes entre el 2 y el 3 de arriba.",
+      text: t("tutorialPuentes.rightUp"),
+      nudge: t("tutorialPuentes.rightUpNudge"),
       check: (s) => (onlyChanged(s, AFTER_LEFT, [RIGHT_UP]) ? reach(s, RIGHT_UP, 2) : "wrong"),
     },
     {
       targets: ["board"],
-      text: "Terminá vos. Al final, todas las islas tienen que quedar unidas en un solo grupo.",
-      nudge: "Ese puente sobra. Contá lo que le falta a cada isla.",
+      text: t("tutorialPuentes.finish"),
+      nudge: t("tutorialPuentes.finishNudge"),
       delay: 900,
       check: (s) => (s.status === "won" ? "done" : s.bridges.some((b, i) => b > P.solution[i]) ? "wrong" : "progress"),
     },
   ],
-  outro: "Contar, no cruzar y dejar todo unido. Con eso ya podés jugar.",
-};
+  outro: t("tutorialPuentes.outro"),
+});
 
 export function PuentesTutorial() {
+  const t = useT();
+  const SCRIPT = useMemo(() => script(t), [t]);
   return (
     <>
       <PuentesGame puzzle={P} mode={{ kind: "tutorial" }} />

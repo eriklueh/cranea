@@ -1,4 +1,5 @@
 /** Compartir texto o imágenes desde el navegador, con alternativa cuando no hay hoja de compartir. */
+import { getT } from "@/lib/i18n";
 
 export type ShareOutcome = "shared" | "copied" | "downloaded" | "saved" | "cancelled" | "failed";
 
@@ -91,15 +92,16 @@ export async function shareImageWithText(blob: Blob, filename: string, text: str
 
 /** Mensaje corto para anunciar cómo terminó; null si no hace falta decir nada. */
 export function outcomeMessage(o: ShareOutcome): string | null {
+  const t = getT();
   switch (o) {
     case "copied":
-      return "Copiado. Pegalo donde quieras.";
+      return t("share.copied");
     case "downloaded":
-      return "Imagen descargada.";
+      return t("share.downloaded");
     case "saved":
-      return "Imagen descargada y texto copiado.";
+      return t("share.saved");
     case "failed":
-      return "No se pudo compartir.";
+      return t("share.failed");
     default:
       return null;
   }

@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { todayKey } from "@cranea/core";
 import { openPaywall } from "@/components/plus/paywall";
 import { GAMES } from "@/games/registry";
+import { gameCopy } from "@cranea/core/i18n";
+import { useLocale, useT } from "@/lib/i18n";
 import { PLUS_TRIAL, usePlus } from "@/lib/plus";
 
 /**
@@ -46,6 +48,8 @@ export function PlusNudge({ gameId, levels, mode, won = true, onLeave }: { gameI
   const slot = mode.kind === "level" && "world" in mode ? `level:${mode.world}-${mode.level}` : mode.kind === "daily" && "date" in mode && !mode.practice ? `daily:${mode.date}` : null;
   // Se decide en el cliente, una vez: depende de localStorage.
   const [shown, setShown] = useState(false);
+  const t = useT();
+  const locale = useLocale();
   const active = Boolean(slot) && won && ready && !plus && levels > 0;
 
   useEffect(() => {
@@ -58,7 +62,7 @@ export function PlusNudge({ gameId, levels, mode, won = true, onLeave }: { gameI
   }, [active, gameId, slot]);
 
   if (!active || !shown || !slot) return null;
-  const game = GAMES.find((g) => g.id === gameId)?.name ?? "este juego";
+  const game = GAMES.some((g) => g.id === gameId) ? gameCopy(gameId, locale).name : t("plus.thisGame");
   const dismiss = () => {
     writeSeen(gameId, { date: todayKey(), slot, dismissed: true });
     setShown(false);
@@ -70,8 +74,8 @@ export function PlusNudge({ gameId, levels, mode, won = true, onLeave }: { gameI
         <SparklesIcon className="size-4" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="font-bold">¿Querés seguir?</p>
-        <p className="text-sm text-muted-foreground">Tenés {levels} niveles más de {game} con Craneá Plus.</p>
+        <p className="font-bold">{t("plus.nudgeTitle")}</p>
+        <p className="text-sm text-muted-foreground">{t("plus.nudgeBody", { count: levels, game })}</p>
         <button
           type="button"
           aria-haspopup="dialog"
@@ -81,12 +85,12 @@ export function PlusNudge({ gameId, levels, mode, won = true, onLeave }: { gameI
           }}
           className="mt-1 -ml-1 inline-flex min-h-11 items-center rounded-md px-1 text-sm font-semibold text-clue-present underline decoration-2 underline-offset-4 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
         >
-          {PLUS_TRIAL || "Ver Craneá Plus"}
+          {PLUS_TRIAL ? t("plus.trial") : t("plus.seePlus")}
         </button>
       </div>
       <button
         type="button"
-        aria-label="Ahora no"
+        aria-label={t("plus.notNow")}
         onClick={dismiss}
         className="absolute top-1 right-1 grid size-11 place-items-center rounded-md text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
       >

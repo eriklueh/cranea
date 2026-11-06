@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { View } from "react-native";
 import { Button, Card, Icon, Row, Screen, Text } from "@/components/ui";
+import { useT } from "@/lib/i18n";
 import { showRewarded } from "@/monetization/ads";
 import { useTheme } from "@/theme/theme";
 import { fonts } from "@/theme/tokens";
@@ -17,8 +18,9 @@ export function usePlusPaywall() {
 /** Etiqueta "Plus" junto a lo que requiere la suscripción. */
 export function PlusBadge({ small }: { small?: boolean }) {
   const { colors } = useTheme();
+  const t = useT();
   return (
-    <Row gap={3} style={{ backgroundColor: colors.cluePresentBg, borderRadius: 999, paddingHorizontal: small ? 5 : 8, paddingVertical: small ? 0 : 2 }} accessibilityLabel="Craneá Plus">
+    <Row gap={3} style={{ backgroundColor: colors.cluePresentBg, borderRadius: 999, paddingHorizontal: small ? 5 : 8, paddingVertical: small ? 0 : 2 }} accessibilityLabel={t("common.plus")}>
       <Icon name="star" size={small ? 9 : 12} color={colors.cluePresent} />
       <Text style={{ fontFamily: fonts.bodyBold, fontSize: small ? 10 : 12, color: colors.cluePresent }}>Plus</Text>
     </Row>
@@ -30,6 +32,7 @@ export function PlusGate({ title, message, reason }: { title: string; message: s
   const { colors } = useTheme();
   const router = useRouter();
   const open = usePlusPaywall();
+  const t = useT();
   return (
     <Screen contentStyle={{ paddingTop: 32 }}>
       <Card raised style={{ gap: 12, alignItems: "flex-start" }}>
@@ -41,8 +44,8 @@ export function PlusGate({ title, message, reason }: { title: string; message: s
           <PlusBadge />
         </Row>
         <Text variant="muted">{message}</Text>
-        <Button title="Conocer Craneá Plus" icon="star" size="lg" style={{ alignSelf: "stretch" }} onPress={() => open(reason)} />
-        <Button title="Volver" variant="ghost" style={{ alignSelf: "stretch" }} onPress={() => (router.canGoBack() ? router.back() : router.navigate("/"))} />
+        <Button title={t("plus.discover")} icon="star" size="lg" style={{ alignSelf: "stretch" }} onPress={() => open(reason)} />
+        <Button title={t("common.back")} variant="ghost" style={{ alignSelf: "stretch" }} onPress={() => (router.canGoBack() ? router.back() : router.navigate("/"))} />
       </Card>
     </Screen>
   );

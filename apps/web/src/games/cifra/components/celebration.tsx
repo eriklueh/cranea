@@ -2,13 +2,15 @@
 
 import type { CSSProperties } from "react";
 import { FlameIcon, TrophyIcon } from "lucide-react";
+import { formatNumber, worldCopy } from "@cranea/core/i18n";
 import { DURATION, popStep } from "@/lib/motion";
+import { useLocale, useT } from "@/lib/i18n";
 import type { Result } from "@/stores/progress";
 import { formatTime } from "@/lib/utils";
 import { getWorld, levelKey } from "../data";
 
 export type Celebration =
-  | { kind: "world"; name: string; levels: number; timeMs: number; attempts: number }
+  | { kind: "world"; world: number; levels: number; timeMs: number; attempts: number }
   | { kind: "streak"; days: number };
 
 export const STREAK_MILESTONES = [7, 30];
@@ -25,7 +27,7 @@ export function worldCelebration(levels: Record<string, Result>, worldId: number
   }
   return {
     kind: "world",
-    name: world.name,
+    world: world.id,
     levels: results.length,
     timeMs: results.reduce((t, r) => t + r.timeMs, 0),
     attempts: results.reduce((t, r) => t + r.attempts, 0) / results.length,
@@ -37,7 +39,11 @@ const SPARKS = ["left-[18%] top-3", "right-[20%] top-5", "left-[28%] bottom-4", 
 const SPARK_STYLE = (i: number) => ({ "--base": `${DURATION.base}ms`, "--i": i, "--step": popStep(SPARKS.length) }) as CSSProperties;
 
 export function CelebrationBanner({ celebration }: { celebration: Celebration }) {
+  const t = useT();
+  const locale = useLocale();
   const world = celebration.kind === "world";
+  const worldData = celebration.kind === "world" ? getWorld(celebration.world) : null;
+  const worldName = worldData ? worldCopy("cifra", worldData, locale).name : "";
   return (
     <div className="relative overflow-hidden rounded-xl bg-clue-exact-bg px-4 pt-5 pb-4 text-center text-clue-exact anim-appear">
       {SPARKS.map((c, i) => (
@@ -48,26 +54,26 @@ export function CelebrationBanner({ celebration }: { celebration: Celebration })
       </span>
       {celebration.kind === "world" ? (
         <>
-          <p className="font-display text-lg font-bold">Mundo completo: {celebration.name}</p>
+          <p className="font-display text-lg font-bold">{t("cifra.worldComplete", { name: worldName })}</p>
           <dl className="mt-2 grid grid-cols-3 gap-2 text-foreground">
             <div>
-              <dt className="text-xs text-muted-foreground">Niveles</dt>
+              <dt className="text-xs text-muted-foreground">{t("common.levels")}</dt>
               <dd className="font-semibold tabular-nums">{celebration.levels}</dd>
             </div>
             <div>
-              <dt className="text-xs text-muted-foreground">Tiempo total</dt>
+              <dt className="text-xs text-muted-foreground">{t("cifra.totalTime")}</dt>
               <dd className="font-semibold tabular-nums">{formatTime(celebration.timeMs)}</dd>
             </div>
             <div>
-              <dt className="text-xs text-muted-foreground">Intentos promedio</dt>
-              <dd className="font-semibold tabular-nums">{celebration.attempts.toLocaleString("es-AR", { maximumFractionDigits: 1 })}</dd>
+              <dt className="text-xs text-muted-foreground">{t("cifra.avgAttempts")}</dt>
+              <dd className="font-semibold tabular-nums">{formatNumber(celebration.attempts, locale, { maximumFractionDigits: 1 })}</dd>
             </div>
           </dl>
         </>
       ) : (
         <>
-          <p className="font-display text-lg font-bold">{celebration.days === 7 ? "Una semana entera" : celebration.days === 30 ? "Un mes entero" : `${celebration.days} días`}</p>
-          <p className="text-sm text-foreground">Resolviste el diario {celebration.days} días seguidos.</p>
+          <p className="font-display text-lg font-bold">{celebration.days === 7 ? t("cifra.aWeek") : celebration.days === 30 ? t("cifra.aMonth") : t("common.days", { count: celebration.days })}</p>
+          <p className="text-sm text-foreground">{t("cifra.streakBody", { n: celebration.days })}</p>
         </>
       )}
     </div>

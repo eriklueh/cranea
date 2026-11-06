@@ -6,12 +6,25 @@ import { AchievementIcon } from "@/components/achievement-icon";
 import { useAchievementList } from "@/components/achievements-view";
 import { ProtectorsCard } from "@/components/protectors";
 import { useHydrated } from "@/hooks/use-hydrated";
+import { useGameCopy, useT, useVisibleGames } from "@/lib/i18n";
 import { formatTime } from "@/lib/utils";
 import { gameStats, useGameProgress } from "@/stores/progress";
 
-/** Estadísticas de cada juego, calculadas con el progreso del dispositivo. */
-export function StatsView({ games }: { games: GameMeta[] }) {
+/** Título y bajada de /estadisticas (la página es del servidor). */
+export function StatsHeader() {
+  const t = useT();
+  return (
+    <div>
+      <h1 className="font-display text-4xl font-extrabold tracking-tight">{t("common.stats")}</h1>
+      <p className="mt-2 max-w-md text-muted-foreground">{t("stats.statsIntro")}</p>
+    </div>
+  );
+}
+
+/** Estadísticas de cada juego, calculadas con el progreso del dispositivo. Solo los juegos del idioma. */
+export function StatsView({ games: all }: { games: GameMeta[] }) {
   const hydrated = useHydrated();
+  const games = useVisibleGames(all);
   return (
     <div className="space-y-10">
       {hydrated ? <AchievementsLink /> : <div className="h-[4.75rem]" />}
@@ -23,6 +36,7 @@ export function StatsView({ games }: { games: GameMeta[] }) {
 
 /** Cuántos logros llevás, con los últimos conseguidos. */
 function AchievementsLink() {
+  const t = useT();
   const list = useAchievementList();
   const done = list.filter((a) => a.unlocked).sort((a, b) => (b.at ?? 0) - (a.at ?? 0));
   return (
@@ -31,9 +45,9 @@ function AchievementsLink() {
       className="flex min-h-11 items-center gap-3 rounded-xl border-2 border-ink bg-card p-4 shadow-[0_4px_0_0_var(--shadow-ink)] outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
     >
       <span className="min-w-0 flex-1">
-        <span className="block font-display text-xl font-extrabold">Logros</span>
+        <span className="block font-display text-xl font-extrabold">{t("common.achievements")}</span>
         <span className="block text-sm text-muted-foreground tabular-nums">
-          {done.length} de {list.length} conseguidos
+          {t("stats.achievementsCount", { done: done.length, total: list.length })}
         </span>
       </span>
       <span aria-hidden className="flex -space-x-2">
@@ -49,6 +63,8 @@ function AchievementsLink() {
 }
 
 function GameStatsCard({ game }: { game: GameMeta }) {
+  const t = useT();
+  const copy = useGameCopy(game.id);
   const today = todayKey();
   const s = gameStats(useGameProgress(game.id), today);
   const rate = s.played ? Math.round((s.won / s.played) * 100) : 0;
@@ -61,34 +77,35 @@ function GameStatsCard({ game }: { game: GameMeta }) {
     <section id={game.id} aria-labelledby={`stats-${game.id}`} className="scroll-mt-20 rounded-xl border-2 border-ink bg-card p-5 shadow-[0_4px_0_0_var(--shadow-ink)]">
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
         <h2 id={`stats-${game.id}`} className="font-display text-2xl font-extrabold">
-          {game.name}
+          {copy.name}
+          {copy.subtitle && <span className="font-sans text-base font-semibold text-muted-foreground"> · {copy.subtitle}</span>}
         </h2>
         <Link href={`/ranking?juego=${game.id}`} className="font-semibold underline decoration-margin decoration-2 underline-offset-4">
-          Ranking
+          {t("common.ranking")}
         </Link>
       </div>
 
       {s.played === 0 ? (
         <p className="text-muted-foreground">
-          Todavía no jugaste.{" "}
+          {t("stats.notPlayed")}{" "}
           <Link href={game.path} className="font-semibold text-foreground underline decoration-margin decoration-2 underline-offset-4">
-            Empezá por acá
+            {t("stats.startHere")}
           </Link>
           .
         </p>
       ) : (
         <>
           <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
-            <Stat label="Partidas" value={s.played} />
-            <Stat label="Ganadas" value={`${rate}%`} />
-            <Stat label="Racha" value={s.streak} />
-            <Stat label="Mejor racha" value={s.bestStreak} />
-            <Stat label="Tiempo promedio" value={s.avgTimeMs === null ? "—" : formatTime(s.avgTimeMs)} />
-            <Stat label="Mejor tiempo" value={s.bestTimeMs === null ? "—" : formatTime(s.bestTimeMs)} />
-            <Stat label="Niveles completos" value={s.levelsCompleted} />
+            <Stat label={t("stats.played")} value={s.played} />
+            <Stat label={t("stats.wonRate")} value={`${rate}%`} />
+            <Stat label={t("common.streak")} value={s.streak} />
+            <Stat label={t("stats.bestStreak")} value={s.bestStreak} />
+            <Stat label={t("stats.avgTime")} value={s.avgTimeMs === null ? "—" : formatTime(s.avgTimeMs)} />
+            <Stat label={t("stats.bestTime")} value={s.bestTimeMs === null ? "—" : formatTime(s.bestTimeMs)} />
+            <Stat label={t("stats.levelsCompleted")} value={s.levelsCompleted} />
           </dl>
 
-          <h3 className="mt-6 mb-2 font-semibold">Intentos en el diario</h3>
+          <h3 className="mt-6 mb-2 font-semibold">{t("stats.dailyAttempts")}</h3>
           <ol className="space-y-1.5">
             {rows.map((r) => (
               <li key={r.label} className="flex items-center gap-2 text-sm tabular-nums">
@@ -98,7 +115,7 @@ function GameStatsCard({ game }: { game: GameMeta }) {
                     className="block h-6 min-w-7 rounded-sm bg-primary px-2 text-right leading-6 font-semibold text-primary-foreground"
                     style={{ width: `${(r.n / top) * 100}%` }}
                   >
-                    <span className="sr-only">{r.label === "X" ? "Sin resolver" : `${r.label} ${r.label === "1" ? "intento" : "intentos"}`}: </span>
+                    <span className="sr-only">{r.label === "X" ? t("stats.unsolved") : t("common.attempts", { count: Number(r.label) })}: </span>
                     {r.n}
                   </span>
                 </span>

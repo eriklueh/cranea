@@ -4,8 +4,10 @@ import * as Sharing from "expo-sharing";
 import { useRef, useState, type ComponentProps, type ComponentRef } from "react";
 import { Platform, Share, StyleSheet, View } from "react-native";
 import { captureRef } from "react-native-view-shot";
+import type { Locale } from "@cranea/core/i18n";
 import { shareText } from "@/components/result-sheet";
 import { Button, Row, Text } from "@/components/ui";
+import { getLocale, translator, useT } from "@/lib/i18n";
 import { light as C, alpha, fonts } from "@/theme/tokens";
 
 /**
@@ -39,9 +41,11 @@ export interface ResultCard {
 
 export const SHARE_FOOTER = "cranea.app";
 
-/** "Diario #12" o "Nivel 2-3". */
-export const resultLabel = (mode: { kind: "daily"; number: number } | { kind: "level"; world: number; level: number }) =>
-  mode.kind === "daily" ? `Diario #${mode.number}` : `Nivel ${mode.world}-${mode.level}`;
+/** "Diario #12" o "Nivel 2-3" ("Daily #12", "Level 2-3"). */
+export const resultLabel = (mode: { kind: "daily"; number: number } | { kind: "level"; world: number; level: number }, locale: Locale = getLocale()) => {
+  const t = translator(locale);
+  return mode.kind === "daily" ? t("share.dailyLabel", { n: mode.number }) : t("share.levelLabel", { world: mode.world, level: mode.level });
+};
 
 /** Los intentos fallados, el que salió y los que sobraron (perdido: todos fallados). */
 export function attemptMarks(total: number, misses: number, won: boolean): AttemptMark[] {
@@ -64,6 +68,7 @@ const VIS_H = 136;
  * y el texto; Android no acepta texto con un archivo, así que el texto queda copiado para pegarlo.
  */
 export function ResultShareButton({ text, card }: { text: string; card: ResultCard }) {
+  const t = useT();
   const ref = useRef<ComponentRef<typeof View>>(null);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
@@ -77,8 +82,8 @@ export function ResultShareButton({ text, card }: { text: string; card: ResultCa
         await Share.share({ url: uri, message: text });
       } else if (await Sharing.isAvailableAsync()) {
         await Clipboard.setStringAsync(text).catch(() => undefined);
-        setNote("El texto quedó copiado: pegalo junto a la imagen.");
-        await Sharing.shareAsync(uri, { mimeType: "image/png", dialogTitle: "Compartir resultado" });
+        setNote(t("share.textCopied"));
+        await Sharing.shareAsync(uri, { mimeType: "image/png", dialogTitle: t("share.shareResult") });
       } else {
         await shareText(text);
       }
@@ -92,8 +97,8 @@ export function ResultShareButton({ text, card }: { text: string; card: ResultCa
   return (
     <View style={{ gap: 4 }}>
       <Row gap={8}>
-        <Button title="Compartir resultado" variant="outline" icon="share-outline" onPress={shareImage} loading={busy} style={{ flex: 1 }} />
-        <Button title="Texto" variant="outline" icon="text-outline" onPress={() => void shareText(text)} accessibilityLabel="Compartir solo el texto" style={{ paddingHorizontal: 14 }} />
+        <Button title={t("share.shareResult")} variant="outline" icon="share-outline" onPress={shareImage} loading={busy} style={{ flex: 1 }} />
+        <Button title={t("share.text")} variant="outline" icon="text-outline" onPress={() => void shareText(text)} accessibilityLabel={t("share.textOnly")} style={{ paddingHorizontal: 14 }} />
       </Row>
       {note && <Text variant="small" style={{ textAlign: "center" }} accessibilityLiveRegion="polite">{note}</Text>}
       {/* Fuera de la pantalla: solo existe para la captura. */}

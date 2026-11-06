@@ -7,7 +7,7 @@ import { useHydrated } from "@/hooks/use-hydrated";
  */
 export const PLUS_ENABLED = process.env.NEXT_PUBLIC_PLUS_ENABLED === "1";
 
-/** Precio de referencia; el real lo ponen las tiendas. */
+/** Precio de referencia; el real lo ponen las tiendas. En pantalla, `t("plus.price")` (este es el de la metadata, en español). */
 export const PLUS_PRICE = "desde USD 1,99/mes";
 
 /** Páginas de la app en las tiendas. Vacías no se muestran. */
@@ -18,17 +18,13 @@ export { FREE_LEVELS, isFreeLevel, plusLevelCount } from "./free-levels";
 
 /**
  * La prueba gratis de la app, para la tarjeta "¿Querés seguir?". La web no puede leer la oferta de la
- * tienda: tiene que coincidir con las ofertas de las tiendas (3 días: ninguna permite menos; ver docs/mobile.md). Vacío no se muestra.
+ * tienda: tiene que coincidir con las ofertas de las tiendas (3 días: ninguna permite menos; ver docs/mobile.md).
+ * El texto es `plus.trial`; en false no se muestra.
  */
-export const PLUS_TRIAL = "Probá gratis 3 días en la app";
+export const PLUS_TRIAL: boolean = true;
 
-/** Lo que suma Plus, para la hoja y /plus. */
-export const PLUS_BENEFITS = [
-  "Todos los niveles y mundos de los cinco juegos",
-  "El archivo: jugá los diarios que te perdiste",
-  "Pistas sin límite",
-  "Sin publicidad en la app",
-] as const;
+/** Lo que suma Plus, para la hoja y /plus (claves de `plus`). */
+export const PLUS_BENEFITS = ["plus.benefitLevels", "plus.benefitArchive", "plus.benefitHints", "plus.benefitNoAds"] as const;
 
 /** Pistas gratis por tablero sin Plus. */
 export const FREE_HINTS = 1;

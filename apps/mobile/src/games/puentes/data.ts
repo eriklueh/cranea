@@ -2,6 +2,7 @@ import { unpack, WORLDS, type PackedLevel } from "@cranea/core/puentes";
 import packed from "@cranea/core/levels/puentes.json";
 import { levelKey, unlockRules, type GameHomeConfig } from "@/components/game-home/types";
 import { dayNumber } from "@/lib/format";
+import { translator, type T } from "@/lib/i18n";
 
 /** Mismo id, claves de nivel (`w2-l5`) y de diario (`2026-10-31`) que la web (apps/web/src/games/puentes/data.ts). */
 export const GAME_ID = "puentes";
@@ -29,7 +30,8 @@ export const { isWorldUnlocked, isLevelUnlocked } = unlockRules(WORLDS);
 /** Puntitos del mapa: 3 sin errores, 2 con uno, 1 con más. */
 export const starsFor = (attempts: number) => Math.max(1, 4 - attempts);
 
-export const mistakesText = (n: number) => (n === 0 ? "sin errores" : n === 1 ? "con 1 error" : `con ${n} errores`);
+/** "sin errores", "con 2 errores" / "no mistakes", "2 mistakes". */
+export const mistakesText = (n: number, t: T) => (n === 0 ? t("puentes.noMistakes") : t("puentes.withMistakes", { count: n }));
 
 export const PUENTES_HOME: GameHomeConfig = {
   id: GAME_ID,
@@ -37,8 +39,8 @@ export const PUENTES_HOME: GameHomeConfig = {
   pitch: "Uní todas las islas con puentes rectos, sin cruzarlos.",
   article: "el",
   daily: {
-    title: "Puentes del día",
-    blurb: "Un mapa nuevo, el mismo para todos.",
+    title: (locale) => translator(locale)("puentes.dailyTitle"),
+    blurb: (locale) => translator(locale)("puentes.dailyBlurb"),
     href: "/puentes/diario",
     number: dailyNumber,
   },
@@ -49,6 +51,6 @@ export const PUENTES_HOME: GameHomeConfig = {
   levelHref: (w, l) => ({ pathname: "/puentes/nivel/[mundo]/[nivel]", params: { mundo: String(w), nivel: String(l) } }),
   howToHref: "/puentes/como-jugar",
   stars: (r) => starsFor(r.attempts),
-  resultText: (r) => mistakesText(r.attempts - 1),
-  resultStat: (r) => ({ label: "Errores", value: String(r.attempts - 1) }),
+  resultText: (r, locale) => mistakesText(r.attempts - 1, translator(locale)),
+  resultStat: (r, locale) => ({ label: translator(locale)("puentes.statMistakes"), value: String(r.attempts - 1) }),
 };

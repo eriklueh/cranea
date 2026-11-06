@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { Locale } from "@cranea/core/i18n";
+import { translator } from "@/lib/i18n";
 import type { Result } from "@/stores/progress";
 
 /**
@@ -60,5 +61,8 @@ export interface GameHomeConfig {
 
 export const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
-/** "en 2 intentos" */
-export const attemptsText = (r: Result) => `en ${plural(r.attempts, "intento", "intentos")}`;
+/** "en 2 intentos" / "in 2 tries" */
+export const attemptsText = (r: Result, locale: Locale = "es") => {
+  const t = translator(locale);
+  return t("hub.inAttempts", { text: t("common.attempts", { count: r.attempts }) });
+};

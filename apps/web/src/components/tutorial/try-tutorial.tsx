@@ -1,8 +1,11 @@
+"use client";
 import Link from "next/link";
 import { ChevronRightIcon, GraduationCapIcon } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 /** Acceso al tutorial desde "Cómo se juega": jugarlo explica más rápido que leerlo. */
 export function TryTutorial({ href }: { href: string }) {
+  const t = useT();
   return (
     <Link
       href={href}
@@ -10,8 +13,8 @@ export function TryTutorial({ href }: { href: string }) {
     >
       <GraduationCapIcon aria-hidden className="size-6 shrink-0 text-ring" />
       <span className="min-w-0 flex-1 leading-snug">
-        <span className="block font-display text-lg font-bold">Probá el tutorial</span>
-        <span className="block text-sm text-muted-foreground">Un tablero chiquito, paso a paso. Menos de un minuto.</span>
+        <span className="block font-display text-lg font-bold">{t("tutorialUi.tryTitle")}</span>
+        <span className="block text-sm text-muted-foreground">{t("tutorialUi.tryBody")}</span>
       </span>
       <ChevronRightIcon aria-hidden className="size-5 shrink-0" />
     </Link>
