@@ -12,6 +12,7 @@ import { useProgress } from "@/stores/progress";
 import { GAME_ID, levelKey } from "../data";
 import { attemptsOf, MAX_ATTEMPTS, MAX_CHECKS, useNonograma } from "../store";
 import { Board } from "./board";
+import { HintButton, HintPanel } from "./hint";
 import { ResultDialog, type GameMode } from "./result-dialog";
 import type { TutorialMode } from "@/components/tutorial/mode";
 import { pictureTitle } from "@cranea/core/i18n";
@@ -77,8 +78,15 @@ export function NonogramaGame({ puzzle, mode }: { puzzle: NonogramaPuzzle; mode:
         </div>
       </div>
 
+      {/* Pista: discreta, arriba a la izquierda del tablero, como en Cifra. En el tutorial no. */}
+      {mode.kind !== "tutorial" && (
+        <div className="mb-1 flex min-h-11 items-center px-1">
+          <HintButton />
+        </div>
+      )}
       <Board puzzle={puzzle} />
       <Reveal mode={mode.kind === "daily" ? "daily" : "level"} />
+      {mode.kind !== "tutorial" && <HintPanel />}
 
       {/* Al terminar, "Ver resultado" ocupa el lugar de los controles sin cambiar el alto de la página. */}
       <FinishSlot

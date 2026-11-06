@@ -10,6 +10,7 @@ import { pictureTitle } from "@cranea/core/i18n";
 import { useLocale, useT } from "@/lib/i18n";
 import { formatTime } from "@/lib/utils";
 import { attemptsOf, MAX_ATTEMPTS, useNonograma } from "../store";
+import { hintsUsedText } from "../hint-copy";
 import { PixelArt, solutionRows } from "./pixel-art";
 
 export type GameMode =
@@ -24,7 +25,7 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry }: {
 }) {
   const t = useT();
   const locale = useLocale();
-  const { puzzle, status, checks, startedAt, finishedAt } = useNonograma();
+  const { puzzle, status, checks, startedAt, finishedAt, hintsUsed } = useNonograma();
   if (!puzzle || status === "playing") return null;
 
   const won = status === "won";
@@ -64,7 +65,10 @@ export function ResultDialog({ open, onOpenChange, mode, onRetry }: {
           <div className="anim-pop rounded-md border-2 border-ink bg-tile p-2 shadow-[0_3px_0_0_var(--shadow-ink)] [--base:var(--dur-base)]">
             <PixelArt rows={solutionRows(puzzle.solution, puzzle.width)} className="size-20" label={name} />
           </div>
-          {mode.kind === "level" && <p className="font-display text-2xl font-extrabold">{name}</p>}
+          <div className="space-y-1">
+            {mode.kind === "level" && <p className="font-display text-2xl font-extrabold">{name}</p>}
+            {hintsUsed > 0 && <p className="text-sm text-muted-foreground">{hintsUsedText(hintsUsed, locale)}</p>}
+          </div>
         </div>
         <DialogFooter>
           <ResultShareButton text={shareText} card={card} filename={`cranea-nonograma-${mode.kind === "daily" ? mode.date : `${mode.world}-${mode.level}`}.png`} />
