@@ -79,10 +79,10 @@ Solo Android: en iOS, la web y Expo Go no se carga nada.
   dibuja solo lo que la app le manda (no tiene una tarea en segundo plano que lea el progreso y calcule el día),
   no tiene `updatePeriodMillis` ni vista previa para el selector, y agrega una extensión de widget en iOS.
 - **Dos formas** (el usuario elige en el selector; misma información y mismas actualizaciones):
-  - **Fila** («Diarios de hoy», , 4×1): conteo y racha/protectores a la izquierda y una ficha por
+  - **Fila** («Diarios de hoy», `DailyPuzzles`, 4×1): conteo y racha/protectores a la izquierda y una ficha por
     juego (inicial + estado; la próxima con borde). **Cada ficha abre su diario**; el resto, el próximo. Achicada
     a 2×1 queda el conteo con puntos y la racha.
-  - **Anillo** («Anillo del día», , 2×2): anillo con un tramo por juego (SVG), el conteo al medio,
+  - **Anillo** («Anillo del día», `DailyRing`, 2×2): anillo con un tramo por juego (SVG), el conteo al medio,
     la racha arriba y el próximo juego abajo. Con todo jugado, el anillo entero con ✓.
 - **Tema**: claro y oscuro según el sistema con los tokens de `theme/tokens.ts` (cuaderno / pizarrón); si en
   Ajustes elegiste Cuaderno o Pizarrón, queda ese. Idioma: el de la app (Ajustes → teléfono).
