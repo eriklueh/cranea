@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ACHIEVEMENTS } from "../achievements";
-import { achievementCopy, coreMessages, createTranslator, gameAvailable, gameCopy, gamesFor, list, localeFromTags, missingKeys, resolveLocale } from "./index";
+import { achievementCopy, coreMessages, worldCopy, createTranslator, gameAvailable, gameCopy, gamesFor, list, localeFromTags, missingKeys, resolveLocale } from "./index";
 
 describe("idioma", () => {
   it("cualquier en-* es inglés; lo demás, español", () => {
@@ -79,5 +79,25 @@ describe("Palabra solo en español", () => {
     expect(gamesFor(games, "en").map((g) => g.id)).toEqual(["cifra", "torres"]);
     expect(gamesFor(games, "es")).toHaveLength(3);
     expect(gameAvailable("palabra", "en")).toBe(false);
+  });
+});
+
+describe("mundos y dibujos", () => {
+  it("el español de los mundos es el de levels.ts y todos tienen inglés", async () => {
+    const games = { cifra: await import("../cifra"), puentes: await import("../puentes"), nonograma: await import("../nonograma"), palabra: await import("../palabra"), torres: await import("../torres") };
+    for (const [id, mod] of Object.entries(games)) {
+      const m = mod as unknown as Record<string, { id: number; name: string; description: string }[]>;
+      for (const w of m.WORLDS ?? m.PALABRA_WORLDS) {
+        expect(worldCopy(id, w, "es")).toEqual({ name: w.name, description: w.description });
+        const en = worldCopy(id, { ...w, name: "", description: "" }, "en");
+        expect(en.name, `${id} ${w.id}`).not.toBe("");
+        expect(en.description).not.toBe("");
+      }
+    }
+  });
+
+  it("cada dibujo tiene título en inglés", async () => {
+    const pics = (await import("../nonograma/pictures")) as unknown as Record<string, { title: string }[]>;
+    for (const p of [...pics.PICTURES_5, ...pics.PICTURES_10, ...pics.PICTURES_15]) expect(coreMessages.en.pictures, p.title).toHaveProperty([p.title]);
   });
 });

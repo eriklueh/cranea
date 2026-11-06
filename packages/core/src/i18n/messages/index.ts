@@ -4,6 +4,8 @@ import * as achievements from "./achievements";
 import * as common from "./common";
 import * as games from "./games";
 import * as notifications from "./notifications";
+import * as pictures from "./pictures";
+import * as worlds from "./worlds";
 import * as tutorial from "./tutorial";
 import * as tutorialCifra from "./tutorials/cifra";
 import * as tutorialPuentes from "./tutorials/puentes";
@@ -17,6 +19,8 @@ const es = {
   games: games.es,
   achievements: achievements.es,
   notifications: notifications.es,
+  worlds: worlds.es,
+  pictures: pictures.es,
   tutorial: tutorial.es,
   tutorialCifra: tutorialCifra.es,
   tutorialPuentes: tutorialPuentes.es,
@@ -30,6 +34,8 @@ const en: Shape<typeof es> = {
   games: games.en,
   achievements: achievements.en,
   notifications: notifications.en,
+  worlds: worlds.en,
+  pictures: pictures.en,
   tutorial: tutorial.en,
   tutorialCifra: tutorialCifra.en,
   tutorialPuentes: tutorialPuentes.en,
@@ -54,4 +60,16 @@ export function gameCopy(id: string, locale: Locale) {
 export function achievementCopy(a: Pick<AchievementState, "id">, locale: Locale, games: number) {
   const t = createTranslator(coreMessages, locale) as (key: string, params?: Record<string, string | number>) => string;
   return { name: t(`achievements.${a.id}.name`), description: t(`achievements.${a.id}.desc`, { count: games }) };
+}
+
+/** Nombre y descripción de un mundo. Si no hay traducción, los de levels.ts. */
+export function worldCopy(gameId: string, world: { id: number; name: string; description: string }, locale: Locale) {
+  const msgs = (locale === "en" ? en : es).worlds as Record<string, string>;
+  const k = `${gameId}${world.id}`;
+  return { name: msgs[k] ?? world.name, description: msgs[`${k}Desc`] ?? world.description };
+}
+
+/** Título de un dibujo del Nonograma (se guarda en español en los niveles). */
+export function pictureTitle(title: string, locale: Locale): string {
+  return ((locale === "en" ? en : es).pictures as Record<string, string>)[title] ?? title;
 }
