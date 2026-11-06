@@ -58,7 +58,7 @@ pnpm levels              # regenera packages/core/levels/cifra.json (~1 min)
 - **Gratis**: los cinco diarios de hoy (también repetirlos como práctica), tutoriales, ranking, estadísticas, logros y los primeros 3 niveles de cada juego (`FREE_LEVELS`). **Plus**: el resto de los niveles, el archivo de diarios anteriores, pistas sin límite y la app sin publicidad. Se compra en la app (RevenueCat); la misma cuenta de Clerk lo activa en la web.
 - `lib/plus.ts`: `usePlus()` → `{ plus, ready }`. `components/plus/plus-sync.tsx` lee `api.entitlements.mine` y guarda el último valor en `cranea-plus`: quien ya tenía Plus no ve candados al abrir, ni sin conexión; un dispositivo nuevo arranca sin Plus. Solo al cerrar sesión se olvida. En `next dev`, `localStorage["cranea-plus-dev"] = "1"` (o `"0"`) lo fuerza.
 - `components/plus/paywall.tsx`: `openPaywall(motivo)` abre la hoja (montada en `AccountProvider`); `<PlusGate>` muestra la propuesta en lugar de un nivel o un diario anterior, sin montar el tablero. Las páginas siguen siendo estáticas: se decide en el cliente.
-- Pistas de Cifra: sin Plus, una por tablero (`cranea-pistas:<id>`, los pasos ya vistos se pueden volver a ver).
+- Pistas de Cifra y Nonograma: sin Plus, una por tablero (`cranea-pistas:<id>`, los pasos ya vistos se pueden volver a ver).
 - Tiendas: `NEXT_PUBLIC_APP_STORE_URL` y `NEXT_PUBLIC_PLAY_STORE_URL`; vacías, el botón lleva a `/plus#app`. Precio de muestra: `PLUS_PRICE`.
 
 ## Logros
@@ -76,6 +76,13 @@ Lógica pura y con tests en `packages/core/src/protectors` (la usan la web, la a
 - **Estado**: stock y días cubiertos **se derivan** del historial de diarios (que ya se sincroniza); se guarda solo `protectors: { since, plus, seen }` dentro de `cranea-progress` (campo opcional, el formato sigue en versión 1, sin migración). `since`: desde cuándo corren las reglas (no se cubre nada antes); `plus`: el día en que se vio Plus en cada mes; `seen`: días cubiertos ya avisados.
 - **Cuenta**: tabla `protectors` de Convex (`convex/protectors.ts`). Combinar (`mergeProtectors`) toma el `since` más antiguo, el primer día de Plus de cada mes y la unión de `seen`: es conmutativa e idempotente, y como el stock se recalcula del historial, dos dispositivos no pueden gastar ni duplicar el mismo protector.
 - **UI**: 🛡️×N junto a la racha (inicio, tarjeta del diario, diario ya jugado en la app) y en Estadísticas, con una hoja que lo explica; al usarse uno, un aviso «Usaste un protector: tu racha sigue en 12». Los logros de racha (`evaluateAchievements({ covered })`) usan los mismos días cubiertos. `dailyStreak`/`bestStreak`/`craneaStreak` los aplican solos.
+
+## Pistas de Nonograma
+
+- **Traza** (`packages/core/src/nonograma/trace.ts`): `lineStep(línea, pista)` busca la deducción más simple en una línea; `nextStep(filas, columnas, tablero)` la más simple de todo el tablero, tomando lo pintado y cruzado como dado; `traceSolve` aplica pasos hasta terminar. Cada paso es `{ line: "row" | "col", index, technique, cellsFilled, cellsCrossed, params }` (posiciones dentro de la línea). Técnicas, de la más simple a la más trabajosa: `empty` (pista 0), `exact` (los tramos ocupan la línea justa), `fill-rest` (las libres son justo las que faltan), `gap` (hueco donde no entra ni el tramo más chico), `overlap` (superposición sin mirar lo marcado), `edge` (lo ya marcado acota el tramo; `anchor` si una pintada contra el borde lo fija), `complete` (la línea ya tiene lo que pide), `unreachable` (ningún tramo llega) y `combined` (el solver de líneas entero; ningún nivel publicado lo necesita). `trace.test.ts` comprueba cada técnica contra el solver de líneas y que la traza resuelva todos los niveles desde el tablero vacío.
+- **Pista** (`hintFor(puzzle, tablero)`): si algo marcado no va, señala la primera fila con un error sin decir cuál casilla («Revisá la fila 3»); si no, el próximo paso. Primer toque: resalta la línea; segundo («¿Qué se deduce?»): la deducción con la técnica nombrada. Nunca pinta ni cruza; se cierra sola cuando el tablero ya muestra lo que decía.
+- **Límite gratis**: la clave de una pista es su línea (`hintKey`); pedir de nuevo la misma no gasta. Web: `cranea-pistas:<id>` y la hoja de Plus; app: `cranea-nonograma-pistas` y «Ver un anuncio para una pista». Las veces que se mostró una pista salen en el resultado; no cambian el puntaje.
+- **Textos**: todos en `games/nonograma/hint-copy.ts` (uno por app, iguales), armados desde los pasos.
 
 ## Cómo funciona Puentes
 

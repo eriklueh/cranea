@@ -19,6 +19,7 @@ import { celebrateStep, DURATION, motion, MOTION, pulse, timing, useMotionReduce
 import { useTheme } from "@/theme/theme";
 import { alpha, fonts } from "@/theme/tokens";
 import { useNonograma } from "../store";
+import { hintLineOf } from "./hint";
 
 /**
  * Tablero con pistas (components/board.tsx de la web).
@@ -283,6 +284,7 @@ export const Board = forwardRef<BoardHandle, { puzzle: NonogramaPuzzle; layout: 
                   ))}
                   {!reduced && puzzle.rows.map((clue, r) => <LineSweep key={`r${r}`} kind="row" index={r} clue={clue} W={W} cell={cell} length={gridW} />)}
                   {!reduced && puzzle.cols.map((clue, c) => <LineSweep key={`c${c}`} kind="col" index={c} clue={clue} W={W} cell={cell} length={gridH} />)}
+                  <HintLine cell={cell} gridW={gridW} gridH={gridH} reduced={reduced} />
                 </Animated.View>
               </View>
             </GestureDetector>
@@ -371,12 +373,14 @@ const RowClue = memo(function RowClue({ r, clue, W, layout, ty, scale }: { r: nu
   const sel = useMemo(() => rowDone(W, r, clue), [W, r, clue]);
   const done = useNonograma(sel);
   const near = useNonograma((s) => s.status === "playing" && s.cursor !== null && Math.floor(s.cursor / W) === r);
+  const hinted = useNonograma((s) => { const h = hintLineOf(s); return h?.line === "row" && h.index === r; });
+  const beat = useHintBeat(hinted);
   const finished = useNonograma((s) => s.status !== "playing" && !s.conceal);
   const { cell, font } = layout;
   const place = useAnimatedStyle(() => ({ top: ty.value + scale.value * r * cell, height: scale.value * cell }));
   return (
     <Animated.View style={[styles.rowClue, place]}>
-      <Animated.View style={[styles.rowClueInner, { opacity: done || finished ? 0.35 : 1, backgroundColor: near ? colors.accent : alpha(colors.accent, 0), transitionProperty: ["opacity", "backgroundColor"], transitionDuration: DURATION.base }]}>
+      <Animated.View style={[styles.rowClueInner, beat, { opacity: (done || finished) && !hinted ? 0.35 : 1, backgroundColor: hinted ? colors.cluePresentBg : near ? colors.accent : alpha(colors.accent, 0), transitionProperty: ["opacity", "backgroundColor"], transitionDuration: DURATION.base }]}>
         <Text maxFontSizeMultiplier={1} numberOfLines={1} adjustsFontSizeToFit style={{ fontFamily: fonts.display, fontSize: font, color: colors.ink, fontVariant: ["tabular-nums"] }}>
           {(clue.length ? clue : [0]).join(" ")}
         </Text>
@@ -391,12 +395,14 @@ const ColClue = memo(function ColClue({ c, clue, W, layout, tx, scale }: { c: nu
   const sel = useMemo(() => colDone(W, c, clue), [W, c, clue]);
   const done = useNonograma(sel);
   const near = useNonograma((s) => s.status === "playing" && s.cursor !== null && s.cursor % W === c);
+  const hinted = useNonograma((s) => { const h = hintLineOf(s); return h?.line === "col" && h.index === c; });
+  const beat = useHintBeat(hinted);
   const finished = useNonograma((s) => s.status !== "playing" && !s.conceal);
   const { cell, font, lineH } = layout;
   const place = useAnimatedStyle(() => ({ left: tx.value + scale.value * c * cell, width: scale.value * cell }));
   return (
     <Animated.View style={[styles.colClue, place]}>
-      <Animated.View style={[styles.colClueInner, { opacity: done || finished ? 0.35 : 1, backgroundColor: near ? colors.accent : alpha(colors.accent, 0), transitionProperty: ["opacity", "backgroundColor"], transitionDuration: DURATION.base }]}>
+      <Animated.View style={[styles.colClueInner, beat, { opacity: (done || finished) && !hinted ? 0.35 : 1, backgroundColor: hinted ? colors.cluePresentBg : near ? colors.accent : alpha(colors.accent, 0), transitionProperty: ["opacity", "backgroundColor"], transitionDuration: DURATION.base }]}>
         {(clue.length ? clue : [0]).map((n, k) => (
           <Text key={k} maxFontSizeMultiplier={1} style={{ fontFamily: fonts.display, fontSize: font, lineHeight: lineH, color: colors.ink, fontVariant: ["tabular-nums"], textAlign: "center" }}>
             {n}
@@ -406,6 +412,33 @@ const ColClue = memo(function ColClue({ c, clue, W, layout, tx, scale }: { c: nu
     </Animated.View>
   );
 });
+
+/** `confirm`: la pista de la línea señalada late una vez al aparecer. */
+function useHintBeat(hinted: boolean) {
+  const reduced = useMotionReduced();
+  const beat = useSharedValue(1);
+  useOnChange(hinted, (h) => {
+    if (h && !reduced) beat.value = pulse(0);
+  });
+  return useAnimatedStyle(() => ({ transform: [{ scale: beat.value }] }));
+}
+
+/** La fila o columna que señala la pista: el resaltado de las pistas sobre la línea (`fade`). Nunca pinta. */
+function HintLine({ cell, gridW, gridH, reduced }: { cell: number; gridW: number; gridH: number; reduced: boolean }) {
+  const { colors } = useTheme();
+  const line = useNonograma((s) => hintLineOf(s));
+  if (!line) return null;
+  const box = line.line === "row" ? { left: 0, top: line.index * cell, width: gridW, height: cell } : { top: 0, left: line.index * cell, height: gridH, width: cell };
+  return (
+    <Animated.View
+      key={`${line.line}${line.index}`}
+      entering={reduced ? undefined : HINT_IN}
+      pointerEvents="none"
+      style={[{ position: "absolute", borderWidth: 2, borderColor: colors.cluePresent, backgroundColor: alpha(colors.cluePresentBg, 0.45) }, box]}
+    />
+  );
+}
+const HINT_IN = motion.fade();
 
 /** `confirm`: una pasada de color sobre la fila o columna que acaba de quedar completa. */
 const LineSweep = memo(function LineSweep({ kind, index, clue, W, cell, length }: { kind: "row" | "col"; index: number; clue: LineClue; W: number; cell: number; length: number }) {

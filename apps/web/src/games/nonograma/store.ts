@@ -3,15 +3,25 @@ import { create } from "zustand";
 import {
   applyStroke,
   emptyBoard,
+  hintKey,
+  hintResolved,
   isSolved,
   mistakes,
   strokeAction,
   strokeCells,
   type Cell,
+  type NonogramaHint,
   type NonogramaPuzzle,
   type StrokeAction,
   type Tool,
 } from "@cranea/core/nonograma";
+
+/** Pista abierta: qué dice (calculada al pedirla, con el tablero de ese momento), su clave y cuánto se reveló. */
+export interface Hint {
+  info: NonogramaHint;
+  key: number;
+  level: 1 | 2;
+}
 
 /** Intentos = 1 + revisiones usadas. Con dos revisiones se llega al máximo de tres, como en Cifra. */
 export const MAX_ATTEMPTS = 3;
@@ -40,7 +50,13 @@ interface NonogramaSession {
   lastCheck: number | null;
   startedAt: number;
   finishedAt: number | null;
+  hint: Hint | null;
+  /** Veces que se mostró una pista (como Cifra). Se ve en el resultado; no cambia el puntaje. */
+  hintsUsed: number;
   start: (p: NonogramaPuzzle) => void;
+  /** Primer toque: la línea; otro toque sobre la misma pista: la deducción. Nunca toca el tablero. */
+  showHint: (info: NonogramaHint) => void;
+  closeHint: () => void;
   setTool: (t: Tool) => void;
   setCursor: (i: number) => void;
   beginStroke: (i: number, tool?: Tool) => void;
@@ -52,7 +68,10 @@ interface NonogramaSession {
   giveUp: () => void;
 }
 
-export const attemptsOf = (s: { status: NonogramaSession["status"]; checks: number }) => (s.status === "lost" ? MAX_ATTEMPTS : s.checks + 1);
+/** Cuando el tablero ya muestra lo que decía la pista (o se corrigió el error), se cierra sola. */
+const closeIfResolved = (hint: Hint | null, puzzle: NonogramaPuzzle, board: readonly Cell[]) => (hint && hintResolved(hint.info, puzzle, board) ? { hint: null } : {});
+
+export const attemptsOf =(s: { status: NonogramaSession["status"]; checks: number }) => (s.status === "lost" ? MAX_ATTEMPTS : s.checks + 1);
 
 export const useNonograma = create<NonogramaSession>((set, get) => ({
   puzzle: null,
@@ -67,9 +86,24 @@ export const useNonograma = create<NonogramaSession>((set, get) => ({
   lastCheck: null,
   startedAt: 0,
   finishedAt: null,
+  hint: null,
+  hintsUsed: 0,
 
   start: (puzzle) =>
-    set({ puzzle, board: emptyBoard(puzzle), history: [], tool: "fill", stroke: null, cursor: null, status: "playing", checks: 0, flagged: [], lastCheck: null, startedAt: Date.now(), finishedAt: null }),
+    set({ puzzle, board: emptyBoard(puzzle), history: [], tool: "fill", stroke: null, cursor: null, status: "playing", checks: 0, flagged: [], lastCheck: null, startedAt: Date.now(), finishedAt: null, hint: null, hintsUsed: 0 }),
+
+  showHint: (info) => {
+    const { hint, hintsUsed, status } = get();
+    if (status !== "playing") return;
+    const key = hintKey(info);
+    if (hint?.key === key) {
+      if (hint.level === 1) set({ hint: { info, key, level: 2 }, hintsUsed: hintsUsed + 1 });
+      return;
+    }
+    set({ hint: { info, key, level: 1 }, hintsUsed: hintsUsed + 1 });
+  },
+
+  closeHint: () => set({ hint: null }),
 
   setTool: (tool) => set({ tool }),
 
@@ -95,7 +129,7 @@ export const useNonograma = create<NonogramaSession>((set, get) => ({
     if (!changed) return set({ stroke: null });
     const nextHistory = [...history, stroke.base].slice(-MAX_HISTORY);
     if (isSolved(board, puzzle)) set({ stroke: null, history: nextHistory, status: "won", finishedAt: Date.now() });
-    else set({ stroke: null, history: nextHistory });
+    else set({ stroke: null, history: nextHistory, ...closeIfResolved(get().hint, puzzle, board) });
   },
 
   undo: () => {

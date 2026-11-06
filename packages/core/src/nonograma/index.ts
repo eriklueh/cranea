@@ -7,3 +7,4 @@ export * from "./pictures";
 export * from "./levels";
 export * from "./board";
 export * from "./tutorial";
+export * from "./trace";

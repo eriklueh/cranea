@@ -6,6 +6,8 @@ import { celebrateStep, haptic, play, useOnChange } from "@/lib/motion";
 import { sound } from "@/lib/sound";
 import { WinBurst } from "@/components/win-burst";
 import { useNonograma } from "../store";
+import { HINT_COPY } from "../hint-copy";
+import { useHintLine } from "./hint";
 
 const NONE: number[] = [];
 const STATE_LABEL: Record<Cell, string> = { 0: "vacía", 1: "pintada", 2: "con cruz" };
@@ -26,6 +28,7 @@ export function Board({ puzzle }: { puzzle: NonogramaPuzzle }) {
   const cursor = useNonograma((s) => (live ? s.cursor : null));
   const flagged = useNonograma((s) => (live ? s.flagged : NONE));
   const status = useNonograma((s) => (live ? s.status : "playing"));
+  const hinted = useHintLine();
   const cellsRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   useOnChange(flagged, (f) => {
@@ -51,6 +54,9 @@ export function Board({ puzzle }: { puzzle: NonogramaPuzzle }) {
   const playing = status === "playing";
   const cursorRow = cursor === null ? -1 : Math.floor(cursor / W);
   const cursorCol = cursor === null ? -1 : cursor % W;
+  // La línea que señala la pista: mismo resaltado que la del cursor, con el color de las pistas y un latido (`confirm`).
+  const hintRow = live && playing && hinted?.line === "row" ? hinted.index : -1;
+  const hintCol = live && playing && hinted?.line === "col" ? hinted.index : -1;
   // Al terminar, el dibujo aparece (o late, si ganaste) en una ola diagonal de ≤ 600 ms (como la app).
   const step = celebrateStep(W + H - 2);
 
@@ -117,10 +123,12 @@ export function Board({ puzzle }: { puzzle: NonogramaPuzzle }) {
             className={cn(
               "flex flex-col items-center justify-end rounded-t-sm pb-0.5 font-display leading-tight font-bold tabular-nums transition-[opacity,background-color] duration-(--dur-slow)",
               sizing.clue,
-              (done.cols[c] || finished) && "opacity-35",
+              (done.cols[c] || finished) && c !== hintCol && "opacity-35",
               playing && c === cursorCol && "bg-accent",
+              c === hintCol && "anim-bump bg-clue-present-bg text-clue-present",
             )}
           >
+            {c === hintCol && <span className="sr-only">{HINT_COPY.marked}</span>}
             {(clue.length ? clue : [0]).map((n, k) => (
               <span key={k}>{n}</span>
             ))}
@@ -137,10 +145,12 @@ export function Board({ puzzle }: { puzzle: NonogramaPuzzle }) {
               "flex items-center justify-end rounded-l-sm pl-1 font-display font-bold whitespace-nowrap tabular-nums transition-[opacity,background-color] duration-(--dur-slow)",
               sizing.clue,
               sizing.gap,
-              (done.rows[r] || finished) && "opacity-35",
+              (done.rows[r] || finished) && r !== hintRow && "opacity-35",
               playing && r === cursorRow && "bg-accent",
+              r === hintRow && "anim-bump bg-clue-present-bg text-clue-present",
             )}
           >
+            {r === hintRow && <span className="sr-only">{HINT_COPY.marked}</span>}
             {(clue.length ? clue : [0]).map((n, k) => (
               <span key={k}>{n}</span>
             ))}
@@ -203,6 +213,12 @@ export function Board({ puzzle }: { puzzle: NonogramaPuzzle }) {
             })}
           </div>
         ))}
+        {hintRow >= 0 && (
+          <span key={`hr${hintRow}`} aria-hidden className="anim-fade pointer-events-none absolute inset-x-0 bg-clue-present-bg/45 ring-2 ring-clue-present ring-inset" style={{ top: `${(hintRow / H) * 100}%`, height: `${100 / H}%` }} />
+        )}
+        {hintCol >= 0 && (
+          <span key={`hc${hintCol}`} aria-hidden className="anim-fade pointer-events-none absolute inset-y-0 bg-clue-present-bg/45 ring-2 ring-clue-present ring-inset" style={{ left: `${(hintCol / W) * 100}%`, width: `${100 / W}%` }} />
+        )}
         {/* Una pasada de color sobre cada fila o columna que queda completa. */}
         {playing &&
           puzzle.rows.map((clue, r) =>

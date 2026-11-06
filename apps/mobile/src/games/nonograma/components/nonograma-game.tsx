@@ -23,6 +23,8 @@ import { GAME_ID, levelKey, MAX_ATTEMPTS } from "../data";
 import { attemptsOf, checkLimit, useNonograma } from "../store";
 import { Board, GAME_PAD, useBoardLayout, type BoardHandle } from "./board";
 import { PixelArt, solutionRows } from "./pixel-art";
+import { HintPanel, HintTools } from "./hint";
+import { hintsUsedText } from "../hint-copy";
 
 export type GameMode =
   | { kind: "level"; world: number; level: number; next: { world: number; level: number } | null }
@@ -81,6 +83,8 @@ export function NonogramaGame({ puzzle, mode }: { puzzle: NonogramaPuzzle; mode:
           <>
             <Board ref={board} puzzle={puzzle} layout={layout} onZoomChange={setZoomed} />
             <Message daily={mode.kind === "daily"} zoomHint={layout.zoomable && !zoomed} />
+            <HintTools />
+            <HintPanel />
             {/* Al terminar, "Ver resultado" ocupa el lugar de los controles: la pantalla no cambia de alto. */}
             <FinishSlot finished={status !== "playing"} done={settled ? <ResultLink onPress={() => setResultOpen(true)} /> : null}>
               <Controls
@@ -284,6 +288,7 @@ function NonogramaResult({ open, onClose, mode, offerAvailable, onRetry, onExtra
   const conceal = useNonograma((s) => s.conceal);
   const startedAt = useNonograma((s) => s.startedAt);
   const finishedAt = useNonograma((s) => s.finishedAt);
+  const hintsUsed = useNonograma((s) => s.hintsUsed);
   const setConceal = useNonograma((s) => s.setConceal);
   // Si el intento extra ya no se puede ofrecer (se usó en otro lado), la solución no queda tapada.
   useEffect(() => {
@@ -337,6 +342,7 @@ function NonogramaResult({ open, onClose, mode, offerAvailable, onRetry, onExtra
           {mode.kind === "level" && <Text variant="title" style={{ flex: 1 }}>{puzzle.title}</Text>}
         </Row>
       )}
+      {hintsUsed > 0 && <Text variant="small" style={{ textAlign: "center" }}>{hintsUsedText(hintsUsed)}</Text>}
       <View style={{ gap: 8 }}>
         {mode.kind === "level" && mode.next ? (
           <Button
