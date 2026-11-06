@@ -15,6 +15,7 @@ import { MotionPreference, useMotionReduced } from "@/lib/motion";
 import { useT } from "@/lib/i18n";
 import { usePrefs } from "@/lib/prefs";
 import { ThemeProvider, useTheme } from "@/theme/theme";
+import { WidgetSync } from "@/widget";
 import { fonts } from "@/theme/tokens";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -43,6 +44,7 @@ export default function RootLayout() {
       {/* Con las medidas iniciales, los márgenes seguros son correctos desde el primer cuadro (sin saltos). */}
       <SafeAreaProvider initialMetrics={initialWindowMetrics}>
         <MotionPreference />
+        <WidgetSync />
         <ThemeProvider>
           <AccountProvider>
             <Navigator />

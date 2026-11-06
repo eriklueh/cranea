@@ -134,6 +134,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         dark: { image: "./assets/splash-icon-dark.png", backgroundColor: BOARD },
       },
     ],
+    // Widget «Diarios de hoy» de Android (solo Android; ver docs/mobile.md → Widget).
+    "./plugins/with-daily-widget",
   ],
   extra: {
     router: {},

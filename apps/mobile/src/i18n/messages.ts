@@ -10,6 +10,7 @@ import * as share from "./messages/share";
 import * as shell from "./messages/shell";
 import * as stats from "./messages/stats";
 import * as torres from "./messages/torres";
+import * as widget from "./messages/widget";
 
 /**
  * Diccionario de la app: los espacios compartidos de `@cranea/core/i18n` más los propios.
@@ -29,6 +30,7 @@ const es = {
   torres: torres.es,
   palabra: palabra.es,
   nonograma: nonograma.es,
+  widget: widget.es,
 };
 
 const en: Shape<typeof es> = {
@@ -44,6 +46,7 @@ const en: Shape<typeof es> = {
   torres: torres.en,
   palabra: palabra.en,
   nonograma: nonograma.en,
+  widget: widget.en,
 };
 
 export type AppMessages = typeof es;

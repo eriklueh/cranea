@@ -16,7 +16,8 @@ App nativa con **Expo SDK 58** + **expo-router**, para Google Play y App Store. 
 
 También: inicio con los diarios de hoy, pantalla de cada juego (diario, «Seguir jugando», mundos y niveles),
 ranking del día, estadísticas, cuenta (Apple / Google / código por mail), **Ajustes** (como la hoja de Ajustes
-de la web), **Craneá Plus** (RevenueCat) y anuncios con recompensa opcionales (AdMob). Ver [Monetización](#monetización).
+de la web), **Craneá Plus** (RevenueCat), anuncios con recompensa opcionales (AdMob) y un **widget de Android**
+(«Diarios de hoy», ver [Widget de Android](#widget-de-android)). Ver [Monetización](#monetización).
 
 ## Cómo está armado
 
@@ -63,6 +64,41 @@ apps/mobile/
   corta la música. expo-audio es nativo: un development build anterior a este cambio no lo trae y la app queda
   muda sin romperse; hace falta un build nuevo para oírlo. No se usa el plugin de expo-audio (agregaría el
   permiso de micrófono).
+
+## Widget de Android
+
+«Diarios de hoy» / «Today's puzzles»: cuántos diarios de hoy jugaste (`2/5`, o `2/4` en inglés, sin Palabra),
+un punto por juego en el orden del registro (verde resuelto, gris no salió, aro amarillo por jugar; con
+Daltonismo, los colores de esa paleta), la racha de diarios más larga entre los juegos visibles (🔥, con los
+protectores como puente) y los protectores disponibles (🛡️, si hay). Tocarlo abre el **próximo diario sin
+jugar** (`cranea://<juego>/diario`); con todo jugado dice «¡Listo por hoy!» y abre el inicio (`cranea:///`).
+Solo Android: en iOS, la web y Expo Go no se carga nada.
+
+- **Librería**: [react-native-android-widget](https://github.com/sAleksovski/react-native-android-widget)
+  (`plugins/with-daily-widget.js` la configura). Se descartó `expo-widgets`: en Android todavía es nuevo,
+  dibuja solo lo que la app le manda (no tiene una tarea en segundo plano que lea el progreso y calcule el día),
+  no tiene `updatePeriodMillis` ni vista previa para el selector, y agrega una extensión de widget en iOS.
+- **Tamaños**: uno solo, redimensionable. Tira (2×1: conteo, puntos, racha), chico (2×2: además el botón) y
+  mediano (4×2, el que se agrega por defecto en Android 12+). Se elige por el tamaño que da el launcher.
+- **Tema**: claro y oscuro según el sistema con los tokens de `theme/tokens.ts` (cuaderno / pizarrón); si en
+  Ajustes elegiste Cuaderno o Pizarrón, queda ese. Idioma: el de la app (Ajustes → teléfono).
+- **Cuándo se actualiza**:
+  - Con la app abierta (`WidgetSync` en el layout raíz): al leer el progreso al abrir, al anotar un diario, al
+    sincronizar con la cuenta, al cambiar protectores, idioma, tema o colores, al volver al frente o irse, y a la
+    medianoche UTC.
+  - Sin abrir la app: la tarea en segundo plano (`widgetTaskHandler`, registrada en `index.ts`) corre al
+    agregarlo, al cambiarle el tamaño y cada 30 min (`updatePeriodMillis`, lo mínimo de Android). Lee
+    `cranea-progress` y `cranea-prefs` de AsyncStorage y calcula «hoy» (UTC) con el reloj del teléfono: después
+    de la medianoche UTC el widget pasa al día nuevo en ≤ 30 min (Android no despierta el teléfono para esto:
+    si está con la pantalla apagada, se actualiza al prenderla).
+- **Lógica**: `dailyWidgetState` en `@cranea/core/widget` (pura, con tests): conteo, próximo diario, juegos
+  según el idioma, racha y protectores. El dibujo está en `src/widget/daily-widget.tsx`.
+- **Selector de widgets**: nombre y descripción en español (`values/`) e inglés (`values-en/`), en
+  `plugins/with-daily-widget.js` (son recursos de Android). Vista previa: `apps/mobile/assets/widget-preview.png`,
+  generada con `node assets/brand/build-widget-preview.mjs`.
+- **Probarlo**: necesita un build nativo nuevo (`eas build --profile development --platform android` o
+  `preview`); en Expo Go no existe. En el emulador: mantener apretado el inicio → Widgets → Craneá.
+  `expo prebuild` hay que correrlo desde `apps/mobile` (el plugin de la librería escribe con rutas relativas).
 
 ## Correrlo en tu máquina
 
