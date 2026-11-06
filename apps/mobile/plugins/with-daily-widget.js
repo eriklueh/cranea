@@ -1,4 +1,5 @@
-// Widget «Diarios de hoy» de Android (react-native-android-widget). Ver docs/mobile.md → Widget.
+// Widgets de los diarios en Android (react-native-android-widget): la fila (4×1) y el anillo (2×2).
+// Ver docs/mobile.md → Widget.
 // El dibujo y las actualizaciones están en src/widget; acá va lo nativo: el receptor, el tamaño, la vista
 // previa y el texto del selector de widgets en español (por defecto) e inglés.
 // iOS no se toca: este plugin solo modifica el proyecto de Android.
@@ -11,8 +12,14 @@ const FONTS = "./node_modules/@expo-google-fonts";
 
 /** Texto del selector de widgets (recursos de Android). En la app, el widget usa src/i18n/messages/widget.ts. */
 const PICKER = {
-  es: { label: "Diarios de hoy", description: "Cuántos desafíos de hoy te faltan, tu racha y un toque para jugar el próximo." },
-  en: { label: "Today's puzzles", description: "How many of today's puzzles are left, your streak, and one tap to play the next." },
+  row: {
+    es: { label: "Diarios de hoy", description: "Una ficha por juego con su estado y tu racha. Tocá una ficha para jugar ese diario." },
+    en: { label: "Today's puzzles", description: "One tile per game with its status, plus your streak. Tap a tile to play that daily." },
+  },
+  ring: {
+    es: { label: "Anillo del día", description: "Un anillo que se completa con cada diario, tu racha y el próximo juego." },
+    en: { label: "Daily ring", description: "A ring that fills with each daily, your streak and the next game." },
+  },
 };
 
 // Android pide escapar el apóstrofo («Today\'s») además de lo de XML.
@@ -34,8 +41,13 @@ function withPickerStrings(config) {
     (c) => {
       const res = path.join(c.modRequest.platformProjectRoot, "app/src/main/res");
       const files = {
-        values: { cranea_widget_label: PICKER.es.label },
-        "values-en": { cranea_widget_label: PICKER.en.label, widget_dailypuzzles_description: PICKER.en.description },
+        values: { cranea_widget_label: PICKER.row.es.label, cranea_ring_label: PICKER.ring.es.label },
+        "values-en": {
+          cranea_widget_label: PICKER.row.en.label,
+          widget_dailypuzzles_description: PICKER.row.en.description,
+          cranea_ring_label: PICKER.ring.en.label,
+          widget_dailyring_description: PICKER.ring.en.description,
+        },
       };
       for (const [dir, entries] of Object.entries(files)) {
         fs.mkdirSync(path.join(res, dir), { recursive: true });
@@ -54,20 +66,35 @@ module.exports = function withDailyWidget(config) {
     ],
     widgets: [
       {
-        // Mismo nombre que DAILY_WIDGET en src/widget/index.tsx.
+        // Fila de juegos. Mismo nombre que DAILY_WIDGETS.row en src/widget/index.tsx (el original: los
+        // widgets ya agregados siguen andando).
         name: "DailyPuzzles",
         label: "@string/cranea_widget_label",
         // La descripción en español la escribe el plugin en values/strings.xml; values-en la reemplaza.
-        description: PICKER.es.description,
-        // De 2×1 (tira) a 4×2 o más; se agrega en 4×2 (Android 12+).
+        description: PICKER.row.es.description,
+        // 4×1; se puede achicar a 2×1 (conteo con puntos) o estirar.
         minWidth: "110dp",
         minHeight: "40dp",
         targetCellWidth: 4,
-        targetCellHeight: 2,
+        targetCellHeight: 1,
         resizeMode: "horizontal|vertical",
         previewImage: "./assets/widget-preview.png",
         // Cada 30 min (lo mínimo de Android): así cambia de día poco después de la medianoche UTC
         // aunque la app no se abra. La tarea calcula «hoy» con el reloj del teléfono.
+        updatePeriodMillis: 30 * 60 * 1000,
+        widgetCategory: "home_screen",
+      },
+      {
+        // Anillo. Mismo nombre que DAILY_WIDGETS.ring.
+        name: "DailyRing",
+        label: "@string/cranea_ring_label",
+        description: PICKER.ring.es.description,
+        minWidth: "110dp",
+        minHeight: "110dp",
+        targetCellWidth: 2,
+        targetCellHeight: 2,
+        resizeMode: "horizontal|vertical",
+        previewImage: "./assets/widget-ring-preview.png",
         updatePeriodMillis: 30 * 60 * 1000,
         widgetCategory: "home_screen",
       },

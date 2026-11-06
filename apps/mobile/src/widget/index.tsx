@@ -9,11 +9,12 @@ import type { WidgetInfo, WidgetRepresentation, WidgetTaskHandler } from "react-
 import { GAMES } from "@/games/registry";
 import { DEFAULT_PREFS, usePrefs, type Prefs } from "@/lib/prefs";
 import { useProgress } from "@/stores/progress";
-import { DailyWidget } from "./daily-widget";
+import { DailyRingWidget, DailyRowWidget } from "./daily-widget";
 import { widgetModule } from "./module";
 
 /**
- * Widget «Diarios de hoy» de Android (react-native-android-widget). Ver docs/mobile.md → Widget.
+ * Widgets de los diarios en Android (react-native-android-widget): la fila (4×1) y el anillo (2×2), con la
+ * misma información; el usuario elige la forma en el selector. Ver docs/mobile.md → Widget.
  *
  * - En segundo plano (agregarlo, cambiarle el tamaño, cada 30 min por `updatePeriodMillis`) corre
  *   `widgetTaskHandler` sin abrir la app: lee `cranea-progress` y `cranea-prefs` de AsyncStorage y
@@ -23,7 +24,9 @@ import { widgetModule } from "./module";
  * - iOS, la web y Expo Go: no hace nada (el módulo nativo ni se carga).
  */
 
-export const DAILY_WIDGET = "DailyPuzzles";
+/** Nombres de los widgets: los mismos que en plugins/with-daily-widget.js. "DailyPuzzles" es la fila (nombre original). */
+export const DAILY_WIDGETS = { row: "DailyPuzzles", ring: "DailyRing" } as const;
+const WIDGET_NAMES: string[] = Object.values(DAILY_WIDGETS);
 
 type WidgetPrefs = Pick<Prefs, "language" | "theme" | "palette">;
 interface WidgetInputs {
@@ -42,11 +45,17 @@ function deviceTags(): string[] {
 const GAME_IDS = GAMES.filter((g) => g.mobile === "live").map((g) => g.id);
 
 /** El widget para un tamaño dado. Claro y oscuro según el sistema, salvo que Ajustes fije uno. */
-export function renderDailyWidget(info: Pick<WidgetInfo, "width" | "height">, { progress, prefs }: WidgetInputs, now = new Date()): WidgetRepresentation {
+export function renderDailyWidget(
+  widgetName: string,
+  info: Pick<WidgetInfo, "width" | "height">,
+  { progress, prefs }: WidgetInputs,
+  now = new Date(),
+): WidgetRepresentation {
   const locale = resolveLocale(prefs.language, deviceTags());
   const state = dailyWidgetState(progress, { gameIds: GAME_IDS, locale, today: todayKey(now) });
   const look = { locale, palette: prefs.palette };
-  const draw = (theme: "light" | "dark") => <DailyWidget state={state} look={look} theme={theme} width={info.width} height={info.height} />;
+  const Widget = widgetName === DAILY_WIDGETS.ring ? DailyRingWidget : DailyRowWidget;
+  const draw = (theme: "light" | "dark") => <Widget state={state} look={look} theme={theme} width={info.width} height={info.height} />;
   if (prefs.theme === "light") return draw("light");
   if (prefs.theme === "dark") return draw("dark");
   return { light: draw("light"), dark: draw("dark") };
@@ -86,12 +95,12 @@ function liveInputs(): WidgetInputs {
 
 /** Tarea en segundo plano del widget (se registra en index.ts). */
 export const widgetTaskHandler: WidgetTaskHandler = async ({ widgetInfo, widgetAction, renderWidget }) => {
-  if (widgetInfo.widgetName !== DAILY_WIDGET) return;
+  if (!WIDGET_NAMES.includes(widgetInfo.widgetName)) return;
   switch (widgetAction) {
     case "WIDGET_ADDED":
     case "WIDGET_UPDATE":
     case "WIDGET_RESIZED":
-      renderWidget(renderDailyWidget(widgetInfo, await readStoredInputs()));
+      renderWidget(renderDailyWidget(widgetInfo.widgetName, widgetInfo, await readStoredInputs()));
       break;
     default:
       // WIDGET_CLICK: los toques abren un link (OPEN_URI) y no llegan acá. WIDGET_DELETED: nada que limpiar.
@@ -110,7 +119,9 @@ export function requestDailyWidgetUpdate() {
     pending = null;
     if (!useProgress.getState().hydrated) return;
     const inputs = liveInputs();
-    m.requestWidgetUpdate({ widgetName: DAILY_WIDGET, renderWidget: (info) => renderDailyWidget(info, inputs) }).catch(() => {});
+    for (const widgetName of WIDGET_NAMES) {
+      m.requestWidgetUpdate({ widgetName, renderWidget: (info) => renderDailyWidget(widgetName, info, inputs) }).catch(() => {});
+    }
   }, 400);
 }
 

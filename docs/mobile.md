@@ -78,8 +78,12 @@ Solo Android: en iOS, la web y Expo Go no se carga nada.
   (`plugins/with-daily-widget.js` la configura). Se descartó `expo-widgets`: en Android todavía es nuevo,
   dibuja solo lo que la app le manda (no tiene una tarea en segundo plano que lea el progreso y calcule el día),
   no tiene `updatePeriodMillis` ni vista previa para el selector, y agrega una extensión de widget en iOS.
-- **Tamaños**: uno solo, redimensionable. Tira (2×1: conteo, puntos, racha), chico (2×2: además el botón) y
-  mediano (4×2, el que se agrega por defecto en Android 12+). Se elige por el tamaño que da el launcher.
+- **Dos formas** (el usuario elige en el selector; misma información y mismas actualizaciones):
+  - **Fila** («Diarios de hoy», , 4×1): conteo y racha/protectores a la izquierda y una ficha por
+    juego (inicial + estado; la próxima con borde). **Cada ficha abre su diario**; el resto, el próximo. Achicada
+    a 2×1 queda el conteo con puntos y la racha.
+  - **Anillo** («Anillo del día», , 2×2): anillo con un tramo por juego (SVG), el conteo al medio,
+    la racha arriba y el próximo juego abajo. Con todo jugado, el anillo entero con ✓.
 - **Tema**: claro y oscuro según el sistema con los tokens de `theme/tokens.ts` (cuaderno / pizarrón); si en
   Ajustes elegiste Cuaderno o Pizarrón, queda ese. Idioma: el de la app (Ajustes → teléfono).
 - **Cuándo se actualiza**:
@@ -94,7 +98,7 @@ Solo Android: en iOS, la web y Expo Go no se carga nada.
 - **Lógica**: `dailyWidgetState` en `@cranea/core/widget` (pura, con tests): conteo, próximo diario, juegos
   según el idioma, racha y protectores. El dibujo está en `src/widget/daily-widget.tsx`.
 - **Selector de widgets**: nombre y descripción en español (`values/`) e inglés (`values-en/`), en
-  `plugins/with-daily-widget.js` (son recursos de Android). Vista previa: `apps/mobile/assets/widget-preview.png`,
+  `plugins/with-daily-widget.js` (son recursos de Android). Vistas previas: `apps/mobile/assets/widget-preview.png` y `widget-ring-preview.png`,
   generada con `node assets/brand/build-widget-preview.mjs`.
 - **Probarlo**: necesita un build nativo nuevo (`eas build --profile development --platform android` o
   `preview`); en Expo Go no existe. En el emulador: mantener apretado el inicio → Widgets → Craneá.
