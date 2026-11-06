@@ -8,6 +8,7 @@ import { motion } from "@/lib/motion";
 import { useTheme } from "@/theme/theme";
 import { radius } from "@/theme/tokens";
 import { HINT_COPY, hintExplain, hintNudge, techniqueName } from "../hint-copy";
+import { useLocale } from "@/lib/i18n";
 import { useNonograma } from "../store";
 
 /**
@@ -24,6 +25,7 @@ const ask = (plus: boolean) => {
 
 /** El botón, discreto y centrado como en Cifra. Al terminar queda invisible en su lugar. */
 export function HintTools() {
+  useLocale(); // redibuja al cambiar de idioma
   const status = useNonograma((s) => s.status);
   const level = useNonograma((s) => s.hint?.level);
   const plus = usePlus();
@@ -43,6 +45,7 @@ export const hintLineOf = (s: ReturnType<typeof useNonograma.getState>): { line:
 };
 
 export function HintPanel() {
+  useLocale(); // redibuja al cambiar de idioma
   const { colors } = useTheme();
   const hint = useNonograma((s) => s.hint);
   const status = useNonograma((s) => s.status);

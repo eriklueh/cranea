@@ -6,6 +6,7 @@ import { hintFor, hintKey, type LineKind } from "@cranea/core/nonograma";
 import { openPaywall } from "@/components/plus/paywall";
 import { FREE_HINTS, addFreeHintStep, freeHintSteps, usePlus } from "@/lib/plus";
 import { HINT_COPY, hintExplain, hintNudge, techniqueName } from "../hint-copy";
+import { useLocale } from "@/lib/i18n";
 import { useNonograma } from "../store";
 
 const base = "inline-flex h-11 min-w-11 items-center justify-center gap-2 rounded-lg px-3 text-sm font-semibold transition-colors hover:bg-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2";
@@ -16,6 +17,7 @@ const base = "inline-flex h-11 min-w-11 items-center justify-center gap-2 rounde
  * (misma línea) no cuenta, ni el aviso de que no queda nada. Después, la hoja de Plus.
  */
 export function HintButton() {
+  useLocale(); // redibuja al cambiar de idioma
   const status = useNonograma((s) => s.status);
   const hint = useNonograma((s) => s.hint);
   const id = useNonograma((s) => s.puzzle?.id);
@@ -63,6 +65,7 @@ export function useHintLine(): { line: LineKind; index: number } | null {
 }
 
 export function HintPanel() {
+  useLocale(); // redibuja al cambiar de idioma
   const hint = useNonograma((s) => s.hint);
   const status = useNonograma((s) => s.status);
   const showHint = useNonograma((s) => s.showHint);

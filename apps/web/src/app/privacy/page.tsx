@@ -30,7 +30,7 @@ export default function PrivacyEn() {
         <li><strong>Game progress:</strong> level and daily puzzle results, attempts, times, streaks and achievements, to sync them across your devices.</li>
         <li><strong>Leaderboard:</strong> if you appear on the leaderboard, we show your first name with your last initial (for example, “Erik E.”) and your results. You can hide yourself at any time.</li>
         <li><strong>Subscription:</strong> if you have Craneá Plus, the status and expiration of your subscription. Payments are processed by Google Play or the App Store; we never see your card details.</li>
-        <li><strong>Reminders:</strong> if you turn on the daily reminder, your browser or device notification subscription, your time zone and the time you chose.</li>
+        <li><strong>Reminders:</strong> if you turn on the daily reminder, your browser or device notification subscription, your time zone, the time you chose and the reminder language.</li>
       </ul>
 
       <h2>Ads in the app</h2>

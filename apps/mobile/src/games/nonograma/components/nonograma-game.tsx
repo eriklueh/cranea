@@ -359,7 +359,7 @@ function NonogramaResult({ open, onClose, mode, offerAvailable, onRetry, onExtra
           {mode.kind === "level" && <Text variant="title" style={{ flex: 1 }}>{name}</Text>}
         </Row>
       )}
-      {hintsUsed > 0 && <Text variant="small" style={{ textAlign: "center" }}>{hintsUsedText(hintsUsed)}</Text>}
+      {hintsUsed > 0 && <Text variant="small" style={{ textAlign: "center" }}>{hintsUsedText(hintsUsed, locale)}</Text>}
       <View style={{ gap: 8 }}>
         {mode.kind === "level" && mode.next ? (
           <Button

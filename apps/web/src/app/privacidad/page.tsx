@@ -25,7 +25,7 @@ export default function Privacy() {
         <li><strong>Progreso de juego:</strong> resultados de niveles y desafíos diarios, intentos, tiempos, rachas y logros, para sincronizarlos entre tus dispositivos.</li>
         <li><strong>Ranking:</strong> si aparecés en el ranking, se muestra tu nombre con la inicial del apellido (por ejemplo, «Erik E.») y tus resultados. Podés ocultarte cuando quieras.</li>
         <li><strong>Suscripción:</strong> si tenés Craneá Plus, el estado y el vencimiento de la suscripción. El pago lo procesan Google Play o App Store; nunca vemos los datos de tu tarjeta.</li>
-        <li><strong>Recordatorios:</strong> si activás el recordatorio del diario, la suscripción de notificaciones de tu navegador o dispositivo, tu zona horaria y la hora elegida.</li>
+        <li><strong>Recordatorios:</strong> si activás el recordatorio del diario, la suscripción de notificaciones de tu navegador o dispositivo, tu zona horaria, la hora elegida y el idioma del aviso.</li>
       </ul>
 
       <h2>Anuncios en la app</h2>
