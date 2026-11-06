@@ -75,7 +75,8 @@ function Navigator() {
           animation: reduced ? "fade" : "slide_from_right",
         }}
       >
-        <Stack.Screen name="index" options={{ title: t("common.appName"), headerBackVisible: false }} /> {/* La portada nunca muestra "atrás", aunque se abra desde un link. */}
+        {/* La portada nunca muestra "atrás", aunque se abra desde un link. */}
+        <Stack.Screen name="index" options={{ title: t("common.appName"), headerBackVisible: false }} />
         <Stack.Screen name="cuenta" options={{ title: t("shell.accountTitle"), presentation: "modal" }} />
         <Stack.Screen name="ajustes" options={{ title: t("common.settings") }} />
         <Stack.Screen name="plus" options={{ title: t("common.plus"), presentation: "modal" }} />

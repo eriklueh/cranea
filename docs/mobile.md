@@ -178,10 +178,30 @@ Notificaciones **locales** con `expo-notifications` (`src/notifications/reminder
 - **Expo Go**: apagado (el módulo se carga con `require` en línea y en Expo Go no se carga); la pantalla de
   cuenta lo explica. Hace falta un build nuevo (development/preview) porque suma un módulo nativo.
 
-### 7. Actualizaciones sin pasar por la tienda (opcional)
+### 7. Actualizaciones sin pasar por la tienda (EAS Update)
 
-`npx expo install expo-updates`, `eas update:configure` y agregar `channel` a los perfiles de `eas.json`.
-Permite publicar arreglos de JS con `eas update` sin un build nuevo.
+Ya está configurado (`expo-updates`, `runtimeVersion: fingerprint`, un `channel` por perfil en `eas.json`).
+Los cambios de JS, textos, estilos y niveles se publican sin build nuevo; la app los baja al abrir y los
+usa la vez siguiente.
+
+```sh
+cd apps/mobile
+npx eas-cli@latest update --channel preview --message "Arreglo X"     # los APK de prueba
+npx eas-cli@latest update --channel production --message "Arreglo X"  # la app de la tienda
+```
+
+- **Cuándo hace falta un build nuevo:** si cambia algo nativo (un paquete con código nativo, permisos,
+  `app.config.ts`, íconos). El fingerprint cambia y los builds viejos ignoran esa actualización.
+- **Volver atrás:** `npx eas-cli@latest update:rollback` o republicar el commit anterior.
+
+### 8. Links de cranea.app que abren la app (Android App Links)
+
+`app.config.ts` declara las rutas (`APP_LINK_PATHS`) y la web publica
+`apps/web/public/.well-known/assetlinks.json` con la huella SHA-256 de la firma.
+Hoy tiene la de EAS (APK de prueba). **Cuando la app esté en Play Console**, agregá la huella de
+"Firma de apps de Google Play" (Play Console → Configuración → Integridad de la app → Firma de apps) al
+arreglo `sha256_cert_fingerprints`, si no los links abren el navegador en la versión de la tienda.
+Comprobar en el celular: `adb shell pm get-app-links app.cranea` tiene que decir `verified`.
 
 ## Monetización
 
