@@ -20,6 +20,9 @@ import { fonts } from "@/theme/tokens";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
+// Al abrir desde un link (cranea.app, el widget o una notificación) la portada queda debajo: "atrás" vuelve a ella.
+export const unstable_settings = { initialRouteName: "index" };
+
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     AtkinsonHyperlegible_400Regular,
