@@ -15,6 +15,10 @@ cranea/
 └─ apps/mobile        Expo + expo-router: app nativa (ver docs/mobile.md)
 ```
 
+## Idiomas
+
+Español e inglés en la web y la app (Ajustes → Idioma; por defecto, el del dispositivo). Palabra solo existe en español. Ver [docs/i18n.md](docs/i18n.md).
+
 ## Empezar
 
 ```bash

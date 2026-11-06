@@ -14,3 +14,7 @@ export const PRIVACY_URL = `${SHARE_URL}/privacidad`;
  * Por defecto, el contrato estándar de Apple (EULA). Si publicás términos propios, cambialo acá.
  */
 export const TERMS_URL = `${SHARE_URL}/terminos`;
+
+/** Versiones en inglés (la web las publica en /privacy y /terms). */
+export const legalUrl = (page: "privacy" | "terms", locale: "es" | "en") =>
+  locale === "en" ? `${SHARE_URL}/${page}` : page === "privacy" ? PRIVACY_URL : TERMS_URL;

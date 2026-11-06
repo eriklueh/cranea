@@ -6,11 +6,11 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import type { PurchasesPackage } from "react-native-purchases";
 import { PlusBadge, type PlusReason } from "@/components/plus";
 import { Button, Card, Icon, Row, Screen, Text, type IconName } from "@/components/ui";
-import { PRIVACY_URL, TERMS_URL } from "@/config";
+import { legalUrl } from "@/config";
 import { usePlus } from "@/entitlements";
 import { accountsEnabled } from "@/lib/convex";
 import { haptic } from "@/lib/haptics";
-import { useT, type Key, type T } from "@/lib/i18n";
+import { useT, type Key, type T, getLocale } from "@/lib/i18n";
 import { isExpoGo } from "@/monetization/native";
 import { freeTrialOf, getPackages, openManageSubscription, purchase, purchasesAvailable, restore, trialIneligible, trialText, type FreeTrial } from "@/monetization/purchases";
 import { useTheme } from "@/theme/theme";
@@ -243,10 +243,10 @@ function Legal() {
         {t("plus.legal")}
       </Text>
       <Row gap={16}>
-        <Pressable onPress={() => open(TERMS_URL)} accessibilityRole="link" style={styles.link}>
+        <Pressable onPress={() => open(legalUrl("terms", getLocale()))} accessibilityRole="link" style={styles.link}>
           <Text variant="small" style={{ textDecorationLine: "underline" }}>{t("plus.terms")}</Text>
         </Pressable>
-        <Pressable onPress={() => open(PRIVACY_URL)} accessibilityRole="link" style={styles.link}>
+        <Pressable onPress={() => open(legalUrl("privacy", getLocale()))} accessibilityRole="link" style={styles.link}>
           <Text variant="small" style={{ textDecorationLine: "underline" }}>{t("common.privacy")}</Text>
         </Pressable>
       </Row>

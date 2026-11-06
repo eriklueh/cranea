@@ -9,12 +9,12 @@ import { useEffect, useState } from "react";
 import { Alert, Platform, Pressable, StyleSheet, Switch, TextInput, View } from "react-native";
 import { PlusBadge, usePlusPaywall } from "@/components/plus";
 import { Button, Card, Icon, Row, Screen, Text } from "@/components/ui";
-import { PRIVACY_URL } from "@/config";
+import { legalUrl } from "@/config";
 import { usePlus } from "@/entitlements";
 import { adPrivacyOptionsRequired, adsAvailable, showAdPrivacyOptions } from "@/monetization/ads";
 import { openManageSubscription } from "@/monetization/purchases";
 import { api, accountsEnabled } from "@/lib/convex";
-import { useT, type T } from "@/lib/i18n";
+import { useT, type T, getLocale } from "@/lib/i18n";
 import { useRouter } from "expo-router";
 import { useTheme } from "@/theme/theme";
 import { fonts, radius } from "@/theme/tokens";
@@ -374,7 +374,7 @@ function About() {
   const t = useT();
   return (
     <View style={{ gap: 6, alignItems: "center", marginTop: 8 }}>
-      <Pressable onPress={() => WebBrowser.openBrowserAsync(PRIVACY_URL).catch(() => {})} accessibilityRole="link" style={{ minHeight: 44, justifyContent: "center" }}>
+      <Pressable onPress={() => WebBrowser.openBrowserAsync(legalUrl("privacy", getLocale())).catch(() => {})} accessibilityRole="link" style={{ minHeight: 44, justifyContent: "center" }}>
         <Text variant="bodyBold" style={{ textDecorationLine: "underline" }}>{t("account.privacyPolicy")}</Text>
       </Pressable>
       <Text variant="small">{t("common.appName")} {Constants.expoConfig?.version ?? ""}</Text>
