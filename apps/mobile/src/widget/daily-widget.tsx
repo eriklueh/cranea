@@ -212,7 +212,8 @@ export function DailyRingWidget(props: DailyWidgetProps) {
   const { FlexWidget, OverlapWidget, SvgWidget, TextWidget } = widgetModule()!;
   const { state, width, height } = props;
   const { t, c, name, a11y, progress } = widgetBits(props);
-  const ring = Math.max(56, Math.min(112, Math.min(width, height) - 76));
+  // Lo más grande que entre entre el encabezado y el pie (las celdas de algunos launchers son altas).
+  const ring = Math.max(56, Math.min(150, width - 36, height - 84));
   const statuses = state.allDone ? ["won" as const] : state.games.map((g) => g.status);
   const footer = state.next ? `${name(state.next)} →` : state.allDone ? t("widget.allDoneSub") : t("widget.openHome");
 
