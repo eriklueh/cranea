@@ -458,3 +458,16 @@ html[data-text="large"] body {
 .tutorial-ring {
   animation: tutorial-pulse var(--dur-loop) var(--ease-out) infinite;
 }
+
+/*
+ * Idioma: las páginas se prerenderizan en español. En inglés, prefs-script.ts marca <html> con
+ * data-i18n-pending y el cuerpo no se ve hasta que LocaleSync lo saca (ya traducido, al hidratar).
+ * Si el JS no llega, a los 1,2 s se muestra igual (en español). No es una animación visible: es un tope.
+ */
+html[data-i18n-pending] body {
+  visibility: hidden;
+  animation: i18n-reveal 0s linear 1200ms forwards;
+}
+@keyframes i18n-reveal {
+  to { visibility: visible; }
+}

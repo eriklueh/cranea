@@ -16,15 +16,32 @@ export interface TraceFacts {
   removed: [number, number][];
 }
 
+/**
+ * Por qué se deduce algo, sin texto: el texto lo arma `cifraStepText` (`@cranea/core/i18n`) en el
+ * idioma activo. `row`, `rows` y `place` empiezan en uno, como se muestran.
+ */
+export type TraceReason =
+  | { kind: "none"; row: number }
+  | { kind: "all"; row: number }
+  | { kind: "noneInPlace"; row: number }
+  | { kind: "foundAll"; row: number; total: number; digits: number[] }
+  | { kind: "discardedRest"; row: number; total: number; digits: number[] }
+  /** `placed`: [lugar, cifra] ya ubicadas. */
+  | { kind: "placedAll"; row: number; exact: number; placed: [number, number][] }
+  | { kind: "onlyPlaces"; row: number; exact: number }
+  | { kind: "hypothesis"; place: number; digit: number; rows: number[] };
+
 export interface TraceStep {
   /** Índices de las pistas que hay que cruzar. */
   rows: number[];
   tier: Tier;
-  /** Por qué: "La fila 2 no tiene ninguna cifra del código". */
-  reason: string;
-  /** Qué se deduce, con sus consecuencias inmediatas. */
-  effect: string;
-  text: string;
+  /** Por qué ("La fila 2 no tiene ninguna cifra del código"). */
+  reason: TraceReason;
+  /** Qué se deduce directamente (en una suposición, solo descartar esa cifra en ese lugar). */
+  effect: TraceFacts;
+  /** Lo que sigue de eso ("Con eso, …"); puede estar vacío. */
+  more: TraceFacts;
+  /** Todo lo que se sabe después del paso. */
   facts: TraceFacts;
 }
 
@@ -35,11 +52,6 @@ export interface Trace {
 }
 
 const total = (c: Clue) => c.feedback.exact + c.feedback.present;
-const and = (items: string[]) => (items.length < 2 ? items.join("") : `${items.slice(0, -1).join(", ")} y ${items.at(-1)}`);
-const digits = (ds: readonly number[]) => and(ds.map((d) => `el ${d}`));
-const cifras = (n: number) => `${n} ${n === 1 ? "cifra" : "cifras"}`;
-const rowsText = (rows: number[]) => (rows.length === 1 ? `la fila ${rows[0] + 1}` : `las filas ${and(rows.map((r) => String(r + 1)))}`);
-
 /** Cuenta, en una fila, cifras que están (a), que no están (b), en su lugar (k) y fuera de su lugar (m). */
 function counts(s: State, { guess }: Clue) {
   let a = 0, b = 0, k = 0, m = 0;
@@ -60,7 +72,7 @@ function check(s: State, c: Clue) {
 interface Rule {
   tier: 1 | 2;
   apply: (s: State, c: Clue) => boolean;
-  reason: (s: State, c: Clue, n: number) => string;
+  reason: (s: State, c: Clue, row: number) => TraceReason;
 }
 
 const each = (ds: readonly number[], f: (d: number, p: number) => boolean) => ds.reduce((ch, d, p) => f(d, p) || ch, false);
@@ -70,17 +82,17 @@ const RULES: Rule[] = [
   {
     tier: 1,
     apply: (s, c) => total(c) === 0 && each(c.guess, (d) => setStatus(s, d, 0)),
-    reason: (_s, _c, n) => `La fila ${n} no tiene ninguna cifra del código`,
+    reason: (_s, _c, row) => ({ kind: "none", row }),
   },
   {
     tier: 1,
     apply: (s, c) => total(c) === s.L && each(c.guess, (d) => setStatus(s, d, 1)),
-    reason: (_s, _c, n) => `Todas las cifras de la fila ${n} están en el código`,
+    reason: (_s, _c, row) => ({ kind: "all", row }),
   },
   {
     tier: 1,
     apply: (s, c) => c.feedback.exact === 0 && each(c.guess, (d, p) => removeDigit(s, p, d)),
-    reason: (_s, _c, n) => `Ninguna cifra de la fila ${n} está en su lugar`,
+    reason: (_s, _c, row) => ({ kind: "noneInPlace", row }),
   },
   {
     tier: 2,
@@ -89,10 +101,7 @@ const RULES: Rule[] = [
       const { a, b } = counts(s, c);
       return a + b < s.L && a === total(c) && each(c.guess, (d) => s.status[d] === -1 && setStatus(s, d, 0));
     },
-    reason: (s, c, n) => {
-      const t = total(c);
-      return `La fila ${n} tiene ${cifras(t)} del código y ya ${t === 1 ? "la" : "las"} encontraste (${digits(c.guess.filter((d) => s.status[d] === 1))})`;
-    },
+    reason: (s, c, row) => ({ kind: "foundAll", row, total: total(c), digits: c.guess.filter((d) => s.status[d] === 1) }),
   },
   {
     tier: 2,
@@ -101,7 +110,7 @@ const RULES: Rule[] = [
       const { a, b } = counts(s, c);
       return a + b < s.L && s.L - b === total(c) && each(c.guess, (d) => s.status[d] === -1 && setStatus(s, d, 1));
     },
-    reason: (s, c, n) => `La fila ${n} tiene ${cifras(total(c))} del código y ya descartaste ${digits(c.guess.filter((d) => s.status[d] === 0))}`,
+    reason: (s, c, row) => ({ kind: "discardedRest", row, total: total(c), digits: c.guess.filter((d) => s.status[d] === 0) }),
   },
   {
     tier: 2,
@@ -110,10 +119,12 @@ const RULES: Rule[] = [
       const { k, m } = counts(s, c);
       return k + m < s.L && k === c.feedback.exact && each(c.guess, (d, p) => open(s, d, p) && removeDigit(s, p, d));
     },
-    reason: (s, c, n) => {
-      const placed = c.guess.flatMap((d, p) => (s.dom[p] === bit(d) ? [`el ${d} en el lugar ${p + 1}`] : []));
-      return `La fila ${n} tiene ${cifras(c.feedback.exact)} en su lugar y ya ${placed.length === 1 ? "está ubicada" : "están ubicadas"} (${and(placed)})`;
-    },
+    reason: (s, c, row) => ({
+      kind: "placedAll",
+      row,
+      exact: c.feedback.exact,
+      placed: c.guess.flatMap((d, p): [number, number][] => (s.dom[p] === bit(d) ? [[p + 1, d]] : [])),
+    }),
   },
   {
     tier: 2,
@@ -122,10 +133,7 @@ const RULES: Rule[] = [
       const { k, m } = counts(s, c);
       return k + m < s.L && s.L - m === c.feedback.exact && each(c.guess, (d, p) => open(s, d, p) && fix(s, p, d));
     },
-    reason: (_s, c, n) => {
-      const e = c.feedback.exact;
-      return `La fila ${n} tiene ${cifras(e)} en su lugar y ${e === 1 ? "solo una puede estarlo" : `solo ${e} pueden estarlo`}`;
-    },
+    reason: (_s, c, row) => ({ kind: "onlyPlaces", row, exact: c.feedback.exact }),
   },
 ];
 
@@ -152,16 +160,6 @@ function diff(a: State, b: State): TraceFacts {
   return f;
 }
 
-function describe(f: TraceFacts): string {
-  const parts = f.fixed.map(([p, d]) => `el ${d} va en el lugar ${p + 1}`);
-  if (f.in.length) parts.push(`${digits(f.in)} ${f.in.length === 1 ? "está" : "están"} en el código`);
-  if (f.out.length) parts.push(`${digits(f.out)} no ${f.out.length === 1 ? "está" : "están"}`);
-  const byDigit = new Map<number, number[]>();
-  for (const [p, d] of f.removed) byDigit.set(d, [...(byDigit.get(d) ?? []), p + 1]);
-  for (const [d, ps] of byDigit) parts.push(`el ${d} no va en ${ps.length === 1 ? `el lugar ${ps[0]}` : `los lugares ${and(ps.map(String))}`}`);
-  return parts.join("; ");
-}
-
 const merge = (a: TraceFacts, b: TraceFacts): TraceFacts => ({
   out: [...a.out, ...b.out],
   in: [...a.in, ...b.in],
@@ -170,7 +168,7 @@ const merge = (a: TraceFacts, b: TraceFacts): TraceFacts => ({
 });
 
 /** Aplica la deducción `next` sobre `s`, suma sus consecuencias y la deja anotada. */
-function commit(s: State, next: State, rows: number[], tier: Tier, reason: string, lead?: [number, number]): TraceStep {
+function commit(s: State, next: State, rows: number[], tier: Tier, reason: TraceReason, lead?: [number, number]): TraceStep {
   const direct = diff(s, next);
   const after = clone(next);
   settle(after);
@@ -178,19 +176,11 @@ function commit(s: State, next: State, rows: number[], tier: Tier, reason: strin
   consequences.in = consequences.in.filter((d) => !direct.fixed.some(([, x]) => x === d));
   s.status = after.status;
   s.dom = after.dom;
+  if (!lead) return { rows, tier, reason, effect: direct, more: consequences, facts: merge(direct, consequences) };
   // En una suposición, lo directo es descartar esa cifra en ese lugar; lo demás es consecuencia.
-  const effect = lead ? `el ${lead[1]} no va en el lugar ${lead[0] + 1}` : describe(direct);
-  if (lead) direct.removed = direct.removed.filter(([p, d]) => p !== lead[0] || d !== lead[1]);
-  const more = describe(lead ? merge(direct, consequences) : consequences);
-  if (lead) direct.removed.push(lead);
-  return {
-    rows,
-    tier,
-    reason,
-    effect: more ? `${effect}. Con eso, ${more}` : effect,
-    text: `${reason}: ${effect}.${more ? ` Con eso, ${more}.` : ""}`,
-    facts: merge(direct, consequences),
-  };
+  const rest: TraceFacts = { ...direct, removed: direct.removed.filter(([p, d]) => p !== lead[0] || d !== lead[1]) };
+  const effect: TraceFacts = { out: [], in: [], fixed: [], removed: [lead] };
+  return { rows, tier, reason, effect, more: merge(rest, consequences), facts: merge({ ...rest, removed: [...rest.removed, lead] }, consequences) };
 }
 
 function rowStep(s: State, clues: readonly Clue[], maxTier: Tier): TraceStep | null {
@@ -258,8 +248,7 @@ function hypothesisStep(s: State, clues: readonly Clue[]): TraceStep | null {
       if (!rows) continue;
       const next = clone(s);
       removeDigit(next, p, d);
-      const why = rows.length ? `${rowsText(rows)} no ${rows.length === 1 ? "cierra" : "cierran"}` : "no quedan lugares para todas las cifras";
-      return commit(s, next, rows, 3, `Si el ${d} fuera en el lugar ${p + 1}, ${why}`, [p, d]);
+      return commit(s, next, rows, 3, { kind: "hypothesis", place: p + 1, digit: d, rows: rows.map((r) => r + 1) }, [p, d]);
     }
   }
   return null;

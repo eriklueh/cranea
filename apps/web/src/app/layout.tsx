@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { PwaProvider } from "@/components/pwa-provider";
 import { AccountProvider } from "@/components/account-provider";
 import { PrefsSync } from "@/components/settings/prefs-sync";
+import { LocaleSync } from "@/components/settings/locale-sync";
 import { PREFS_SCRIPT } from "@/lib/prefs-script";
 import { Achievements } from "@/components/achievements-provider";
 import { Protectors } from "@/components/protectors";
@@ -34,11 +35,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="es" suppressHydrationWarning className={`${display.variable} ${body.variable}`}>
       <head>
-        {/* Ajustes visuales (paleta, letra, movimiento) antes de pintar, para no destellar. */}
+        {/* Ajustes visuales (paleta, letra, movimiento) e idioma antes de pintar, para no destellar. */}
         <script dangerouslySetInnerHTML={{ __html: PREFS_SCRIPT }} />
       </head>
       <body className="font-sans">
         <PrefsSync />
+        <LocaleSync />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <AccountProvider><PwaProvider>{children}</PwaProvider><Achievements /><Protectors /></AccountProvider>
         </ThemeProvider>

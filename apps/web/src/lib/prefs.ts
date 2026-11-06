@@ -1,6 +1,7 @@
 "use client";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { LocalePref } from "@cranea/core/i18n";
 import { PREFS_KEY } from "@/lib/prefs-script";
 
 /** Ajustes del dispositivo. Los visuales se reflejan como atributos de <html> (ver prefs-script.ts y globals.css). */
@@ -10,9 +11,11 @@ export interface Prefs {
   motion: "system" | "reduced";
   palette: "classic" | "colorblind";
   text: "normal" | "large";
+  /** Idioma: «auto» sigue al navegador. */
+  language: LocalePref;
 }
 
-export const DEFAULT_PREFS: Prefs = { sound: false, vibration: true, motion: "system", palette: "classic", text: "normal" };
+export const DEFAULT_PREFS: Prefs = { sound: false, vibration: true, motion: "system", palette: "classic", text: "normal", language: "auto" };
 
 interface PrefsState extends Prefs {
   set: (patch: Partial<Prefs>) => void;

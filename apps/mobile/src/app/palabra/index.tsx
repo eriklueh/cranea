@@ -1,8 +1,9 @@
 import { Stack } from "expo-router";
 import { GameHome } from "@/components/game-home/game-home";
 import { PALABRA_HOME } from "@/games/palabra/data";
+import { spanishOnly } from "@/components/spanish-only";
 
-export default function PalabraHome() {
+function PalabraHome() {
   return (
     <>
       <Stack.Screen options={{ title: "Palabra" }} />
@@ -10,3 +11,6 @@ export default function PalabraHome() {
     </>
   );
 }
+
+/** En inglés, Palabra no está: ver SpanishOnly. */
+export default spanishOnly("palabra", PalabraHome);

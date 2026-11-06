@@ -7,8 +7,9 @@ import { PalabraGame } from "@/games/palabra/components/palabra-game";
 import { PALABRA_HOME, getLevel, isLevelUnlocked, levelKey, nextLevelOf } from "@/games/palabra/data";
 import { Loading } from "@/components/ui";
 import { useGameProgress, useProgress } from "@/stores/progress";
+import { spanishOnly } from "@/components/spanish-only";
 
-export default function PalabraLevel() {
+function PalabraLevel() {
   const params = useLocalSearchParams<{ mundo: string; nivel: string }>();
   const world = Number(params.mundo);
   const level = Number(params.nivel);
@@ -36,3 +37,6 @@ export default function PalabraLevel() {
     </>
   );
 }
+
+/** En inglés, Palabra no está: ver SpanishOnly. */
+export default spanishOnly("palabra", PalabraLevel);

@@ -5,9 +5,10 @@ import { Row } from "@/components/ui";
 import { DailyGate } from "@/components/daily-gate";
 import { LetterTile, PalabraGame } from "@/games/palabra/components/palabra-game";
 import { dailyNumber, GAME_ID, getDictionary } from "@/games/palabra/data";
+import { spanishOnly } from "@/components/spanish-only";
 
 /** La palabra del día sale de la fecha UTC: la misma para todos. Cuenta la primera partida. */
-export default function PalabraDaily() {
+function PalabraDaily() {
   return (
     <>
       <Stack.Screen options={{ title: "Palabra del día" }} />
@@ -36,3 +37,6 @@ function Play({ date, practice }: { date: string; practice: boolean }) {
   const mode = useMemo(() => ({ kind: "daily" as const, date, number: dailyNumber(date), practice }), [date, practice]);
   return <PalabraGame puzzle={puzzle} mode={mode} />;
 }
+
+/** En inglés, Palabra no está: ver SpanishOnly. */
+export default spanishOnly("palabra", PalabraDaily);

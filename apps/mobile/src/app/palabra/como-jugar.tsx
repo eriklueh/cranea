@@ -3,6 +3,7 @@ import { Stack, useRouter } from "expo-router";
 import { View } from "react-native";
 import { Button, Row, Screen, Text } from "@/components/ui";
 import { LetterTile } from "@/games/palabra/components/palabra-game";
+import { spanishOnly } from "@/components/spanish-only";
 
 const tone = (s: LetterScore) => (s === 2 ? "exact" : s === 1 ? "present" : "absent");
 
@@ -22,7 +23,7 @@ function Word({ word, scores }: { word: string; scores: LetterScore[] }) {
   );
 }
 
-export default function HowToPalabra() {
+function HowToPalabra() {
   const router = useRouter();
   return (
     <>
@@ -55,3 +56,6 @@ export default function HowToPalabra() {
     </>
   );
 }
+
+/** En inglés, Palabra no está: ver SpanishOnly. */
+export default spanishOnly("palabra", HowToPalabra);

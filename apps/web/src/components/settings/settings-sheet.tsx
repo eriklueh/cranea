@@ -17,6 +17,7 @@ import { TilePreview } from "@/components/settings/tile-preview";
 import { canVibrate } from "@/lib/motion";
 import { PLUS_ENABLED, usePlus } from "@/lib/plus";
 import { usePrefs } from "@/lib/prefs";
+import { useLocale, useT } from "@/lib/i18n";
 import { sound } from "@/lib/sound";
 
 /** Botón del encabezado: abre Ajustes (tema, pantalla, sonido, instalar, aviso y estadísticas). En el celular es una hoja desde abajo. */
@@ -123,6 +124,28 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
+/** Idioma: Automático (el del navegador), Español o English. Cada opción se nombra en su idioma. */
+function LanguageChoice() {
+  const t = useT();
+  const locale = useLocale();
+  const language = usePrefs((s) => s.language);
+  const set = usePrefs((s) => s.set);
+  return (
+    <Choice
+      name="language"
+      legend={t("common.language")}
+      value={language}
+      options={[
+        { value: "auto", label: t("common.languageAuto") },
+        { value: "es", label: t("common.languageEs") },
+        { value: "en", label: t("common.languageEn") },
+      ]}
+      onChange={(language) => set({ language })}
+      hint={language === "auto" ? `${t("common.languageAutoHint")} (${locale === "en" ? t("common.languageEn") : t("common.languageEs")})` : undefined}
+    />
+  );
+}
+
 function Preferences() {
   const { sound: soundOn, vibration, motion, palette, text, set } = usePrefs();
   // Solo se monta con la hoja abierta (en el cliente), pero igual se evita leer `navigator` al renderizar en el servidor.
@@ -132,6 +155,7 @@ function Preferences() {
   return (
     <>
       <Section title="Pantalla">
+        <LanguageChoice />
         <ThemeChoice />
         <Choice
           name="palette"

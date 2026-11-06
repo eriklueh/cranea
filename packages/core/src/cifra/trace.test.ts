@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { generateDaily, solve, traceSolve, unpack, type CifraPuzzle, type Clue, type PackedLevel, type Trace } from "./index";
 import packed from "../../levels/cifra.json";
+import { cifraStepText } from "../i18n";
+
+const es = (step: Trace["steps"][number]) => cifraStepText(step, "es");
 
 const clue = (guess: string, exact: number, present: number): Clue => ({ guess: guess.split("").map(Number), feedback: { exact, present } });
 
@@ -11,8 +14,9 @@ function expectTruthful(trace: Trace, p: CifraPuzzle) {
   expect(trace.steps.length).toBeGreaterThan(0);
   for (const step of trace.steps) {
     const { out, in: inn, fixed, removed } = step.facts;
-    expect(out.length + inn.length + fixed.length + removed.length, step.text).toBeGreaterThan(0);
-    expect(step.text.length).toBeGreaterThan(step.reason.length);
+    expect(out.length + inn.length + fixed.length + removed.length, es(step).text).toBeGreaterThan(0);
+    expect(es(step).text.length).toBeGreaterThan(es(step).reason.length);
+    expect(cifraStepText(step, "en").text.length).toBeGreaterThan(cifraStepText(step, "en").reason.length);
     for (const d of out) expect(p.solution).not.toContain(d);
     for (const d of inn) expect(p.solution).toContain(d);
     for (const [pos, d] of fixed) expect(p.solution[pos]).toBe(d);
@@ -26,10 +30,12 @@ describe("traza del solver", () => {
   it("explica cada paso en palabras", () => {
     const clues = [clue("1234", 0, 0), clue("5678", 1, 3), clue("5690", 2, 0), clue("8756", 0, 4), clue("6875", 0, 4)];
     const trace = traceSolve(clues, 4);
-    expect(trace.steps[0]).toMatchObject({ rows: [0], tier: 1, reason: "La fila 1 no tiene ninguna cifra del código" });
-    expect(trace.steps[0].text).toBe("La fila 1 no tiene ninguna cifra del código: el 1, el 2, el 3 y el 4 no están.");
-    expect(trace.steps[1].reason).toBe("Todas las cifras de la fila 2 están en el código");
-    expect(trace.steps[1].text).toContain("Con eso, el 0 y el 9 no están");
+    expect(trace.steps[0]).toMatchObject({ rows: [0], tier: 1, reason: { kind: "none", row: 1 } });
+    expect(es(trace.steps[0]).reason).toBe("La fila 1 no tiene ninguna cifra del código");
+    expect(cifraStepText(trace.steps[0], "en").text).toBe("Row 1 has none of the code's digits: 1, 2, 3 and 4 are out.");
+    expect(es(trace.steps[0]).text).toBe("La fila 1 no tiene ninguna cifra del código: el 1, el 2, el 3 y el 4 no están.");
+    expect(es(trace.steps[1]).reason).toBe("Todas las cifras de la fila 2 están en el código");
+    expect(es(trace.steps[1]).text).toContain("Con eso, el 0 y el 9 no están");
   });
 
   it("resuelve todos los niveles publicados con la técnica de su mundo", () => {
@@ -49,7 +55,7 @@ describe("traza del solver", () => {
       expectTruthful(trace, p);
       for (const step of trace.steps.filter((s) => s.tier === 3)) {
         hypotheses++;
-        expect(step.reason).toMatch(/^Si el \d fuera en el lugar \d/);
+        expect(es(step).reason).toMatch(/^Si el \d fuera en el lugar \d/);
         expect(step.rows.length).toBeGreaterThan(0);
       }
     }

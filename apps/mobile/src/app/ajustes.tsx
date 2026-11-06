@@ -9,6 +9,7 @@ import { usePlus } from "@/entitlements";
 import { Indicator } from "@/games/cifra/components/tiles";
 import { LetterTile } from "@/games/palabra/components/palabra-game";
 import { usePrefs } from "@/lib/prefs";
+import { useLocale, useT } from "@/lib/i18n";
 import { sound } from "@/lib/sound";
 import { useTheme } from "@/theme/theme";
 import { fonts, radius } from "@/theme/tokens";
@@ -21,9 +22,23 @@ import { fonts, radius } from "@/theme/tokens";
 export default function SettingsScreen() {
   const prefs = usePrefs();
   const { preference, setPreference } = useTheme();
+  const t = useT();
+  const locale = useLocale();
   return (
     <Screen contentStyle={{ gap: 24 }}>
       <Section title="Pantalla">
+        {/* Idioma: Automático (el del teléfono), Español o English; cada opción en su idioma. */}
+        <Choice
+          legend={t("common.language")}
+          value={prefs.language}
+          options={[
+            { value: "auto", label: t("common.languageAuto") },
+            { value: "es", label: t("common.languageEs") },
+            { value: "en", label: t("common.languageEn") },
+          ]}
+          onChange={(language) => prefs.set({ language })}
+          hint={prefs.language === "auto" ? `${t("common.languageAutoHint")} (${locale === "en" ? t("common.languageEn") : t("common.languageEs")})` : undefined}
+        />
         <Choice
           legend="Tema"
           value={preference}

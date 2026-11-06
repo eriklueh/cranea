@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { nextReminder, validMinutes } from "./schedule";
 
+const locale = v.optional(v.union(v.literal("es"), v.literal("en")));
 const subscription = v.object({ endpoint: v.string(), keys: v.object({ p256dh: v.string(), auth: v.string() }) });
 /** Si el envío se atrasó más que esto (cron caído), se saltea el día en vez de avisar tarde. */
 const STALE_MS = 2 * 60 * 60 * 1000;
@@ -17,13 +18,13 @@ export const status = query({
 
 /** Activa o actualiza el recordatorio del dispositivo; con sesión iniciada, queda asociado a la cuenta. */
 export const subscribe = mutation({
-  args: { subscription, minutes: v.number(), timeZone: v.string(), offset: v.number() },
-  handler: async (ctx, { subscription: { endpoint, keys }, minutes, timeZone, offset }) => {
+  args: { subscription, minutes: v.number(), timeZone: v.string(), offset: v.number(), locale },
+  handler: async (ctx, { subscription: { endpoint, keys }, minutes, timeZone, offset, locale }) => {
     if (!validMinutes(minutes)) throw new Error("Hora inválida.");
     if (!endpoint.startsWith("https://") || endpoint.length > 1000 || keys.p256dh.length > 200 || keys.auth.length > 100) throw new Error("Suscripción inválida.");
     if (timeZone.length > 64 || !Number.isInteger(offset) || Math.abs(offset) > 18 * 60) throw new Error("Zona horaria inválida.");
     const userId = (await ctx.auth.getUserIdentity())?.tokenIdentifier;
-    const row = { endpoint, p256dh: keys.p256dh, auth: keys.auth, userId, minutes, timeZone, offset, nextAt: nextReminder(Date.now(), minutes, timeZone, offset) };
+    const row = { endpoint, p256dh: keys.p256dh, auth: keys.auth, userId, minutes, timeZone, offset, nextAt: nextReminder(Date.now(), minutes, timeZone, offset), ...(locale ? { locale } : {}) };
     const existing = await ctx.db.query("reminders").withIndex("by_endpoint", (q) => q.eq("endpoint", endpoint)).unique();
     if (existing) await ctx.db.replace(existing._id, row);
     else await ctx.db.insert("reminders", row);
@@ -49,7 +50,7 @@ export const due = internalQuery({
         .query("progress")
         .withIndex("by_entry", (q) => q.eq("userId", row.userId!).eq("gameId", "cifra").eq("kind", "daily").eq("key", today))
         .first();
-      return { id: row._id, endpoint: row.endpoint, keys: { p256dh: row.p256dh, auth: row.auth }, skip: !!played || now - row.nextAt > STALE_MS };
+      return { id: row._id, endpoint: row.endpoint, keys: { p256dh: row.p256dh, auth: row.auth }, locale: row.locale ?? "es", skip: !!played || now - row.nextAt > STALE_MS };
     }));
   },
 });

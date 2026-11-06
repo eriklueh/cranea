@@ -40,11 +40,12 @@ export type AchievementIcon =
   | "calendar" | "flag" | "flame" | "crown" | "sunrise" | "moon" | "zap" | "target" | "sparkles" | "eye"
   | "bridge" | "palette" | "building" | "puzzle" | "map" | "star" | "trophy" | "medal" | "infinity";
 
+/** Nombre y descripción: `achievementCopy(a, locale, juegos)` de `@cranea/core/i18n`. */
 export interface Achievement {
   id: string;
-  name: string;
-  description: string;
   icon: AchievementIcon;
+  /** Si es de un solo juego: se oculta cuando ese juego no está (Palabra en inglés). */
+  game?: string;
 }
 
 export interface AchievementState extends Achievement {
@@ -180,29 +181,29 @@ interface Definition extends Achievement {
 }
 
 const DEFINITIONS: Definition[] = [
-  { id: "primer-diario", name: "Primera vez", description: "Jugá tu primer diario.", icon: "calendar", check: (c) => count(c.daily.map((e) => e.r.at), 1) },
-  { id: "primer-nivel", name: "Arrancamos", description: "Ganá tu primer nivel.", icon: "flag", check: (c) => count(wonLevels(c).map((e) => e.r.at), 1) },
-  { id: "de-todo-un-poco", name: "De todo un poco", description: "Ganá una partida en cada juego.", icon: "puzzle", check: everyGame },
-  { id: "racha-7", name: "Semana redonda", description: "Ganá algún diario 7 días seguidos.", icon: "flame", check: (c) => streak(c, 7) },
-  { id: "racha-30", name: "Un mes sin faltar", description: "Ganá algún diario 30 días seguidos.", icon: "flame", check: (c) => streak(c, 30) },
-  { id: "racha-100", name: "Centenario", description: "Ganá algún diario 100 días seguidos.", icon: "crown", check: (c) => streak(c, 100) },
-  { id: "pleno", name: "Pleno", description: "Ganá los 5 diarios el mismo día.", icon: "medal", check: fullDay },
-  { id: "diarios-30", name: "Habitué", description: "Ganá 30 diarios.", icon: "calendar", check: (c) => count(wonDaily(c).map((e) => e.r.at), 30) },
-  { id: "diarios-100", name: "De la casa", description: "Ganá 100 diarios.", icon: "infinity", check: (c) => count(wonDaily(c).map((e) => e.r.at), 100) },
-  { id: "madrugador", name: "Madrugador", description: "Terminá un diario entre las 5 y las 8 de la mañana.", icon: "sunrise", check: (c) => any(c.daily, (e) => { const h = c.hour(e.r.at); return h >= 5 && h < 8; }) },
-  { id: "buho", name: "Búho", description: "Terminá un diario entre la medianoche y las 5.", icon: "moon", check: (c) => any(c.daily, (e) => c.hour(e.r.at) < 5) },
-  { id: "rayo", name: "Rayo", description: "Resolvé un diario en menos de un minuto.", icon: "zap", check: (c) => any(c.daily, (e) => e.r.won && e.r.timeMs < 60_000) },
-  { id: "palabra-2", name: "Puntería", description: "Adiviná una Palabra en 2 intentos o menos.", icon: "target", check: (c) => any([...c.daily, ...c.levels], (e) => e.gameId === "palabra" && e.r.won && e.r.attempts <= 2) },
-  { id: "palabra-1", name: "Adivino", description: "Adiviná una Palabra al primer intento.", icon: "sparkles", check: (c) => any([...c.daily, ...c.levels], (e) => e.gameId === "palabra" && e.r.won && e.r.attempts === 1) },
-  { id: "cifra-1", name: "Ojo de lince", description: "Descubrí el diario de Cifra al primer intento.", icon: "eye", check: (c) => any(c.daily, (e) => e.gameId === "cifra" && e.r.won && e.r.attempts === 1) },
-  { id: "torres-limpio", name: "Vista de águila", description: "Resolvé el diario de Torres sin errores.", icon: "building", check: (c) => any(c.daily, (e) => e.gameId === "torres" && e.r.won && e.r.attempts === 1) },
-  { id: "puentes-10", name: "Ingeniería", description: "Ganá 10 niveles de Puentes sin errores.", icon: "bridge", check: (c) => count(c.levels.filter((e) => e.gameId === "puentes" && e.r.won && e.r.attempts === 1).map((e) => e.r.at), 10) },
-  { id: "artista", name: "Artista", description: "Pintá 10 dibujos del Nonograma.", icon: "palette", check: (c) => count(c.levels.filter((e) => e.gameId === "nonograma" && e.r.won).map((e) => e.r.at), 10) },
-  { id: "niveles-50", name: "Medio centenar", description: "Ganá 50 niveles.", icon: "trophy", check: (c) => count(wonLevels(c).map((e) => e.r.at), 50) },
-  { id: "niveles-200", name: "Incansable", description: "Ganá 200 niveles.", icon: "trophy", check: (c) => count(wonLevels(c).map((e) => e.r.at), 200) },
-  { id: "mundo-completo", name: "Mundo completo", description: "Ganá todos los niveles de un mundo.", icon: "map", check: (c) => world(c, (_, r) => r.won) },
-  { id: "mundo-perfecto", name: "Sin un rayón", description: "Completá un mundo con 3 puntitos en cada nivel.", icon: "star", check: (c) => world(c, isPerfect) },
-  { id: "leyenda", name: "Leyenda", description: "Completá todos los mundos de un juego.", icon: "crown", check: wholeGame },
+  { id: "primer-diario", icon: "calendar", check: (c) => count(c.daily.map((e) => e.r.at), 1) },
+  { id: "primer-nivel", icon: "flag", check: (c) => count(wonLevels(c).map((e) => e.r.at), 1) },
+  { id: "de-todo-un-poco", icon: "puzzle", check: everyGame },
+  { id: "racha-7", icon: "flame", check: (c) => streak(c, 7) },
+  { id: "racha-30", icon: "flame", check: (c) => streak(c, 30) },
+  { id: "racha-100", icon: "crown", check: (c) => streak(c, 100) },
+  { id: "pleno", icon: "medal", check: fullDay },
+  { id: "diarios-30", icon: "calendar", check: (c) => count(wonDaily(c).map((e) => e.r.at), 30) },
+  { id: "diarios-100", icon: "infinity", check: (c) => count(wonDaily(c).map((e) => e.r.at), 100) },
+  { id: "madrugador", icon: "sunrise", check: (c) => any(c.daily, (e) => { const h = c.hour(e.r.at); return h >= 5 && h < 8; }) },
+  { id: "buho", icon: "moon", check: (c) => any(c.daily, (e) => c.hour(e.r.at) < 5) },
+  { id: "rayo", icon: "zap", check: (c) => any(c.daily, (e) => e.r.won && e.r.timeMs < 60_000) },
+  { id: "palabra-2", game: "palabra", icon: "target", check: (c) => any([...c.daily, ...c.levels], (e) => e.gameId === "palabra" && e.r.won && e.r.attempts <= 2) },
+  { id: "palabra-1", game: "palabra", icon: "sparkles", check: (c) => any([...c.daily, ...c.levels], (e) => e.gameId === "palabra" && e.r.won && e.r.attempts === 1) },
+  { id: "cifra-1", game: "cifra", icon: "eye", check: (c) => any(c.daily, (e) => e.gameId === "cifra" && e.r.won && e.r.attempts === 1) },
+  { id: "torres-limpio", game: "torres", icon: "building", check: (c) => any(c.daily, (e) => e.gameId === "torres" && e.r.won && e.r.attempts === 1) },
+  { id: "puentes-10", game: "puentes", icon: "bridge", check: (c) => count(c.levels.filter((e) => e.gameId === "puentes" && e.r.won && e.r.attempts === 1).map((e) => e.r.at), 10) },
+  { id: "artista", game: "nonograma", icon: "palette", check: (c) => count(c.levels.filter((e) => e.gameId === "nonograma" && e.r.won).map((e) => e.r.at), 10) },
+  { id: "niveles-50", icon: "trophy", check: (c) => count(wonLevels(c).map((e) => e.r.at), 50) },
+  { id: "niveles-200", icon: "trophy", check: (c) => count(wonLevels(c).map((e) => e.r.at), 200) },
+  { id: "mundo-completo", icon: "map", check: (c) => world(c, (_, r) => r.won) },
+  { id: "mundo-perfecto", icon: "star", check: (c) => world(c, isPerfect) },
+  { id: "leyenda", icon: "crown", check: wholeGame },
 ];
 
 /** Catálogo, en el orden en que se muestra. */

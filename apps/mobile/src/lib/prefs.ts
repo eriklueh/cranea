@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import type { LocalePref } from "@cranea/core/i18n";
 
 export type ThemePreference = "system" | "light" | "dark";
 
@@ -12,9 +13,11 @@ export interface Prefs {
   motion: "system" | "reduced";
   sound: boolean;
   vibration: boolean;
+  /** Idioma: «auto» sigue al teléfono. */
+  language: LocalePref;
 }
 
-export const DEFAULT_PREFS: Prefs = { theme: "system", palette: "classic", text: "normal", motion: "system", sound: false, vibration: true };
+export const DEFAULT_PREFS: Prefs = { theme: "system", palette: "classic", text: "normal", motion: "system", sound: false, vibration: true, language: "auto" };
 
 interface PrefsState extends Prefs {
   hydrated: boolean;
@@ -31,7 +34,7 @@ export const usePrefs = create<PrefsState>()(
       name: "cranea-prefs",
       version: 1,
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: ({ theme, palette, text, motion, sound, vibration }) => ({ theme, palette, text, motion, sound, vibration }),
+      partialize: ({ theme, palette, text, motion, sound, vibration, language }) => ({ theme, palette, text, motion, sound, vibration, language }),
       onRehydrateStorage: () => (state) => {
         const done = () => usePrefs.setState({ hydrated: true });
         if (state && state.theme !== DEFAULT_PREFS.theme) return done();

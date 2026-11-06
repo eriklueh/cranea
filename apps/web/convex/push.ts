@@ -4,9 +4,14 @@ import webpush, { WebPushError } from "web-push";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { internalAction } from "./_generated/server";
+import { coreMessages, createTranslator, type Locale } from "@cranea/core/i18n";
 
 const BATCH = 200;
-const payload = JSON.stringify({ title: "Craneá", body: "Ya está la Cifra del día. ¿La sacás en tres intentos?", url: "/cifra/diario" });
+/** El aviso en el idioma que tenía la web al activarlo (`locale` de la suscripción). */
+const payload = (locale: Locale) => {
+  const t = createTranslator(coreMessages, locale);
+  return JSON.stringify({ title: t("notifications.title"), body: t("notifications.pushCifra"), url: "/cifra/diario" });
+};
 
 /** Envía los recordatorios vencidos. Lo ejecuta el cron cada 15 minutos. */
 export const sendDue = internalAction({
@@ -22,7 +27,7 @@ export const sendDue = internalAction({
       const gone: Id<"reminders">[] = [];
       await Promise.all(due.filter((r) => !r.skip).map(async (r) => {
         try {
-          await webpush.sendNotification({ endpoint: r.endpoint, keys: r.keys }, payload, { TTL: 6 * 60 * 60, topic: "diario" });
+          await webpush.sendNotification({ endpoint: r.endpoint, keys: r.keys }, payload(r.locale), { TTL: 6 * 60 * 60, topic: "diario" });
         } catch (error) {
           // 404/410: el navegador dio de baja la suscripción. Otros errores esperan al día siguiente.
           if (error instanceof WebPushError && (error.statusCode === 404 || error.statusCode === 410)) gone.push(r.id);

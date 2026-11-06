@@ -76,6 +76,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     "expo-web-browser",
     "expo-font",
     "expo-apple-authentication",
+    // Idioma: español o inglés (ver docs/i18n.md). Habilita elegirlo por app en los ajustes del sistema.
+    ["expo-localization", { supportedLocales: { ios: ["es", "en"], android: ["es", "en"] } }],
     // Recordatorio del diario: notificaciones locales (sin push). El permiso POST_NOTIFICATIONS
     // (Android 13+) y RECEIVE_BOOT_COMPLETED (reprogramar al reiniciar) los agrega el módulo.
     ["expo-notifications", { color: "#1c2b4b", icon: "./assets/adaptive-icon-monochrome.png" }],

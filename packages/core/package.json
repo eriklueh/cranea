@@ -20,7 +20,8 @@
     "./levels/torres.json": "./levels/torres.json",
     "./achievements": "./src/achievements/index.ts",
     "./protectors": "./src/protectors/index.ts",
-    "./motion": "./src/motion.ts"
+    "./motion": "./src/motion.ts",
+    "./i18n": "./src/i18n/index.ts"
   },
   "scripts": {
     "test": "vitest run",

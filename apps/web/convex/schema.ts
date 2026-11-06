@@ -122,6 +122,8 @@ export default defineSchema({
     offset: v.number(),
     /** Próximo envío (ms UTC). */
     nextAt: v.number(),
+    /** Idioma del aviso (el de la web al activarlo). Sin dato: español. */
+    locale: v.optional(v.union(v.literal("es"), v.literal("en"))),
   })
     .index("by_endpoint", ["endpoint"])
     .index("by_next", ["nextAt"]),
