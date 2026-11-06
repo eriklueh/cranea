@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.cranea",
+      "sha256_cert_fingerprints": [
+        "44:80:7F:39:44:77:AE:20:88:C7:32:0D:9C:37:9B:BE:BC:27:BC:E3:EB:86:19:12:06:19:CC:1E:25:DE:EC:8A"
+      ]
+    }
+  }
+]

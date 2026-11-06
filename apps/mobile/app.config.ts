@@ -28,6 +28,9 @@ const ADMOB_IOS_APP_ID = process.env.EXPO_PUBLIC_ADMOB_IOS_APP_ID || "ca-app-pub
 const PAPER = "#f6f8fb";
 const BOARD = "#202124";
 
+/** Rutas de la web que tienen pantalla en la app; el resto de cranea.app se sigue abriendo en el navegador. */
+const APP_LINK_PATHS = ["/cifra", "/puentes", "/nonograma", "/torres", "/palabra", "/ranking", "/estadisticas", "/plus"];
+
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: APP_NAME,
@@ -35,6 +38,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   owner: "eriklueh",
   scheme: SCHEME,
   version: VERSION,
+  // Actualizaciones sin pasar por la tienda (EAS Update). "fingerprint": cada build solo recibe las
+  // actualizaciones hechas para su misma parte nativa; si cambia algo nativo, hace falta un build nuevo.
+  runtimeVersion: { policy: "fingerprint" },
+  updates: { url: `https://u.expo.dev/${EAS_PROJECT_ID}`, checkAutomatically: "ON_LOAD", fallbackToCacheTimeout: 0 },
   orientation: "portrait",
   icon: "./assets/icon.png",
   userInterfaceStyle: "automatic",
@@ -55,6 +62,15 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   android: {
     package: ANDROID_PACKAGE,
+    // Links de cranea.app que abren la app (Android App Links, verificados con /.well-known/assetlinks.json).
+    intentFilters: [
+      {
+        action: "VIEW",
+        autoVerify: true,
+        data: APP_LINK_PATHS.map((pathPrefix) => ({ scheme: "https", host: "cranea.app", pathPrefix })),
+        category: ["BROWSABLE", "DEFAULT"],
+      },
+    ],
     adaptiveIcon: {
       foregroundImage: "./assets/adaptive-icon.png",
       backgroundImage: "./assets/adaptive-icon-background.png",
